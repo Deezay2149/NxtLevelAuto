@@ -806,6 +806,18 @@ ${currentViewingInvoice.notes}
     showNotification('Invoice downloaded!', 'success');
 }
 
+// Get shop name from settings
+function getShopName() {
+    try {
+        const saved = localStorage.getItem('globalSettings');
+        if (saved) {
+            const s = JSON.parse(saved);
+            return s.shopName || 'NxtLevel Auto';
+        }
+    } catch(e) {}
+    return 'NxtLevel Auto';
+}
+
 // WhatsApp Integration
 function sendInvoiceWhatsApp() {
     if (!currentViewingInvoice) return;
@@ -816,35 +828,24 @@ function sendInvoiceWhatsApp() {
         return;
     }
     
-    // Format phone number for WhatsApp
+    const shopName = getShopName();
+    
+    // Format phone number for WhatsApp (SA format)
     let phoneNumber = customer.phone.replace(/\D/g, '');
-    // Remove leading '0' for South African format (27)
     if (phoneNumber.startsWith('0') && phoneNumber.length === 10) {
         phoneNumber = '27' + phoneNumber.substring(1);
     }
-    // Remove leading '1' if present (international format)
     if (phoneNumber.startsWith('1') && phoneNumber.length === 11) {
         phoneNumber = phoneNumber.substring(1);
     }
     
     // Create message
-    const message = `🔧 *Auto Fix Pro - Invoice*
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-*Invoice:* ${currentViewingInvoice.invoiceNumber}
-*Date:* ${new Date(currentViewingInvoice.createdAt).toLocaleDateString()}
-*Status:* ${currentViewingInvoice.status}
-
-*Customer:* ${customer.firstName} ${customer.lastName}
-
-*Total Amount:* ${formatCurrency(currentViewingInvoice.total)}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Thank you for choosing Auto Fix Pro!`;
+    const message = `🔧 *${shopName} - Invoice*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n*Invoice:* ${currentViewingInvoice.invoiceNumber}\n*Date:* ${new Date(currentViewingInvoice.createdAt).toLocaleDateString()}\n*Status:* ${currentViewingInvoice.status}\n\n*Customer:* ${customer.firstName} ${customer.lastName}\n\n*Total Amount:* ${formatCurrency(currentViewingInvoice.total)}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nThank you for choosing ${shopName}!`;
     
     // Open WhatsApp
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappURL, '_blank');
+    showNotification('WhatsApp opened!', 'success');
 }
 
 // SMS Integration
@@ -857,14 +858,66 @@ function sendInvoiceSMS() {
         return;
     }
     
-    // Create message
-    const message = `Auto Fix Pro Invoice ${currentViewingInvoice.invoiceNumber} - Total: ${formatCurrency(currentViewingInvoice.total)}. Status: ${currentViewingInvoice.status}. Thank you for your business!`;
+    const shopName = getShopName();
+    const message = `${shopName}: Invoice ${currentViewingInvoice.invoiceNumber} - Total: ${formatCurrency(currentViewingInvoice.total)}. Status: ${currentViewingInvoice.status}. Thank you for your business!`;
+    const phone = customer.phone.replace(/\s/g, '');
     
-    // For SMS, we'll use tel: protocol which opens the phone app
-    const smsURL = `sms:${customer.phone}?body=${encodeURIComponent(message)}`;
-    window.open(smsURL, '_blank');
+    // Try sms: protocol first (works on mobile/some desktop apps)
+    const smsURL = `sms:${phone}?body=${encodeURIComponent(message)}`;
     
-    showNotification('SMS composer opened!', 'success');
+    // Show SMS modal with copy option as fallback for desktop
+    showSMSModal(phone, message, smsURL);
+}
+
+// SMS Modal — works on both desktop and mobile
+function showSMSModal(phone, message, smsURL) {
+    // Remove existing modal if any
+    const existing = document.getElementById('sms-send-modal');
+    if (existing) existing.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'sms-send-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        z-index: 9999; display: flex; align-items: center; justify-content: center;
+    `;
+    modal.innerHTML = `
+        <div style="background:white; border-radius:12px; padding:2rem; max-width:520px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="margin:0; color:#1a1a2e;">💬 Send SMS</h3>
+                <button onclick="document.getElementById('sms-send-modal').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
+            </div>
+            <p style="margin:0 0 0.5rem 0; color:#555; font-size:0.9rem;"><strong>To:</strong> ${phone}</p>
+            <textarea id="sms-message-preview" readonly style="width:100%;height:120px;padding:0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.88rem;resize:none;background:#f9f9f9;box-sizing:border-box;">${message}</textarea>
+            <div style="display:flex; gap:0.75rem; margin-top:1rem; flex-wrap:wrap;">
+                <a href="${smsURL}" style="flex:1; min-width:140px; text-align:center; background:var(--primary-color,#e63946); color:white; padding:0.7rem 1rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem;">
+                    📱 Open SMS App
+                </a>
+                <button onclick="copySMSMessage()" style="flex:1; min-width:140px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; padding:0.7rem 1rem; cursor:pointer; font-weight:600; font-size:0.9rem;">
+                    📋 Copy Message
+                </button>
+            </div>
+            <p style="margin:0.75rem 0 0 0; font-size:0.78rem; color:#999; text-align:center;">
+                "Open SMS App" works on mobile devices. On desktop, copy the message and send manually.
+            </p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function copySMSMessage() {
+    const textarea = document.getElementById('sms-message-preview');
+    if (!textarea) return;
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        showNotification('SMS message copied to clipboard!', 'success');
+    }).catch(() => {
+        textarea.select();
+        document.execCommand('copy');
+        showNotification('SMS message copied!', 'success');
+    });
 }
 
 // Helper Functions
