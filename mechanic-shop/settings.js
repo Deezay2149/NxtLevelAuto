@@ -45,6 +45,23 @@ function loadSettings() {
 function saveSettings(e) {
     e.preventDefault();
     
+    // Validate shop phone (optional in settings)
+    const shopPhoneInput = document.getElementById('settings-shop-phone');
+    const shopPhoneVal = shopPhoneInput.value.trim();
+    let shopPhone = shopPhoneVal;
+    if (shopPhoneVal) {
+        const formatted = formatSAPhone(shopPhoneVal);
+        if (!formatted) {
+            shopPhoneInput.style.borderColor = '#e03131';
+            shopPhoneInput.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
+            showNotification('Shop phone must be in format: +27 72 768 0826', 'error');
+            shopPhoneInput.focus();
+            return;
+        }
+        shopPhone = formatted;
+        shopPhoneInput.value = formatted;
+    }
+    
     globalSettings = {
         taxRate: parseFloat(document.getElementById('settings-tax-rate').value),
         currency: 'R',
@@ -53,7 +70,7 @@ function saveSettings(e) {
         serviceReminderKm: parseInt(document.getElementById('settings-service-reminder-km').value),
         shopName: document.getElementById('settings-shop-name').value,
         shopAddress: document.getElementById('settings-shop-address').value,
-        shopPhone: document.getElementById('settings-shop-phone').value,
+        shopPhone: shopPhone,
         shopEmail: document.getElementById('settings-shop-email').value
     };
     

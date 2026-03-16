@@ -1763,6 +1763,9 @@ function openSupplierModal(id = null) {
 function saveSupplier(e) {
     e.preventDefault();
     
+    const phone = getValidatedPhone('supplier-phone', true);
+    if (phone === null) return;
+    
     const id = document.getElementById('supplier-id').value || generateId();
     const existingIndex = suppliers.findIndex(s => s.id === id);
     
@@ -1770,7 +1773,7 @@ function saveSupplier(e) {
         id: id,
         name: document.getElementById('supplier-name').value,
         contact: document.getElementById('supplier-contact').value,
-        phone: document.getElementById('supplier-phone').value,
+        phone: phone,
         email: document.getElementById('supplier-email').value,
         address: document.getElementById('supplier-address').value,
         accountNumber: document.getElementById('supplier-account-number').value,

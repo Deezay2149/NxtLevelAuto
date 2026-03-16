@@ -215,13 +215,16 @@ function openCustomerModal() {
 function saveCustomer(e) {
     e.preventDefault();
     
+    const phone = getValidatedPhone('customer-phone', true);
+    if (phone === null) return; // Validation failed
+    
     const id = document.getElementById('customer-id').value || generateId();
     const customer = {
         id: id,
         firstName: document.getElementById('customer-firstname').value,
         lastName: document.getElementById('customer-lastname').value,
         email: document.getElementById('customer-email').value,
-        phone: document.getElementById('customer-phone').value,
+        phone: phone,
         address: document.getElementById('customer-address').value,
         createdAt: new Date().toISOString()
     };
@@ -1210,6 +1213,117 @@ function updateUpcomingAppointments() {
 // Helper Functions
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// ===========================================
+// PHONE NUMBER VALIDATION & FORMATTING
+// Format enforced: +27 XX XXX XXXX
+// ===========================================
+
+/**
+ * Format a phone number into +27 XX XXX XXXX
+ * Accepts: 0721234567, 27721234567, +27721234567, +27 72 123 4567
+ * Returns formatted string or null if invalid
+ */
+function formatSAPhone(raw) {
+    // Strip everything except digits and leading +
+    let digits = raw.replace(/\s/g, '');
+    
+    // Remove all non-digit chars for processing
+    let nums = digits.replace(/\D/g, '');
+    
+    // Convert local format: 0XXXXXXXXX -> 27XXXXXXXXX
+    if (nums.startsWith('0') && nums.length === 10) {
+        nums = '27' + nums.substring(1);
+    }
+    
+    // Remove country code prefix if already has 27
+    if (nums.startsWith('27') && nums.length === 11) {
+        // Good: 27XXXXXXXXX
+    } else {
+        return null; // Invalid
+    }
+    
+    // Must be exactly 11 digits: 27 + 9 digits
+    if (nums.length !== 11) return null;
+    
+    // Format: +27 XX XXX XXXX
+    return `+${nums.substring(0,2)} ${nums.substring(2,4)} ${nums.substring(4,7)} ${nums.substring(7,11)}`;
+}
+
+/**
+ * Validate and format phone input on-the-fly.
+ * Call this on oninput of a phone field.
+ */
+function liveFormatPhone(input) {
+    // Only reformat if user has typed enough to try
+    const raw = input.value;
+    const digits = raw.replace(/\D/g, '');
+    
+    // Auto-insert +27 prefix if user starts typing with 0
+    if (raw === '0') {
+        input.value = '+27 ';
+        // Move cursor to end
+        setTimeout(() => { input.setSelectionRange(input.value.length, input.value.length); }, 0);
+        return;
+    }
+    
+    // Remove invalid style once user starts correcting
+    input.style.borderColor = '';
+}
+
+/**
+ * Validate phone on blur - shows error style if invalid.
+ * Returns true if valid, false if invalid.
+ */
+function validatePhoneField(input) {
+    const val = input.value.trim();
+    if (!val) {
+        // Empty - let required attr handle it
+        input.style.borderColor = '';
+        input.title = '';
+        return true;
+    }
+    const formatted = formatSAPhone(val);
+    if (!formatted) {
+        input.style.borderColor = '#e03131';
+        input.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
+        input.title = 'Invalid format. Use: +27 72 768 0826';
+        showNotification('Phone number must be in format: +27 72 768 0826', 'error');
+        return false;
+    }
+    // Auto-correct to formatted version
+    input.value = formatted;
+    input.style.borderColor = '#2f9e44';
+    input.style.boxShadow = '0 0 0 2px rgba(47,158,68,0.2)';
+    input.title = '';
+    return true;
+}
+
+/**
+ * Get validated phone value from an input field.
+ * Returns formatted value or shows error and returns null.
+ */
+function getValidatedPhone(inputId, required = true) {
+    const input = document.getElementById(inputId);
+    if (!input) return null;
+    const val = input.value.trim();
+    if (!val && !required) return '';
+    if (!val && required) {
+        input.style.borderColor = '#e03131';
+        showNotification('Phone number is required', 'error');
+        return null;
+    }
+    const formatted = formatSAPhone(val);
+    if (!formatted) {
+        input.style.borderColor = '#e03131';
+        input.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
+        showNotification('Phone number must be in format: +27 72 768 0826', 'error');
+        input.focus();
+        return null;
+    }
+    input.value = formatted;
+    return formatted;
 }
 
 function saveData() {
