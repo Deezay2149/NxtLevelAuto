@@ -530,7 +530,7 @@ tbody tr:hover {
     max-width: 900px;
     width: 95%;
     max-height: 90vh;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .part-selection-container {
