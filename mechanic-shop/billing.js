@@ -1743,6 +1743,8 @@ function initSupplierManagement() {
 function openSupplierModal(id = null) {
     document.getElementById('supplier-form').reset();
     document.getElementById('supplier-id').value = '';
+    currentSupplierLogoData = null;
+    resetSupplierLogoPreview();
     
     if (id) {
         const supplier = suppliers.find(s => s.id === id);
@@ -1753,15 +1755,65 @@ function openSupplierModal(id = null) {
             document.getElementById('supplier-phone').value = supplier.phone || '';
             document.getElementById('supplier-email').value = supplier.email || '';
             document.getElementById('supplier-address').value = supplier.address || '';
+            document.getElementById('supplier-website').value = supplier.website || '';
             document.getElementById('supplier-account-number').value = supplier.accountNumber || '';
             document.getElementById('supplier-vat-number').value = supplier.vatNumber || '';
             document.getElementById('supplier-payment-terms').value = supplier.paymentTerms || 'net30';
             document.getElementById('supplier-status').value = supplier.status || 'active';
             document.getElementById('supplier-notes').value = supplier.notes || '';
+            
+            // Load logo preview
+            if (supplier.logo) {
+                currentSupplierLogoData = supplier.logo;
+                setSupplierLogoPreview(supplier.logo);
+            }
         }
     }
     
     openModal('supplier-modal');
+}
+
+// Supplier logo helpers
+function previewSupplierLogo(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { alert('Logo must be under 5MB'); input.value = ''; return; }
+    if (!file.type.match('image.*')) { alert('Please select an image file'); input.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentSupplierLogoData = e.target.result;
+        setSupplierLogoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function setSupplierLogoPreview(src) {
+    const preview = document.getElementById('supplier-logo-preview');
+    if (preview) {
+        preview.innerHTML = `<img src="${src}" alt="Supplier Logo" style="max-height:80px;max-width:200px;object-fit:contain;border-radius:8px;">
+        <p style="margin:0.3rem 0 0 0;font-size:0.78rem;color:#888;">Click to change</p>`;
+    }
+}
+
+function resetSupplierLogoPreview() {
+    const preview = document.getElementById('supplier-logo-preview');
+    if (preview) {
+        preview.innerHTML = `<span style="font-size:2.5rem;">🏭</span><p style="margin:0.4rem 0 0 0;font-size:0.82rem;color:#888;">Click to upload logo or photo</p>`;
+    }
+    const input = document.getElementById('supplier-logo-input');
+    if (input) input.value = '';
+}
+
+function clearSupplierLogo() {
+    currentSupplierLogoData = null;
+    resetSupplierLogoPreview();
+}
+
+function previewSupplierWebsite() {
+    const url = document.getElementById('supplier-website').value.trim();
+    if (!url) { alert('Please enter a website URL first.'); return; }
+    const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+    window.open(fullUrl, '_blank');
 }
 
 // Save Supplier
@@ -1774,6 +1826,10 @@ function saveSupplier(e) {
     const id = document.getElementById('supplier-id').value || generateId();
     const existingIndex = suppliers.findIndex(s => s.id === id);
     
+    const websiteRaw = document.getElementById('supplier-website').value.trim();
+    const website = websiteRaw && !websiteRaw.startsWith('http') ? 'https://' + websiteRaw : websiteRaw;
+    const existingSupplier = existingIndex >= 0 ? suppliers[existingIndex] : null;
+
     const supplier = {
         id: id,
         name: document.getElementById('supplier-name').value,
@@ -1781,12 +1837,14 @@ function saveSupplier(e) {
         phone: phone,
         email: document.getElementById('supplier-email').value,
         address: document.getElementById('supplier-address').value,
+        website: website,
         accountNumber: document.getElementById('supplier-account-number').value,
         vatNumber: document.getElementById('supplier-vat-number').value,
         paymentTerms: document.getElementById('supplier-payment-terms').value,
         status: document.getElementById('supplier-status').value,
         notes: document.getElementById('supplier-notes').value,
-        createdAt: existingIndex >= 0 ? suppliers[existingIndex].createdAt : new Date().toISOString()
+        logo: currentSupplierLogoData || (existingSupplier ? existingSupplier.logo : null),
+        createdAt: existingSupplier ? existingSupplier.createdAt : new Date().toISOString()
     };
     
     if (existingIndex >= 0) {
@@ -1796,6 +1854,7 @@ function saveSupplier(e) {
     }
     
     localStorage.setItem('suppliers', JSON.stringify(suppliers));
+    currentSupplierLogoData = null;
     closeModal('supplier-modal');
     renderSuppliersList();
     updateSuppliersSummary();
@@ -1824,20 +1883,31 @@ function renderSuppliersList() {
         return;
     }
     
-    container.innerHTML = suppliers.map(supplier => `
+    container.innerHTML = suppliers.map(supplier => {
+        const logoHtml = supplier.logo
+            ? `<img src="${supplier.logo}" class="supplier-logo-thumb" alt="${supplier.name} logo">`
+            : `<div class="supplier-logo-placeholder">🏭</div>`;
+        
+        const websiteHtml = supplier.website
+            ? `<p>🌐 <a href="${supplier.website}" target="_blank" style="color:var(--primary-color);text-decoration:none;font-weight:500;" onclick="event.stopPropagation()">${supplier.website.replace(/^https?:\/\//, '')}</a></p>`
+            : '';
+
+        return `
         <div class="supplier-item">
+            ${logoHtml}
             <div class="supplier-info">
                 <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
                 <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
                 <p>👤 ${supplier.contact || 'No contact person'}</p>
-                ${supplier.accountNumber ? `<p>Account: ${supplier.accountNumber}</p>` : ''}
+                ${supplier.accountNumber ? `<p>🔖 Account: ${supplier.accountNumber}</p>` : ''}
+                ${websiteHtml}
             </div>
             <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')">Edit</button>
-                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')">Delete</button>
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')">🗑️ Delete</button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Update Suppliers Summary
