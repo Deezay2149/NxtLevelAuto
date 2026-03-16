@@ -740,10 +740,15 @@ function downloadInvoicePDF() {
     
     const customer = customers.find(c => c.id === currentViewingInvoice.customerId);
     const vehicle = vehicles.find(v => v.id === currentViewingInvoice.vehicleId);
+    const shopName = getShopName();
+    const shopSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
     
     let invoiceText = `
 ================================================================================
-                           AUTO FIX PRO - INVOICE
+                           ${shopName.toUpperCase()} - INVOICE
+${shopSettings.shopPhone ? '                         Tel: ' + shopSettings.shopPhone : ''}
+${shopSettings.shopEmail ? '                         Email: ' + shopSettings.shopEmail : ''}
+${shopSettings.shopAddress ? '                         ' + shopSettings.shopAddress : ''}
 ================================================================================
 
 Invoice Number: ${currentViewingInvoice.invoiceNumber}
@@ -788,7 +793,7 @@ ${currentViewingInvoice.notes}
 ` : ''}
 
 ================================================================================
-                           Thank you for your business!
+                    Thank you for choosing ${shopName}!
 ================================================================================
     `;
     

@@ -1763,7 +1763,7 @@ function loadSampleData() {
         services: [services[0].id, services[2].id],
         parts: [],
         laborHours: 1,
-        partsUsed: 'Oil filter - $15.00',
+        partsUsed: 'Oil filter - R15.00',
         notes: 'Customer requested full service',
         status: 'completed',
         totalCost: 49.99 + 35.00,

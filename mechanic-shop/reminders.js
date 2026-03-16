@@ -87,7 +87,7 @@ function sendServiceReminder(vehicleId, method) {
     
     const reminderInterval = getServiceReminderKm();
     const kmSinceLastService = vehicle.mileage - vehicle.lastServiceMileage;
-    const shopName = globalSettings.shopName || 'Auto Fix Pro';
+    const shopName = globalSettings.shopName || 'NxtLevel Auto';
     
     let message = '';
     
