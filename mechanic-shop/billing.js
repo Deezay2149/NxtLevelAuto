@@ -2253,28 +2253,18 @@ function updateBookInSummary() {
 // ===========================================
 
 function switchPartsTab(tabId) {
-    // Update sub-tab buttons
-    const subTabs = document.querySelectorAll('#parts .sub-tab');
-    subTabs.forEach(tab => {
-        tab.classList.remove('active');
+    // Update sub-tab buttons using data-tab attribute
+    document.querySelectorAll('#parts .sub-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabId);
     });
     
-    // Find and activate the clicked tab
-    subTabs.forEach(tab => {
-        if (tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(tabId)) {
-            tab.classList.add('active');
-        }
-    });
-    
-    // Update tab content
+    // Update tab content panels
     document.querySelectorAll('#parts .tab-content').forEach(content => {
         content.classList.remove('active');
     });
     
     const targetTab = document.getElementById(tabId);
-    if (targetTab) {
-        targetTab.classList.add('active');
-    }
+    if (targetTab) targetTab.classList.add('active');
     
     // Refresh specific tab content
     if (tabId === 'parts-list-tab') {
@@ -2498,16 +2488,12 @@ function filterTechItems(type) {
 }
 
 function switchTechTab(tabId) {
-    // Update sub-tab buttons
-    const subTabs = document.querySelectorAll('#technical .sub-tab');
-    subTabs.forEach(tab => tab.classList.remove('active'));
-    subTabs.forEach(tab => {
-        if (tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(tabId)) {
-            tab.classList.add('active');
-        }
+    // Update sub-tab buttons using data-tab attribute
+    document.querySelectorAll('#technical .sub-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabId);
     });
 
-    // Update tab content
+    // Update tab content panels
     document.querySelectorAll('#technical .tab-content').forEach(c => c.classList.remove('active'));
     const target = document.getElementById(tabId);
     if (target) target.classList.add('active');

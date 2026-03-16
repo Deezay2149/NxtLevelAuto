@@ -136,9 +136,9 @@
                 <h2>🔩 Parts Management</h2>
                 <!-- Parts Sub-tabs -->
                 <div class="sub-tabs">
-                    <button class="sub-tab active" onclick="switchPartsTab('parts-list')">Parts Inventory</button>
-                    <button class="sub-tab" onclick="switchPartsTab('parts-returns-tab')">Parts Returns</button>
-                    <button class="sub-tab" onclick="switchPartsTab('parts-book-in-tab')">Book In Parts</button>
+                    <button class="sub-tab active" data-tab="parts-list-tab" onclick="switchPartsTab('parts-list-tab')">Parts Inventory</button>
+                    <button class="sub-tab" data-tab="parts-returns-tab" onclick="switchPartsTab('parts-returns-tab')">Parts Returns</button>
+                    <button class="sub-tab" data-tab="parts-book-in-tab" onclick="switchPartsTab('parts-book-in-tab')">Book In Parts</button>
                 </div>
                 
                 <!-- Parts List Tab -->
@@ -232,9 +232,9 @@
 
                 <!-- Technical Sub-tabs -->
                 <div class="sub-tabs">
-                    <button class="sub-tab active" onclick="switchTechTab('tech-articles-tab')">📄 Articles</button>
-                    <button class="sub-tab" onclick="switchTechTab('tech-bulletins-tab')">📋 Bulletins</button>
-                    <button class="sub-tab" onclick="switchTechTab('tech-tips-tab')">💡 Tips</button>
+                    <button class="sub-tab active" data-tab="tech-articles-tab" onclick="switchTechTab('tech-articles-tab')">📄 Articles</button>
+                    <button class="sub-tab" data-tab="tech-bulletins-tab" onclick="switchTechTab('tech-bulletins-tab')">📋 Bulletins</button>
+                    <button class="sub-tab" data-tab="tech-tips-tab" onclick="switchTechTab('tech-tips-tab')">💡 Tips</button>
                 </div>
 
                 <!-- Articles Tab -->
@@ -638,7 +638,7 @@
                 </div>
                 <div class="form-group">
                     <label>Supplier *</label>
-                    <select id="part-supplier" required>
+                    <select id="part-supplier">
                         <option value="">Select Supplier</option>
                     </select>
                 </div>
