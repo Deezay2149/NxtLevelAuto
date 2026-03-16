@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NxtLevel Auto - Mechanic Shop Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="billing.css">
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <span>🔧</span> NxtLevel Auto
+            </div>
+            <div id="current-date"></div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <li><button class="active" data-section="dashboard">Dashboard</button></li>
+            <li><button data-section="customers">Customers</button></li>
+            <li><button data-section="vehicles">Vehicles</button></li>
+            <li><button data-section="services">Services</button></li>
+            <li><button data-section="suppliers">Suppliers</button></li>
+            <li><button data-section="parts">Parts</button></li>
+            <li><button data-section="appointments">Appointments</button></li>
+            <li><button data-section="work-orders">Work Orders</button></li>
+            <li><button data-section="invoices">Invoices</button></li>
+            <li><button data-section="technical">Technical</button></li>
+            <li><button data-section="reminders">Reminders</button></li>
+            <li><button data-section="settings">Settings</button></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="active">
+            <div class="dashboard">
+                <div class="stat-card">
+                    <h3>Total Customers</h3>
+                    <div class="number" id="total-customers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Vehicles</h3>
+                    <div class="number" id="total-vehicles">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Appointments Today</h3>
+                    <div class="number" id="appointments-today">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Work Orders</h3>
+                    <div class="number" id="active-work-orders">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Recent Activity</h2>
+                <div id="recent-activity">
+                    <p class="empty-state">No recent activity</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⏰ Upcoming Appointments</h2>
+                <div id="upcoming-appointments"></div>
+            </div>
+        </section>
+
+        <!-- Customers Section -->
+        <section id="customers">
+            <div class="card">
+                <h2>👥 Customer Management</h2>
+                <div class="search-box">
+                    <input type="text" id="customer-search" placeholder="Search customers...">
+                    <button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button>
+                </div>
+                <div id="customers-list"></div>
+            </div>
+        </section>
+
+        <!-- Vehicles Section -->
+        <section id="vehicles">
+            <div class="card">
+                <h2>🚗 Vehicle Management</h2>
+                <div class="search-box">
+                    <input type="text" id="vehicle-search" placeholder="Search vehicles...">
+                    <button class="btn btn-primary" onclick="openVehicleModal()">+ Add Vehicle</button>
+                </div>
+                <div id="vehicles-list"></div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services">
+            <div class="card">
+                <h2>🔧 Service Catalog</h2>
+                <button class="btn btn-primary" onclick="openServiceModal()">+ Add Service</button>
+                <div id="services-list" style="margin-top: 1.5rem;"></div>
+            </div>
+        </section>
+
+        <!-- Appointments Section -->
+        <section id="appointments">
+            <div class="card">
+                <h2>📅 Appointments</h2>
+                <div class="search-box">
+                    <input type="text" id="appointment-search" placeholder="Search appointments...">
+                    <button class="btn btn-primary" onclick="openAppointmentModal()">+ New Appointment</button>
+                </div>
+                <div id="appointments-list"></div>
+            </div>
+        </section>
+
+        <!-- Work Orders Section -->
+        <section id="work-orders">
+            <div class="card">
+                <h2>📋 Work Orders</h2>
+                <div class="search-box">
+                    <input type="text" id="work-order-search" placeholder="Search work orders...">
+                    <button class="btn btn-primary" onclick="openWorkOrderModal()">+ Create Work Order</button>
+                </div>
+                <div id="work-orders-list"></div>
+            </div>
+        </section>
+
+        <!-- Parts Section -->
+        <section id="parts">
+            <div class="card">
+                <h2>🔩 Parts Management</h2>
+                <!-- Parts Sub-tabs -->
+                <div class="sub-tabs">
+                    <button class="sub-tab active" onclick="switchPartsTab('parts-list')">Parts Inventory</button>
+                    <button class="sub-tab" onclick="switchPartsTab('parts-returns-tab')">Parts Returns</button>
+                    <button class="sub-tab" onclick="switchPartsTab('parts-book-in-tab')">Book In Parts</button>
+                </div>
+                
+                <!-- Parts List Tab -->
+                <div id="parts-list-tab" class="tab-content active">
+                    <div class="search-box">
+                        <input type="text" id="parts-search" placeholder="Search parts...">
+                        <button class="btn btn-primary" onclick="openPartModal()">+ Add Part</button>
+                    </div>
+                    <div id="parts-list"></div>
+                </div>
+                
+                <!-- Parts Returns Tab -->
+                <div id="parts-returns-tab" class="tab-content">
+                    <div class="search-box">
+                        <input type="text" id="returns-search" placeholder="Search returns...">
+                        <button class="btn btn-primary" onclick="openReturnModal()">+ Process Return</button>
+                    </div>
+                    <div class="returns-summary" id="returns-summary">
+                        <div class="summary-card">
+                            <h4>Total Returns</h4>
+                            <span id="total-returns-count">0</span>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Return Value</h4>
+                            <span id="total-returns-value">R0.00</span>
+                        </div>
+                    </div>
+                    <div id="returns-list"></div>
+                </div>
+                
+                <!-- Book In Parts Tab -->
+                <div id="parts-book-in-tab" class="tab-content">
+                    <div class="search-box">
+                        <input type="text" id="book-in-search" placeholder="Search supplier invoices...">
+                        <button class="btn btn-primary" onclick="openBookInModal()">+ Book In Parts</button>
+                    </div>
+                    <div class="book-in-summary" id="book-in-summary">
+                        <div class="summary-card">
+                            <h4>Total Booked In</h4>
+                            <span id="total-booked-count">0</span>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Total Value</h4>
+                            <span id="total-booked-value">R0.00</span>
+                        </div>
+                    </div>
+                    <div id="book-in-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Suppliers Section -->
+        <section id="suppliers">
+            <div class="card">
+                <h2>🏭 Suppliers Management</h2>
+                <div class="search-box">
+                    <input type="text" id="suppliers-search" placeholder="Search suppliers...">
+                    <button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button>
+                </div>
+                <div class="suppliers-summary" id="suppliers-summary">
+                    <div class="summary-card">
+                        <h4>Total Suppliers</h4>
+                        <span id="total-suppliers-count">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Active Suppliers</h4>
+                        <span id="active-suppliers-count">0</span>
+                    </div>
+                </div>
+                <div id="suppliers-list"></div>
+            </div>
+        </section>
+
+        <!-- Invoices Section -->
+        <section id="invoices">
+            <div class="card">
+                <h2>🧾 Invoice Management</h2>
+                <div class="search-box">
+                    <input type="text" id="invoice-search" placeholder="Search invoices...">
+                    <button class="btn btn-primary" onclick="openCreateInvoiceModal()">+ Create Invoice</button>
+                </div>
+                <div id="invoices-list"></div>
+            </div>
+        </section>
+
+        <!-- Technical Knowledge Base Section -->
+        <section id="technical">
+            <div class="card">
+                <h2>🔧 Technical Knowledge Base</h2>
+                <p style="color:#666;margin-top:-0.5rem;margin-bottom:1rem;font-size:0.95rem;">Store knowledge articles, service bulletins, and workshop tips for your team.</p>
+
+                <!-- Technical Sub-tabs -->
+                <div class="sub-tabs">
+                    <button class="sub-tab active" onclick="switchTechTab('tech-articles-tab')">📄 Articles</button>
+                    <button class="sub-tab" onclick="switchTechTab('tech-bulletins-tab')">📋 Bulletins</button>
+                    <button class="sub-tab" onclick="switchTechTab('tech-tips-tab')">💡 Tips</button>
+                </div>
+
+                <!-- Articles Tab -->
+                <div id="tech-articles-tab" class="tab-content active">
+                    <div class="search-box">
+                        <input type="text" id="tech-articles-search" placeholder="Search articles..." oninput="filterTechItems('articles')">
+                        <button class="btn btn-primary" onclick="openTechModal('article')">+ Add Article</button>
+                    </div>
+                    <div class="tech-summary" id="tech-articles-summary">
+                        <div class="summary-card">
+                            <h4>Total Articles</h4>
+                            <span id="total-articles-count">0</span>
+                        </div>
+                    </div>
+                    <div id="tech-articles-list"></div>
+                </div>
+
+                <!-- Bulletins Tab -->
+                <div id="tech-bulletins-tab" class="tab-content">
+                    <div class="search-box">
+                        <input type="text" id="tech-bulletins-search" placeholder="Search bulletins..." oninput="filterTechItems('bulletins')">
+                        <button class="btn btn-primary" onclick="openTechModal('bulletin')">+ Add Bulletin</button>
+                    </div>
+                    <div class="tech-summary" id="tech-bulletins-summary">
+                        <div class="summary-card">
+                            <h4>Total Bulletins</h4>
+                            <span id="total-bulletins-count">0</span>
+                        </div>
+                    </div>
+                    <div id="tech-bulletins-list"></div>
+                </div>
+
+                <!-- Tips Tab -->
+                <div id="tech-tips-tab" class="tab-content">
+                    <div class="search-box">
+                        <input type="text" id="tech-tips-search" placeholder="Search tips..." oninput="filterTechItems('tips')">
+                        <button class="btn btn-primary" onclick="openTechModal('tip')">+ Add Tip</button>
+                    </div>
+                    <div class="tech-summary" id="tech-tips-summary">
+                        <div class="summary-card">
+                            <h4>Total Tips</h4>
+                            <span id="total-tips-count">0</span>
+                        </div>
+                    </div>
+                    <div id="tech-tips-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reminders Section -->
+        <section id="reminders">
+            <div class="card">
+                <h2>🔔 Service Reminders</h2>
+                <div class="search-box">
+                    <button class="btn btn-primary" onclick="checkServiceReminders()">Check for Due Services</button>
+                </div>
+                <div id="reminders-list"></div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings">
+            <div class="card">
+                <h2>⚙️ Global Settings</h2>
+                <form id="settings-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Shop Name</label>
+                            <input type="text" id="settings-shop-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tax Rate (%)</label>
+                            <input type="number" id="settings-tax-rate" min="0" max="100" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Labor Rate (R/hr)</label>
+                            <input type="number" id="settings-labor-rate" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Service Reminder Interval (km)</label>
+                            <input type="number" id="settings-service-reminder-km" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Shop Address</label>
+                        <textarea id="settings-shop-address" rows="2"></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Shop Phone</label>
+                            <input type="tel" id="settings-shop-phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Shop Email</label>
+                            <input type="email" id="settings-shop-email">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Customer Modal -->
+    <div id="customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Customer</h2>
+                <button class="close-btn" onclick="closeModal('customer-modal')">&times;</button>
+            </div>
+            <form id="customer-form">
+                <input type="hidden" id="customer-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="customer-firstname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="customer-lastname" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="customer-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone *</label>
+                    <input type="tel" id="customer-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="customer-address" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Modal -->
+    <div id="vehicle-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Vehicle</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-modal')">&times;</button>
+            </div>
+            <form id="vehicle-form">
+                <input type="hidden" id="vehicle-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="vehicle-customer" required>
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Brand *</label>
+                        <select id="vehicle-make" required onchange="updateModelDropdown()">
+                            <option value="">Select Brand</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Model *</label>
+                        <select id="vehicle-model" required>
+                            <option value="">Select Model</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Year *</label>
+                        <input type="number" id="vehicle-year" min="1900" max="2099" required>
+                    </div>
+                    <div class="form-group">
+                        <label>License Plate *</label>
+                        <input type="text" id="vehicle-plate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VIN</label>
+                    <input type="text" id="vehicle-vin">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <select id="vehicle-color">
+                        <option value="">Select Color</option>
+                        <option value="White">White</option>
+                        <option value="Black">Black</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Grey">Grey</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Red">Red</option>
+                        <option value="Green">Green</option>
+                        <option value="Yellow">Yellow</option>
+                        <option value="Orange">Orange</option>
+                        <option value="Brown">Brown</option>
+                        <option value="Beige">Beige</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Maroon">Maroon</option>
+                        <option value="Purple">Purple</option>
+                        <option value="Navy">Navy</option>
+                        <option value="Teal">Teal</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Current Mileage (km)</label>
+                        <input type="number" id="vehicle-mileage" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Service Mileage (km)</label>
+                        <input type="number" id="vehicle-last-service-mileage" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Image</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="vehicle-image" accept="image/*" onchange="previewVehicleImage(this)">
+                        <label for="vehicle-image" class="image-upload-label">
+                            📷 Click to upload vehicle image
+                        </label>
+                    </div>
+                    <div id="vehicle-image-preview" style="margin-top: 0.5rem;"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Vehicle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Image Modal -->
+    <div id="vehicle-image-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Vehicle Image</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-image-modal')">&times;</button>
+            </div>
+            <div id="vehicle-image-display" style="text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="service-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Service</h2>
+                <button class="close-btn" onclick="closeModal('service-modal')">&times;</button>
+            </div>
+            <form id="service-form">
+                <input type="hidden" id="service-id">
+                <div class="form-group">
+                    <label>Service Name *</label>
+                    <input type="text" id="service-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="service-description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Price ($) *</label>
+                    <input type="number" id="service-price" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Time (hours)</label>
+                    <input type="number" id="service-time" min="0" step="0.5">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Service</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Appointment Modal -->
+    <div id="appointment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Schedule Appointment</h2>
+                <button class="close-btn" onclick="closeModal('appointment-modal')">&times;</button>
+            </div>
+            <form id="appointment-form">
+                <input type="hidden" id="appointment-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="appointment-customer" required>
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle *</label>
+                    <select id="appointment-vehicle" required>
+                        <option value="">Select Vehicle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="appointment-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Time *</label>
+                    <input type="time" id="appointment-time" required>
+                </div>
+                <div class="form-group">
+                    <label>Service Type *</label>
+                    <select id="appointment-service" required>
+                        <option value="">Select Service</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="appointment-notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Schedule Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Work Order Modal -->
+    <div id="work-order-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create/Edit Work Order</h2>
+                <button class="close-btn" onclick="closeModal('work-order-modal')">&times;</button>
+            </div>
+            <form id="work-order-form">
+                <input type="hidden" id="work-order-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="work-order-customer" required onchange="loadCustomerVehicles()">
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle *</label>
+                    <select id="work-order-vehicle" required>
+                        <option value="">Select Vehicle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Services *</label>
+                    <div id="work-order-services"></div>
+                </div>
+                <div class="form-group">
+                    <label>Parts Used</label>
+                    <div id="work-order-parts-list"></div>
+                    <button type="button" class="btn btn-secondary" onclick="openAddPartToWorkOrder()">+ Add Part</button>
+                    <input type="hidden" id="work-order-parts" value="">
+                </div>
+                <div class="form-group">
+                    <label>Labor Hours</label>
+                    <input type="number" id="work-order-labor" min="0" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Description/Notes</label>
+                    <textarea id="work-order-notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="work-order-status">
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Work Order</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Part Modal -->
+    <div id="part-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Part</h2>
+                <button class="close-btn" onclick="closeModal('part-modal')">&times;</button>
+            </div>
+            <form id="part-form">
+                <input type="hidden" id="part-id">
+                <div class="form-group">
+                    <label>Part Name *</label>
+                    <input type="text" id="part-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Part Number/SKU</label>
+                    <input type="text" id="part-sku">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="part-description" rows="2"></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Cost Ex VAT (R) *</label>
+                        <input type="number" id="part-cost-ex-vat" min="0" step="0.01" required onchange="calculatePartPricing()">
+                    </div>
+                    <div class="form-group">
+                        <label>Cost Inc VAT (R)</label>
+                        <input type="number" id="part-cost-inc-vat" min="0" step="0.01" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Supplier *</label>
+                    <select id="part-supplier" required>
+                        <option value="">Select Supplier</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Selling Price Mode</label>
+                        <select id="part-price-mode" onchange="togglePriceMode()">
+                            <option value="manual">Manual Entry</option>
+                            <option value="percentage">Percentage Markup</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="markup-percentage-group" style="display: none;">
+                        <label>Markup %</label>
+                        <input type="number" id="part-markup-percent" min="0" step="0.1" value="30" onchange="calculatePartPricing()">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Selling Price (R) *</label>
+                        <input type="number" id="part-price" min="0" step="0.01" required onchange="calculatePartProfit()">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Quantity *</label>
+                        <input type="number" id="part-stock" min="0" required>
+                    </div>
+                </div>
+                <!-- Profit Display -->
+                <div class="profit-display" id="profit-display">
+                    <div class="profit-row">
+                        <span>Cost Ex VAT:</span>
+                        <span id="display-cost-ex-vat">R0.00</span>
+                    </div>
+                    <div class="profit-row">
+                        <span>Selling Price:</span>
+                        <span id="display-selling-price">R0.00</span>
+                    </div>
+                    <div class="profit-row profit-highlight">
+                        <span>Profit:</span>
+                        <span id="display-profit">R0.00</span>
+                    </div>
+                    <div class="profit-row">
+                        <span>Profit Margin:</span>
+                        <span id="display-profit-margin">0%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Part Image</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="part-image" accept="image/*" onchange="previewPartImage(this)">
+                        <label for="part-image" class="image-upload-label">
+                            📷 Click to upload part image
+                        </label>
+                    </div>
+                    <div id="part-image-preview" style="margin-top: 0.5rem;"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Part</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Supplier Modal -->
+    <div id="supplier-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Supplier</h2>
+                <button class="close-btn" onclick="closeModal('supplier-modal')">&times;</button>
+            </div>
+            <form id="supplier-form">
+                <input type="hidden" id="supplier-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Company Name *</label>
+                        <input type="text" id="supplier-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Person</label>
+                        <input type="text" id="supplier-contact">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Phone *</label>
+                        <input type="tel" id="supplier-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="supplier-email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="supplier-address" rows="2"></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="supplier-account-number">
+                    </div>
+                    <div class="form-group">
+                        <label>VAT Number</label>
+                        <input type="text" id="supplier-vat-number">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Payment Terms</label>
+                        <select id="supplier-payment-terms">
+                            <option value="cod">Cash on Delivery</option>
+                            <option value="net7">Net 7 Days</option>
+                            <option value="net15">Net 15 Days</option>
+                            <option value="net30">Net 30 Days</option>
+                            <option value="net60">Net 60 Days</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="supplier-status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="supplier-notes" rows="2" placeholder="Additional notes about this supplier..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Supplier</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Book In Parts Modal -->
+    <div id="book-in-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📦 Book In Parts from Supplier</h2>
+                <button class="close-btn" onclick="closeModal('book-in-modal')">&times;</button>
+            </div>
+            <form id="book-in-form">
+                <input type="hidden" id="book-in-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Supplier *</label>
+                        <select id="book-in-supplier" required onchange="loadSupplierDetails()">
+                            <option value="">Select Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number *</label>
+                        <input type="text" id="book-in-invoice-number" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Invoice Date *</label>
+                        <input type="date" id="book-in-invoice-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Invoice Value (R) <span style="font-size:0.78rem;color:#888;font-weight:400;">— auto-calculated or enter manually</span></label>
+                        <input type="number" id="book-in-total-value" min="0" step="0.01" placeholder="0.00" oninput="this.dataset.manualEntry='1'" onfocus="this.dataset.manualEntry='1'">
+                        <small id="book-in-calculated-subtotal" style="color:#888;font-size:0.8rem;margin-top:0.25rem;display:block;"></small>
+                    </div>
+                </div>
+                
+                <!-- Parts Being Booked In -->
+                <div class="book-in-parts-section">
+                    <h4>Parts Being Booked In</h4>
+                    <button type="button" class="btn btn-secondary" onclick="addBookInPartRow()">+ Add Part</button>
+                    <div id="book-in-parts-container" style="margin-top: 1rem;">
+                        <!-- Part rows will be added here -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="book-in-notes" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Book In Parts</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Technical Knowledge Modal -->
+    <div id="tech-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="tech-modal-title">📄 Add Article</h2>
+                <button class="close-btn" onclick="closeModal('tech-modal')">&times;</button>
+            </div>
+            <form id="tech-form">
+                <input type="hidden" id="tech-item-id">
+                <input type="hidden" id="tech-item-type">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Title *</label>
+                        <input type="text" id="tech-title" required placeholder="Enter a clear, descriptive title...">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Category / Vehicle Type</label>
+                        <input type="text" id="tech-category" placeholder="e.g. Engine, Brakes, Electrical, General...">
+                    </div>
+                    <div class="form-group">
+                        <label>Applies To (Make / Model)</label>
+                        <input type="text" id="tech-applies-to" placeholder="e.g. Toyota Hilux, All vehicles...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Content *</label>
+                    <textarea id="tech-content" rows="8" required placeholder="Enter detailed content, steps, descriptions or notes..."></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Author / Source</label>
+                        <input type="text" id="tech-author" placeholder="e.g. Technician name, OEM bulletin ref...">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority / Severity</label>
+                        <select id="tech-priority">
+                            <option value="normal">Normal</option>
+                            <option value="important">Important</option>
+                            <option value="critical">Critical</option>
+                            <option value="info">Info Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags <span style="font-size:0.8rem;color:#888;">(comma-separated)</span></label>
+                    <input type="text" id="tech-tags" placeholder="e.g. oil leak, timing belt, recall...">
+                </div>
+                <button type="submit" class="btn btn-primary" id="tech-save-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Part Image Modal -->
+    <div id="part-image-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Part Image</h2>
+                <button class="close-btn" onclick="closeModal('part-image-modal')">&times;</button>
+            </div>
+            <div id="part-image-display" style="text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- Select Part for Work Order Modal (Full Page Style) -->
+    <div id="select-part-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🔧 Select Parts to Add</h2>
+                <button class="close-btn" onclick="closeModal('select-part-modal')">&times;</button>
+            </div>
+            <div class="part-selection-container">
+                <div class="part-selection-search">
+                    <input type="text" id="part-selection-search" placeholder="Search parts by name or SKU..." oninput="filterPartsForSelection()">
+                </div>
+                <div class="part-selection-grid" id="part-selection-grid">
+                    <!-- Parts will be populated here -->
+                </div>
+            </div>
+            <div class="part-selection-footer">
+                <div class="selected-parts-summary" id="selected-parts-summary">
+                    <span>No parts selected</span>
+                </div>
+                <div class="part-selection-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('select-part-modal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPartSelection()">Add Selected Parts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Invoice Modal -->
+    <div id="create-invoice-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Create Invoice</h2>
+                <button class="close-btn" onclick="closeModal('create-invoice-modal')">&times;</button>
+            </div>
+            <form id="create-invoice-form">
+                <input type="hidden" id="invoice-id">
+                
+                <!-- Edit Mode Banner -->
+                <div id="invoice-edit-banner" class="invoice-edit-banner" style="display: none;">
+                    <span><span class="edit-icon">✏️</span> Edit Mode Active - You can modify line items and prices</span>
+                    <button type="button" class="btn btn-sm btn-warning" onclick="toggleInvoiceEditMode(false)">Exit Edit Mode</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Work Order *</label>
+                    <select id="invoice-work-order" required onchange="loadWorkOrderData()">
+                        <option value="">Select Work Order</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Customer</label>
+                    <input type="text" id="invoice-customer" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle</label>
+                    <input type="text" id="invoice-vehicle" readonly>
+                </div>
+                
+                <!-- Invoice Actions Bar -->
+                <div class="invoice-actions-bar" id="invoice-actions-bar" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="toggleInvoiceEditMode(true)">✏️ Edit Invoice</button>
+                    <button type="button" class="btn btn-primary" onclick="openAddLineItemModal()">➕ Add Line Item</button>
+                </div>
+                
+                <div id="invoice-items">
+                    <h3>Invoice Items</h3>
+                    <div id="invoice-services-list"></div>
+                    <div id="invoice-parts-list"></div>
+                    <div id="invoice-custom-items-list"></div>
+                </div>
+                
+                <!-- Invoice Summary Section -->
+                <div class="invoice-summary-section">
+                    <div class="invoice-summary-row">
+                        <span>Subtotal:</span>
+                        <span id="invoice-subtotal">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Labor (<span id="invoice-labor-display">0</span> hrs):</span>
+                        <span id="invoice-labor-total">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Discount:</span>
+                        <span id="invoice-discount-display">-R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Tax (<span id="invoice-tax-display">0</span>%):</span>
+                        <span id="invoice-tax-total">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row total">
+                        <span>Total:</span>
+                        <span id="invoice-grand-total">R0.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Labor Hours</label>
+                    <input type="number" id="invoice-labor" min="0" step="0.5" readonly onchange="recalculateInvoiceTotal()">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Labor Rate (R/hr)</label>
+                        <input type="number" id="invoice-labor-rate" min="0" step="0.01" value="75" onchange="recalculateInvoiceTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Discount (R)</label>
+                        <input type="number" id="invoice-discount" min="0" step="0.01" value="0" onchange="recalculateInvoiceTotal()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tax Rate (%)</label>
+                    <input type="number" id="invoice-tax-rate" min="0" max="100" step="0.1" value="15" onchange="recalculateInvoiceTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="invoice-notes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Generate Invoice</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Line Item Modal -->
+    <div id="add-line-item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Add Custom Line Item</h2>
+                <button class="close-btn" onclick="closeModal('add-line-item-modal')">&times;</button>
+            </div>
+            <form id="add-line-item-form" class="add-line-item-form">
+                <div class="line-item-type-selector">
+                    <button type="button" class="line-item-type-btn active" data-type="service" onclick="selectLineItemType('service')">
+                        <span>🔧</span>
+                        <span>Service</span>
+                    </button>
+                    <button type="button" class="line-item-type-btn" data-type="part" onclick="selectLineItemType('part')">
+                        <span>🔩</span>
+                        <span>Part</span>
+                    </button>
+                    <button type="button" class="line-item-type-btn" data-type="misc" onclick="selectLineItemType('misc')">
+                        <span>📦</span>
+                        <span>Other</span>
+                    </button>
+                </div>
+                <input type="hidden" id="custom-item-type" value="service">
+                <div class="form-group full-width">
+                    <label>Description *</label>
+                    <input type="text" id="custom-item-description" required placeholder="Enter item description" maxlength="100">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity *</label>
+                        <input type="number" id="custom-item-quantity" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price (R) *</label>
+                        <input type="number" id="custom-item-price" min="0" step="0.01" value="0" required>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Notes (Optional)</label>
+                    <input type="text" id="custom-item-notes" placeholder="Additional notes">
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-line-item-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Price Override Modal -->
+    <div id="price-override-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💰 Modify Price</h2>
+                <button class="close-btn" onclick="closeModal('price-override-modal')">&times;</button>
+            </div>
+            <div class="price-override-form">
+                <div class="form-group">
+                    <label>Current Price</label>
+                    <div id="override-current-price" style="font-size: 1.2rem; font-weight: 600; color: var(--text-light);">R0.00</div>
+                </div>
+                <div class="form-group">
+                    <label>New Price (R) *</label>
+                    <input type="number" id="override-new-price" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Quick Discount</label>
+                    <div class="quick-discounts">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="applyQuickDiscount(5)">5%</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="applyQuickDiscount(10)">10%</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="applyQuickDiscount(15)">15%</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="applyQuickDiscount(20)">20%</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason for Change *</label>
+                    <select id="override-reason" required>
+                        <option value="">Select Reason</option>
+                        <option value="price-match">Price Match</option>
+                        <option value="loyalty">Customer Loyalty Discount</option>
+                        <option value="promotion">Promotional Pricing</option>
+                        <option value="manager">Manager Approval</option>
+                        <option value="error">Error Correction</option>
+                        <option value="negotiated">Negotiated Rate</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="override-notes-group" style="display: none;">
+                    <label>Additional Notes</label>
+                    <input type="text" id="override-notes" placeholder="Please explain">
+                </div>
+                <input type="hidden" id="override-item-index">
+                <input type="hidden" id="override-item-type">
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('price-override-modal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPriceOverride()">Apply Change</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice View Modal -->
+    <div id="invoice-view-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Invoice Details</h2>
+                <button class="close-btn" onclick="closeModal('invoice-view-modal')">&times;</button>
+            </div>
+            <div id="invoice-details"></div>
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="downloadInvoicePDF()">📥 Download PDF</button>
+                <button class="btn btn-success" onclick="sendInvoiceWhatsApp()">📱 Send via WhatsApp</button>
+                <button class="btn btn-warning" onclick="sendInvoiceSMS()">💬 Send via SMS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parts Return Modal -->
+    <div id="return-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔄 Process Parts Return</h2>
+                <button class="close-btn" onclick="closeModal('return-modal')">&times;</button>
+            </div>
+            <form id="return-form">
+                <input type="hidden" id="return-id">
+                <div class="form-group">
+                    <label>Select Part *</label>
+                    <select id="return-part" required onchange="loadPartDetails()">
+                        <option value="">Select Part</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Part Details</label>
+                    <div id="return-part-details" style="background: #f5f5f5; padding: 1rem; border-radius: 8px;">
+                        <p style="color: var(--text-light);">Select a part to see details</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Quantity to Return *</label>
+                        <input type="number" id="return-quantity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Return Type *</label>
+                        <select id="return-type" required>
+                            <option value="restock">Restock to Inventory</option>
+                            <option value="defective">Defective (Do Not Restock)</option>
+                            <option value="exchange">Exchange</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason for Return *</label>
+                    <select id="return-reason" required>
+                        <option value="">Select Reason</option>
+                        <option value="wrong-part">Wrong Part Ordered</option>
+                        <option value="defective">Defective/Damaged</option>
+                        <option value="customer-cancelled">Customer Cancelled</option>
+                        <option value="overstock">Overstock</option>
+                        <option value="warranty">Warranty Claim</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Work Order Reference</label>
+                    <select id="return-work-order">
+                        <option value="">None</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="return-notes" rows="2" placeholder="Additional notes about this return..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Refund Amount (R)</label>
+                    <input type="number" id="return-refund-amount" min="0" step="0.01" value="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Process Return</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="billing.js"></script>
+    <script src="settings.js"></script>
+    <script src="reminders.js"></script>
+</body>
+</html>
