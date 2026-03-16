@@ -136,29 +136,50 @@ async function initWeatherWidget() {
 async function fetchWeather(lat, lon) {
     const weatherIcon = document.getElementById('weather-icon');
     const weatherTemp = document.getElementById('weather-temp');
+    const weatherDesc = document.getElementById('weather-desc');
+    const weatherLocation = document.getElementById('weather-location');
     
     try {
-        // Using Open-Meteo API (free, no API key required)
-        const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=celsius`
-        );
+        const [weatherResponse, geoResponse] = await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh`),
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+        ]);
         
-        if (!response.ok) throw new Error('Weather fetch failed');
+        if (!weatherResponse.ok) throw new Error('Weather fetch failed');
         
-        const data = await response.json();
+        const data = await weatherResponse.json();
         const currentWeather = data.current_weather;
         
-        // Update temperature
-        weatherTemp.textContent = `${Math.round(currentWeather.temperature)}°C`;
+        if (weatherTemp) weatherTemp.textContent = `${Math.round(currentWeather.temperature)}°C`;
+        if (weatherIcon) weatherIcon.textContent = getWeatherIcon(currentWeather.weathercode, currentWeather.is_day);
+        if (weatherDesc) weatherDesc.textContent = getWeatherDescription(currentWeather.weathercode);
         
-        // Update icon based on weather code
-        weatherIcon.textContent = getWeatherIcon(currentWeather.weathercode, currentWeather.is_day);
+        if (weatherLocation && geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            const city = geoData.address?.city || geoData.address?.town || geoData.address?.suburb || geoData.address?.county || 'Your Area';
+            weatherLocation.textContent = `📍 ${city}`;
+        }
         
     } catch (error) {
         console.error('Weather error:', error);
-        weatherTemp.textContent = '--°C';
-        weatherIcon.textContent = '🌡️';
+        if (weatherTemp) weatherTemp.textContent = '--°C';
+        if (weatherIcon) weatherIcon.textContent = '🌡️';
+        if (weatherDesc) weatherDesc.textContent = 'Unavailable';
+        if (weatherLocation) weatherLocation.textContent = '📍 --';
     }
+}
+
+function getWeatherDescription(code) {
+    const descriptions = {
+        0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+        45: 'Foggy', 48: 'Rime Fog', 51: 'Light Drizzle', 53: 'Drizzle',
+        55: 'Heavy Drizzle', 61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain',
+        71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
+        80: 'Rain Showers', 81: 'Showers', 82: 'Heavy Showers',
+        85: 'Snow Showers', 86: 'Heavy Snow Showers',
+        95: 'Thunderstorm', 96: 'Thunderstorm + Hail', 99: 'Heavy Thunderstorm'
+    };
+    return descriptions[code] || 'Unknown';
 }
 
 function getWeatherIcon(code, isDay) {
