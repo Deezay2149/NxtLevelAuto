@@ -8,8 +8,20 @@ let globalSettings = JSON.parse(localStorage.getItem('globalSettings')) || {
     shopName: 'NxtLevel Auto',
     shopAddress: '123 Main Street, Johannesburg, South Africa',
     shopPhone: '+27 11 123 4567',
-    shopEmail: 'info@autofixpro.co.za'
+    shopEmail: 'info@nxtlevelauto.co.za'
 };
+
+// Apply shop name to all visible elements (header, page title)
+function applyShopName() {
+    const name = globalSettings.shopName || 'NxtLevel Auto';
+
+    // Update header logo text
+    const headerEl = document.getElementById('header-shop-name');
+    if (headerEl) headerEl.textContent = name;
+
+    // Update browser tab title
+    document.title = name + ' - Mechanic Shop Management';
+}
 
 // Initialize Settings
 function initializeSettings() {
@@ -25,6 +37,9 @@ function loadSettings() {
     document.getElementById('settings-shop-address').value = globalSettings.shopAddress;
     document.getElementById('settings-shop-phone').value = globalSettings.shopPhone;
     document.getElementById('settings-shop-email').value = globalSettings.shopEmail;
+
+    // Apply shop name to UI on load
+    applyShopName();
 }
 
 function saveSettings(e) {
@@ -43,8 +58,11 @@ function saveSettings(e) {
     };
     
     localStorage.setItem('globalSettings', JSON.stringify(globalSettings));
+
+    // Apply updated shop name immediately to header + title
+    applyShopName();
+
     showNotification('Settings saved successfully!', 'success');
-    closeModal('settings-modal');
 }
 
 function getTaxRate() {
@@ -60,7 +78,7 @@ function getLaborRate() {
 }
 
 function formatCurrency(amount) {
-    return `${getCurrency()}${amount.toFixed(2)}`;
+    return `${getCurrency()}${parseFloat(amount || 0).toFixed(2)}`;
 }
 
 function getServiceReminderKm() {
