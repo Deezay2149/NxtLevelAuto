@@ -1,13 +1,18 @@
 // Parts Management
 let parts = JSON.parse(localStorage.getItem('parts')) || [];
 let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
-let currentPartImageData = null;
+let currentPartImages = [];  // array of base64 strings
+
+// Sorting state for parts
+let partSortColumn = 'name';
+let partSortDirection = 'asc';
 
 // Initialize Billing Features
 function initializeBilling() {
     initializePartsManagement();
     initializeInvoices();
     renderPartsList();
+    renderStockLevelsList();
     renderInvoicesList();
 }
 
@@ -15,7 +20,8 @@ function initializeBilling() {
 function openPartModal() {
     document.getElementById('part-form').reset();
     document.getElementById('part-id').value = '';
-    document.getElementById('part-image-preview').innerHTML = '';
+    currentPartImages = [];
+    renderPartImageGallery();
     document.getElementById('part-cost-ex-vat').value = '';
     document.getElementById('part-cost-inc-vat').value = '';
     document.getElementById('part-price').value = '';
@@ -31,7 +37,6 @@ function openPartModal() {
     // Populate supplier dropdown
     populateSupplierDropdowns();
     
-    currentPartImageData = null;
     openModal('part-modal');
 }
 
@@ -47,14 +52,17 @@ function savePart(e) {
         id: id,
         name: document.getElementById('part-name').value,
         sku: document.getElementById('part-sku').value,
+        serialNumber: document.getElementById('part-serial-number').value || '',
         description: document.getElementById('part-description').value,
         costExVat: parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
         costPrice: parseFloat(document.getElementById('part-cost-inc-vat').value) || parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
         sellingPrice: parseFloat(document.getElementById('part-price').value) || 0,
         stockQuantity: parseInt(document.getElementById('part-stock').value) || 0,
+        minStockLevel: parseInt(document.getElementById('part-min-stock').value) || 0,
+        reorderQty: parseInt(document.getElementById('part-reorder-qty').value) || 0,
         supplierId: supplierId,
         supplier: supplier ? supplier.name : '',
-        image: currentPartImageData || (existingPart ? existingPart.image : null),
+        images: currentPartImages.length ? currentPartImages : (existingPart ? (existingPart.images || (existingPart.image ? [existingPart.image] : [])) : []),
         createdAt: existingPart ? existingPart.createdAt : new Date().toISOString()
     };
     
@@ -68,8 +76,20 @@ function savePart(e) {
     saveBillingData();
     closeModal('part-modal');
     renderPartsList();
+    renderStockLevelsList();
     showNotification('Part saved successfully!', 'success');
-    currentPartImageData = null;
+    currentPartImages = [];
+}
+
+// Sort Parts
+function sortParts(column) {
+    if (partSortColumn === column) {
+        partSortDirection = partSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        partSortColumn = column;
+        partSortDirection = 'asc';
+    }
+    renderPartsList();
 }
 
 function renderPartsList() {
@@ -80,35 +100,97 @@ function renderPartsList() {
         return;
     }
     
+    // Sort parts
+    const sortedParts = [...parts].sort((a, b) => {
+        let aVal, bVal;
+        switch (partSortColumn) {
+            case 'name':
+                aVal = (a.name || '').toLowerCase();
+                bVal = (b.name || '').toLowerCase();
+                break;
+            case 'sku':
+                aVal = (a.sku || '').toLowerCase();
+                bVal = (b.sku || '').toLowerCase();
+                break;
+            case 'serialNumber':
+                aVal = (a.serialNumber || '').toLowerCase();
+                bVal = (b.serialNumber || '').toLowerCase();
+                break;
+            case 'cost':
+                aVal = parseFloat(a.costPrice) || 0;
+                bVal = parseFloat(b.costPrice) || 0;
+                break;
+            case 'price':
+                aVal = parseFloat(a.sellingPrice) || 0;
+                bVal = parseFloat(b.sellingPrice) || 0;
+                break;
+            case 'stock':
+                aVal = parseInt(a.stockQuantity) || 0;
+                bVal = parseInt(b.stockQuantity) || 0;
+                break;
+            case 'supplier':
+                aVal = (a.supplier || '').toLowerCase();
+                bVal = (b.supplier || '').toLowerCase();
+                break;
+            default:
+                aVal = (a.name || '').toLowerCase();
+                bVal = (b.name || '').toLowerCase();
+        }
+        if (partSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+    
+    const sortIndicator = (col) => partSortColumn === col ? (partSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    
     const table = document.createElement('table');
     table.className = 'parts-table';
     table.innerHTML = `
         <thead>
             <tr>
                 <th>Image</th>
-                <th>Part Name</th>
-                <th>SKU</th>
-                <th>Cost</th>
-                <th>Selling Price</th>
-                <th>Stock</th>
-                <th>Supplier</th>
+                <th class="sortable${asc('name',partSortColumn)}" onclick="sortParts('name')">Part Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('sku',partSortColumn)}" onclick="sortParts('sku')">SKU${sortIndicator('sku')}</th>
+                <th class="sortable${asc('serialNumber',partSortColumn)}" onclick="sortParts('serialNumber')">Serial Number${sortIndicator('serialNumber')}</th>
+                <th class="sortable${asc('cost',partSortColumn)}" onclick="sortParts('cost')">Cost${sortIndicator('cost')}</th>
+                <th class="sortable${asc('price',partSortColumn)}" onclick="sortParts('price')">Selling Price${sortIndicator('price')}</th>
+                <th class="sortable${asc('stock',partSortColumn)}" onclick="sortParts('stock')">Stock${sortIndicator('stock')}</th>
+                <th>Min Stock</th>
+                <th class="sortable${asc('supplier',partSortColumn)}" onclick="sortParts('supplier')">Supplier${sortIndicator('supplier')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            ${parts.map(part => {
-                const stockClass = part.stockQuantity <= 5 ? 'stock-low' : part.stockQuantity <= 20 ? 'stock-medium' : 'stock-good';
-                const imageHTML = part.image 
-                    ? `<img src="${part.image}" class="vehicle-thumbnail" onclick="showPartImage('${part.id}')" alt="Part Image">` 
+            ${sortedParts.map(part => {
+                const minStock = part.minStockLevel || 0;
+                const stockClass = minStock > 0 && part.stockQuantity <= minStock ? 'stock-low' : part.stockQuantity <= 5 ? 'stock-low' : part.stockQuantity <= 20 ? 'stock-medium' : 'stock-good';
+                const pImgs = part.images && part.images.length ? part.images : (part.image ? [part.image] : []);
+                const imageHTML = pImgs.length
+                    ? `<div style="position:relative;display:inline-block">` +
+                       `<img src="${pImgs[0]}" class="vehicle-thumbnail" onclick="showPartImages('${part.id}')" alt="Part Image">` +
+                       (pImgs.length > 1 ? `<span style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:1px 4px;border-radius:3px;">${pImgs.length}📷</span>` : '') +
+                       `</div>`
                     : '<span style="color: var(--text-light); font-size: 0.8rem;">No image</span>';
+                
+                // Create image gallery HTML for hover tooltip
+                const galleryHTML = pImgs.length
+                    ? `<div class="hover-image-gallery">
+                        ${pImgs.map(img => `<img src="${img}" alt="Part Image">`).join('')}
+                       </div>`
+                    : '<div class="hover-image-gallery">No images</div>';
+                
                 return `
-                <tr>
+                <tr class="part-row" data-part-id="${part.id}" data-images='${JSON.stringify(pImgs)}'>
                     <td>${imageHTML}</td>
                     <td>${part.name}</td>
                     <td>${part.sku || 'N/A'}</td>
+                    <td>${part.serialNumber || 'N/A'}</td>
                     <td>${formatCurrency(part.costPrice)}</td>
                     <td>${formatCurrency(part.sellingPrice)}</td>
                     <td><span class="stock-badge ${stockClass}">${part.stockQuantity}</span></td>
+                    <td>${minStock > 0 ? minStock : '-'}</td>
                     <td>${part.supplier || 'N/A'}</td>
                     <td>
                         <div class="action-buttons">
@@ -125,84 +207,221 @@ function renderPartsList() {
     
     container.innerHTML = '';
     container.appendChild(table);
+    
+    // Add hover event listeners for part rows
+    const rows = table.querySelectorAll('.part-row');
+    rows.forEach(row => {
+        row.addEventListener('mouseenter', showPartImageHover);
+        row.addEventListener('mouseleave', hidePartImageHover);
+    });
+}
+
+// Render Stock Levels List - Parts that need reordering
+function renderStockLevelsList() {
+    const container = document.getElementById('stock-levels-list');
+    const reorderCountEl = document.getElementById('reorder-count');
+    const reorderValueEl = document.getElementById('reorder-value');
+    
+    // Filter parts that need reordering (stock <= minStockLevel and minStockLevel > 0)
+    const partsToReorder = parts.filter(part => {
+        const minStock = part.minStockLevel || 0;
+        return minStock > 0 && part.stockQuantity <= minStock;
+    });
+    
+    // Update summary
+    if (reorderCountEl) reorderCountEl.textContent = partsToReorder.length;
+    
+    let totalValue = 0;
+    partsToReorder.forEach(part => {
+        const reorderQty = part.reorderQty || (part.minStockLevel - part.stockQuantity + 5);
+        totalValue += reorderQty * (part.costPrice || 0);
+    });
+    if (reorderValueEl) reorderValueEl.textContent = formatCurrency(totalValue);
+    
+    if (partsToReorder.length === 0) {
+        container.innerHTML = '<p class="empty-state">All parts are above minimum stock levels. Great job!</p>';
+        return;
+    }
+    
+    // Group by supplier
+    const bySupplier = {};
+    partsToReorder.forEach(part => {
+        const supplierName = part.supplier || 'Unknown Supplier';
+        if (!bySupplier[supplierName]) {
+            bySupplier[supplierName] = [];
+        }
+        bySupplier[supplierName].push(part);
+    });
+    
+    let html = '';
+    
+    // Render by supplier
+    Object.keys(bySupplier).sort().forEach(supplierName => {
+        const supplierParts = bySupplier[supplierName];
+        let supplierTotal = 0;
+        
+        html += `
+            <div class="stock-levels-supplier-group">
+                <h3 class="supplier-header">📦 ${supplierName}</h3>
+                <table class="stock-levels-table">
+                    <thead>
+                        <tr>
+                            <th>Part Name</th>
+                            <th>SKU</th>
+                            <th>Current Stock</th>
+                            <th>Min Level</th>
+                            <th>Reorder Qty</th>
+                            <th>Unit Cost</th>
+                            <th>Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        supplierParts.forEach(part => {
+            const reorderQty = part.reorderQty || Math.max(1, (part.minStockLevel - part.stockQuantity + 5));
+            const lineTotal = reorderQty * (part.costPrice || 0);
+            supplierTotal += lineTotal;
+            
+            const stockClass = part.stockQuantity === 0 ? 'stock-critical' : 'stock-low';
+            
+            html += `
+                <tr class="stock-level-row ${stockClass}">
+                    <td>${part.name}</td>
+                    <td>${part.sku || 'N/A'}</td>
+                    <td><span class="stock-badge stock-low">${part.stockQuantity}</span></td>
+                    <td>${part.minStockLevel}</td>
+                    <td>${reorderQty}</td>
+                    <td>${formatCurrency(part.costPrice)}</td>
+                    <td>${formatCurrency(lineTotal)}</td>
+                </tr>`;
+        });
+        
+        html += `
+                    </tbody>
+                    <tfoot>
+                        <tr class="supplier-total">
+                            <td colspan="6"><strong>${supplierName} Total:</strong></td>
+                            <td><strong>${formatCurrency(supplierTotal)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+    });
+    
+    // Add grand total
+    html += `
+        <div class="stock-levels-grand-total">
+            <h3>Grand Total: ${formatCurrency(totalValue)}</h3>
+        </div>`;
+    
+    container.innerHTML = html;
 }
 
 function editPart(id) {
     const part = parts.find(p => p.id === id);
     if (!part) return;
-    
+
     document.getElementById('part-id').value = part.id;
     document.getElementById('part-name').value = part.name;
     document.getElementById('part-sku').value = part.sku || '';
+    document.getElementById('part-serial-number').value = part.serialNumber || '';
     document.getElementById('part-description').value = part.description || '';
     document.getElementById('part-cost-ex-vat').value = part.costExVat || part.costPrice || 0;
     document.getElementById('part-price').value = part.sellingPrice;
     document.getElementById('part-supplier').value = part.supplierId || '';
     document.getElementById('part-stock').value = part.stockQuantity;
-    
+    document.getElementById('part-min-stock').value = part.minStockLevel || '';
+    document.getElementById('part-reorder-qty').value = part.reorderQty || '';
+
     // Calculate VAT and profit display
     calculatePartPricing();
-    
-    // Show image preview if exists
-    const previewContainer = document.getElementById('part-image-preview');
-    if (part.image) {
-        currentPartImageData = part.image;
-        previewContainer.innerHTML = `
-            <img src="${part.image}" class="vehicle-image-preview" onclick="document.getElementById('part-image').click()">
-            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem;">Click to change image</p>
-        `;
-    } else {
-        currentPartImageData = null;
-        previewContainer.innerHTML = '';
-    }
-    
+
+    // Load existing images into gallery
+    currentPartImages = part.images && part.images.length
+        ? [...part.images]
+        : (part.image ? [part.image] : []);
+    renderPartImageGallery();
+
     openModal('part-modal');
 }
 
-function previewPartImage(input) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        
-        // Check file size (limit to 5MB)
+function addPartImages(input) {
+    const MAX_IMAGES = 8;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+
+    const remaining = MAX_IMAGES - currentPartImages.length;
+    if (remaining <= 0) {
+        showNotification(`Maximum ${MAX_IMAGES} photos allowed per part.`, 'error');
+        input.value = '';
+        return;
+    }
+
+    const toLoad = files.slice(0, remaining);
+    if (files.length > remaining) {
+        showNotification(`Only ${remaining} more photo(s) can be added (max ${MAX_IMAGES}).`, 'error');
+    }
+
+    let loaded = 0;
+    toLoad.forEach(file => {
+        if (!file.type.match('image.*')) return;
         if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB');
-            input.value = '';
+            showNotification('Each image must be under 5MB.', 'error');
             return;
         }
-        
-        // Check file type
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file');
-            input.value = '';
-            return;
-        }
-        
         const reader = new FileReader();
         reader.onload = function(e) {
-            currentPartImageData = e.target.result;
-            const previewContainer = document.getElementById('part-image-preview');
-            previewContainer.innerHTML = `
-                <img src="${currentPartImageData}" class="vehicle-image-preview" onclick="document.getElementById('part-image').click()">
-                <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem;">Click to change image</p>
-            `;
+            currentPartImages.push(e.target.result);
+            loaded++;
+            if (loaded === toLoad.length) renderPartImageGallery();
         };
         reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function renderPartImageGallery() {
+    const gallery = document.getElementById('part-image-gallery');
+    if (!gallery) return;
+
+    const MAX_IMAGES = 8;
+    let html = '';
+
+    currentPartImages.forEach((src, idx) => {
+        html += `
+            <div class="image-gallery-item">
+                <img src="${src}" alt="Part photo ${idx+1}" onclick="openImageLightbox(currentPartImages, ${idx})">
+                <button class="img-remove-btn" onclick="removePartImage(${idx})" title="Remove">✕</button>
+            </div>`;
+    });
+
+    if (currentPartImages.length < MAX_IMAGES) {
+        html += `
+            <div class="image-gallery-add" onclick="document.getElementById('part-image').click()" title="Add photo">
+                <span>📷</span><span>Add Photo</span>
+            </div>`;
+    }
+
+    gallery.innerHTML = html;
+}
+
+function removePartImage(idx) {
+    if (confirm('Are you sure you want to remove this image?')) {
+        currentPartImages.splice(idx, 1);
+        renderPartImageGallery();
     }
 }
 
-function showPartImage(id) {
+function showPartImages(id) {
     const part = parts.find(p => p.id === id);
-    if (!part || !part.image) return;
-    
-    const displayContainer = document.getElementById('part-image-display');
-    displayContainer.innerHTML = `
-        <img src="${part.image}" class="vehicle-image-full" alt="Full Part Image">
-        <p style="margin-top: 1rem; color: var(--text-light);">${part.name}</p>
-        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="closeModal('part-image-modal')">Close</button>
-    `;
-    
-    openModal('part-image-modal');
+    if (!part) return;
+    const imgs = part.images && part.images.length ? part.images : (part.image ? [part.image] : []);
+    if (!imgs.length) return;
+    openImageLightbox(imgs, 0, part.name);
 }
+
+// Keep legacy alias
+function showPartImage(id) { showPartImages(id); }
 
 function adjustStock(id) {
     const part = parts.find(p => p.id === id);
@@ -241,15 +460,28 @@ function openCreateInvoiceModal() {
     document.getElementById('invoice-parts-list').innerHTML = '';
     document.getElementById('invoice-custom-items-list').innerHTML = '';
     populateWorkOrderDropdown();
-    
+
     // Reset invoice edit mode
     resetInvoiceEditMode();
-    
+
+    // Reset submit button text
+    resetInvoiceSubmitButton();
+
     // Set default values from global settings
     document.getElementById('invoice-tax-rate').value = getTaxRate();
     document.getElementById('invoice-labor-rate').value = getLaborRate();
-    
+
     openModal('create-invoice-modal');
+}
+
+function resetInvoiceSubmitButton() {
+    const form = document.getElementById('create-invoice-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.textContent = 'Generate Invoice';
+        submitBtn.classList.remove('btn-success');
+        submitBtn.classList.add('btn-primary');
+    }
 }
 
 function populateWorkOrderDropdown() {
@@ -507,11 +739,35 @@ function createInvoice(e) {
     };
     
     invoices.push(invoice);
+
+    // Adjust stock for parts that were invoiced
+    invoiceParts.forEach(invoicePart => {
+        const part = parts.find(p => p.id === invoicePart.partId);
+        if (part) {
+            part.stockQuantity = Math.max(0, part.stockQuantity - invoicePart.quantity);
+        }
+    });
+
     saveBillingData();
     closeModal('create-invoice-modal');
     renderInvoicesList();
+    renderPartsList(); // Refresh parts list to show updated stock
     updateDashboard();
-    showNotification('Invoice created successfully!', 'success');
+    showNotification('Invoice created successfully! Stock adjusted for invoiced parts.', 'success');
+}
+
+// Invoice sorting state
+let invoiceSortColumn = 'date';
+let invoiceSortDirection = 'desc';
+
+function sortInvoices(column) {
+    if (invoiceSortColumn === column) {
+        invoiceSortDirection = invoiceSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        invoiceSortColumn = column;
+        invoiceSortDirection = 'asc';
+    }
+    renderInvoicesList();
 }
 
 function renderInvoicesList() {
@@ -522,20 +778,64 @@ function renderInvoicesList() {
         return;
     }
     
-    // Sort by creation date (newest first)
-    const sortedInvoices = [...invoices].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Sort invoices
+    const sortedInvoices = [...invoices].sort((a, b) => {
+        let aVal, bVal;
+        const aCustomer = customers.find(c => c.id === a.customerId);
+        const bCustomer = customers.find(c => c.id === b.customerId);
+        switch (invoiceSortColumn) {
+            case 'number':
+                aVal = (a.invoiceNumber || '').toLowerCase();
+                bVal = (b.invoiceNumber || '').toLowerCase();
+                break;
+            case 'date':
+                aVal = new Date(a.createdAt).getTime();
+                bVal = new Date(b.createdAt).getTime();
+                break;
+            case 'customer':
+                aVal = aCustomer ? `${aCustomer.firstName} ${aCustomer.lastName}`.toLowerCase() : '';
+                bVal = bCustomer ? `${bCustomer.firstName} ${bCustomer.lastName}`.toLowerCase() : '';
+                break;
+            case 'total':
+                aVal = parseFloat(a.total) || 0;
+                bVal = parseFloat(b.total) || 0;
+                break;
+            case 'paid':
+                aVal = parseFloat(a.amountPaid) || 0;
+                bVal = parseFloat(b.amountPaid) || 0;
+                break;
+            case 'balance':
+                aVal = parseFloat(a.balanceDue) || 0;
+                bVal = parseFloat(b.balanceDue) || 0;
+                break;
+            case 'status':
+                aVal = (a.status || '').toLowerCase();
+                bVal = (b.status || '').toLowerCase();
+                break;
+            default:
+                aVal = new Date(a.createdAt).getTime();
+                bVal = new Date(b.createdAt).getTime();
+        }
+        if (invoiceSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+
+    const sortIndicator = (col) => invoiceSortColumn === col ? (invoiceSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
     
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Total</th>
-                <th>Paid</th>
-                <th>Balance</th>
-                <th>Status</th>
+                <th class="sortable${asc('number',invoiceSortColumn)}" onclick="sortInvoices('number')">Invoice #${sortIndicator('number')}</th>
+                <th class="sortable${asc('date',invoiceSortColumn)}" onclick="sortInvoices('date')">Date${sortIndicator('date')}</th>
+                <th class="sortable${asc('customer',invoiceSortColumn)}" onclick="sortInvoices('customer')">Customer${sortIndicator('customer')}</th>
+                <th class="sortable${asc('total',invoiceSortColumn)}" onclick="sortInvoices('total')">Total${sortIndicator('total')}</th>
+                <th class="sortable${asc('paid',invoiceSortColumn)}" onclick="sortInvoices('paid')">Paid${sortIndicator('paid')}</th>
+                <th class="sortable${asc('balance',invoiceSortColumn)}" onclick="sortInvoices('balance')">Balance${sortIndicator('balance')}</th>
+                <th class="sortable${asc('status',invoiceSortColumn)}" onclick="sortInvoices('status')">Status${sortIndicator('status')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -557,8 +857,10 @@ function renderInvoicesList() {
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-primary" onclick="viewInvoice('${invoice.id}')">View</button>
+                            <button class="btn btn-info" onclick="editInvoice('${invoice.id}')">Edit</button>
                             <button class="btn btn-success" onclick="openPaymentModal('${invoice.id}')">Payment</button>
                             <button class="btn btn-secondary" onclick="openStatusModal('${invoice.id}')">Status</button>
+                            <button class="btn btn-warning" onclick="openInvoiceNotesModal('${invoice.id}')">Notes</button>
                             <button class="btn btn-danger" onclick="deleteInvoice('${invoice.id}')">Delete</button>
                         </div>
                     </td>
@@ -583,10 +885,73 @@ function viewInvoice(id) {
     const customer = customers.find(c => c.id === invoice.customerId);
     const vehicle = vehicles.find(v => v.id === invoice.vehicleId);
     const workOrder = workOrders.find(w => w.id === invoice.workOrderId);
-    
+    const shopName = getShopName();
+    const shopSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
+
+    // Recalculate totals from stored invoice data
+    const laborHours = invoice.laborHours || 0;
+    const laborRate = invoice.laborRate || 0;
+    const laborTotal = invoice.laborTotal || (laborHours * laborRate);
+
+    let servicesTotal = 0;
+    (invoice.services || []).forEach(s => { servicesTotal += parseFloat(s.price || s.total || 0); });
+
+    let partsTotal = 0;
+    (invoice.parts || []).forEach(p => { partsTotal += parseFloat(p.total || (p.unitPrice * p.quantity) || 0); });
+
+    let customTotal = 0;
+    (invoice.customItems || []).forEach(c => { customTotal += parseFloat(c.total || 0); });
+
+    const subtotal = invoice.subtotal || (servicesTotal + partsTotal + customTotal + laborTotal);
+    const discount = invoice.discount || 0;
+    const taxRate = invoice.taxRate !== undefined ? invoice.taxRate : (shopSettings.taxRate || 0);
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const taxAmount = invoice.taxAmount !== undefined ? invoice.taxAmount : (taxableAmount * taxRate / 100);
+    const total = invoice.total || (taxableAmount + taxAmount);
+    const amountPaid = invoice.amountPaid || 0;
+    const balanceDue = invoice.balanceDue !== undefined ? invoice.balanceDue : (total - amountPaid);
+
+    // Services rows
+    const servicesRows = (invoice.services || []).map(service => `
+        <tr>
+            <td>${service.name || 'Service'}</td>
+            <td>1</td>
+            <td>${formatCurrency(service.price || service.total || 0)}</td>
+            <td>${formatCurrency(service.price || service.total || 0)}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" style="color:var(--text-light);text-align:center;">No services</td></tr>';
+
+    // Parts rows
+    const partsRows = (invoice.parts || []).map(part => {
+        const unitPrice = part.unitPrice || part.price || 0;
+        const qty = part.quantity || 1;
+        const lineTotal = part.total || (unitPrice * qty);
+        return `
+        <tr>
+            <td>${part.name || 'Part'}</td>
+            <td>${qty}</td>
+            <td>${formatCurrency(unitPrice)}</td>
+            <td>${formatCurrency(lineTotal)}</td>
+        </tr>`;
+    }).join('');
+
+    // Custom items rows
+    const customRows = (invoice.customItems || []).map(item => `
+        <tr>
+            <td>${item.name || 'Custom Item'}${item.description ? `<br><small>${item.description}</small>` : ''}</td>
+            <td>${item.quantity || 1}</td>
+            <td>${formatCurrency(item.unitPrice || 0)}</td>
+            <td>${formatCurrency(item.total || 0)}</td>
+        </tr>
+    `).join('');
+
     let invoiceHTML = `
         <div class="invoice-header">
-            <h1>INVOICE</h1>
+            <h1>${shopName}</h1>
+            ${shopSettings.address ? `<p style="font-size:0.85rem;color:#666;">${shopSettings.address}</p>` : ''}
+            ${shopSettings.phone ? `<p style="font-size:0.85rem;color:#666;">Tel: ${shopSettings.phone}</p>` : ''}
+            ${shopSettings.email ? `<p style="font-size:0.85rem;color:#666;">Email: ${shopSettings.email}</p>` : ''}
+            <h2>INVOICE</h2>
             <p><strong>${invoice.invoiceNumber}</strong></p>
         </div>
         
@@ -596,8 +961,8 @@ function viewInvoice(id) {
                 <p>${new Date(invoice.createdAt).toLocaleDateString()}</p>
             </div>
             <div class="invoice-info-section">
-                <h3>Due Date</h3>
-                <p>${new Date(invoice.createdAt).toLocaleDateString()}</p>
+                <h3>Last Updated</h3>
+                <p>${invoice.updatedAt ? new Date(invoice.updatedAt).toLocaleDateString() : new Date(invoice.createdAt).toLocaleDateString()}</p>
             </div>
             <div class="invoice-info-section">
                 <h3>Status</h3>
@@ -608,106 +973,109 @@ function viewInvoice(id) {
         <div class="invoice-info">
             <div class="invoice-info-section">
                 <h3>Bill To</h3>
-                <p>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</p>
-                <p>${customer ? customer.email : ''}</p>
-                <p>${customer ? customer.phone : ''}</p>
-                <p>${customer ? customer.address || '' : ''}</p>
+                <p><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                ${customer && customer.email ? `<p>${customer.email}</p>` : ''}
+                ${customer && customer.phone ? `<p>${customer.phone}</p>` : ''}
+                ${customer && customer.address ? `<p>${customer.address}</p>` : ''}
             </div>
             <div class="invoice-info-section">
                 <h3>Vehicle</h3>
-                <p>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</p>
-                <p>${vehicle ? `Plate: ${vehicle.plate}` : ''}</p>
-                <p>Work Order: #${workOrder ? workOrder.id.substring(0, 8).toUpperCase() : 'N/A'}</p>
+                <p><strong>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</strong></p>
+                ${vehicle ? `<p>Reg: ${vehicle.registrationNumber || vehicle.plate || 'N/A'}</p>` : ''}
+                ${vehicle && vehicle.vin ? `<p>VIN: ${vehicle.vin}</p>` : ''}
+                <p>Work Order: <strong>#${workOrder ? workOrder.id.substring(0, 8).toUpperCase() : 'N/A'}</strong></p>
             </div>
         </div>
-        
-        <h3>Services</h3>
+
+        <!-- All Line Items in one table -->
+        <h3>Invoice Items</h3>
         <table class="invoice-table">
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th>Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${invoice.services.map(service => `
-                    <tr>
-                        <td>${service.name}</td>
-                        <td>${formatCurrency(service.price)}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        
-        ${invoice.parts && invoice.parts.length > 0 ? `
-        <h3>Parts</h3>
-        <table class="invoice-table">
-            <thead>
-                <tr>
-                    <th>Part Name</th>
                     <th>Qty</th>
                     <th>Unit Price</th>
                     <th>Total</th>
                 </tr>
             </thead>
             <tbody>
-                ${invoice.parts.map(part => `
+                ${(invoice.services || []).length > 0 ? `
+                    <tr style="background:var(--bg-secondary);"><td colspan="4"><strong>🔧 Services</strong></td></tr>
+                    ${servicesRows}
+                ` : ''}
+                ${(invoice.parts || []).length > 0 ? `
+                    <tr style="background:var(--bg-secondary);"><td colspan="4"><strong>🔩 Parts</strong></td></tr>
+                    ${partsRows}
+                ` : ''}
+                ${(invoice.customItems || []).length > 0 ? `
+                    <tr style="background:var(--bg-secondary);"><td colspan="4"><strong>➕ Additional Items</strong></td></tr>
+                    ${customRows}
+                ` : ''}
+                ${laborHours > 0 ? `
+                    <tr style="background:var(--bg-secondary);"><td colspan="4"><strong>⏱️ Labor</strong></td></tr>
                     <tr>
-                        <td>${part.name}</td>
-                        <td>${part.quantity}</td>
-                        <td>${formatCurrency(part.unitPrice)}</td>
-                        <td>${formatCurrency(part.total)}</td>
+                        <td>Labor Charges (${laborHours} hrs @ ${formatCurrency(laborRate)}/hr)</td>
+                        <td>${laborHours}</td>
+                        <td>${formatCurrency(laborRate)}/hr</td>
+                        <td>${formatCurrency(laborTotal)}</td>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        ` : ''}
-        
-        <h3>Labor</h3>
-        <table class="invoice-table">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Hours</th>
-                    <th>Rate</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Labor Charges</td>
-                    <td>${invoice.laborHours}</td>
-                    <td>${formatCurrency(invoice.laborRate)}/hr</td>
-                    <td>${formatCurrency(invoice.laborTotal)}</td>
-                </tr>
+                ` : ''}
             </tbody>
         </table>
         
         <div class="invoice-totals">
             <div class="invoice-totals-row">
                 <span class="invoice-totals-label">Subtotal</span>
-                <span class="invoice-totals-value">${formatCurrency(invoice.subtotal)}</span>
+                <span class="invoice-totals-value">${formatCurrency(subtotal)}</span>
             </div>
+            ${discount > 0 ? `
             <div class="invoice-totals-row">
                 <span class="invoice-totals-label">Discount</span>
-                <span class="invoice-totals-value">-${formatCurrency(invoice.discount)}</span>
-            </div>
+                <span class="invoice-totals-value" style="color:#28a745;">-${formatCurrency(discount)}</span>
+            </div>` : ''}
+            ${taxRate > 0 ? `
             <div class="invoice-totals-row">
-                <span class="invoice-totals-label">Tax (${invoice.taxRate}%)</span>
-                <span class="invoice-totals-value">${formatCurrency(invoice.taxAmount)}</span>
-            </div>
-            <div class="invoice-totals-row">
+                <span class="invoice-totals-label">Tax (${taxRate}%)</span>
+                <span class="invoice-totals-value">${formatCurrency(taxAmount)}</span>
+            </div>` : ''}
+            <div class="invoice-totals-row" style="font-size:1.15rem;font-weight:700;border-top:2px solid var(--border-color);padding-top:0.5rem;margin-top:0.25rem;">
                 <span class="invoice-totals-label">Total</span>
-                <span class="invoice-totals-value">${formatCurrency(invoice.total)}</span>
+                <span class="invoice-totals-value">${formatCurrency(total)}</span>
             </div>
+            ${amountPaid > 0 ? `
+            <div class="invoice-totals-row" style="color:#28a745;">
+                <span class="invoice-totals-label">Amount Paid</span>
+                <span class="invoice-totals-value">-${formatCurrency(amountPaid)}</span>
+            </div>
+            <div class="invoice-totals-row" style="font-weight:700;color:${balanceDue > 0 ? '#dc3545' : '#28a745'};">
+                <span class="invoice-totals-label">Balance Due</span>
+                <span class="invoice-totals-value">${formatCurrency(balanceDue)}</span>
+            </div>` : ''}
         </div>
         
         ${invoice.notes ? `
-        <div style="margin-top: 2rem; padding: 1rem; background: var(--light-bg); border-radius: 6px;">
-            <h4>Notes</h4>
+        <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 6px; border-left: 4px solid var(--primary-color);">
+            <h4>📝 Notes</h4>
             <p>${invoice.notes}</p>
         </div>
         ` : ''}
+
+        ${invoice.payments && invoice.payments.length > 0 ? `
+        <div style="margin-top: 1.5rem;">
+            <h4>💳 Payment History</h4>
+            <table class="invoice-table">
+                <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead>
+                <tbody>
+                    ${invoice.payments.map(p => `
+                    <tr>
+                        <td>${new Date(p.date).toLocaleDateString()}</td>
+                        <td>${formatCurrency(p.amount)}</td>
+                        <td>${p.method || 'N/A'}</td>
+                        <td>${p.reference || '-'}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>` : ''}
     `;
     
     document.getElementById('invoice-details').innerHTML = invoiceHTML;
@@ -725,6 +1093,375 @@ function markInvoicePaid(id) {
     }
 }
 
+
+
+// Render invoice items from existing invoice data (for editing)
+function renderInvoiceItemsFromInvoice(invoice) {
+    // Render Services
+    let servicesHTML = '<div class="invoice-items-section"><h4>🔧 Services</h4>';
+    if (invoice.services && invoice.services.length > 0) {
+        invoice.services.forEach((item, index) => {
+            const price = item.price || item.total || 0;
+            servicesHTML += `
+                <div class="invoice-line-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Service'}</div>
+                    <div class="line-item-quantity">1</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(price)}</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(price)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('service', ${index})">✏️</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        servicesHTML += '<p style="color: var(--text-light); padding: 0.5rem;">No services</p>';
+    }
+    servicesHTML += '</div>';
+    document.getElementById('invoice-services-list').innerHTML = servicesHTML;
+    
+    // Render Parts
+    let partsHTML = '<div class="invoice-items-section"><h4>🔩 Parts</h4>';
+    if (invoice.parts && invoice.parts.length > 0) {
+        invoice.parts.forEach((item, index) => {
+            const total = item.total || (item.unitPrice * item.quantity) || 0;
+            const unitPrice = item.unitPrice || item.price || 0;
+            partsHTML += `
+                <div class="invoice-line-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Part'} (x${item.quantity || 1})</div>
+                    <div class="line-item-quantity">${item.quantity || 1}</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(unitPrice)}/ea</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(total)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('part', ${index})">✏️</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        partsHTML += '<p style="color: var(--text-light); padding: 0.5rem;">No parts</p>';
+    }
+    partsHTML += '</div>';
+    document.getElementById('invoice-parts-list').innerHTML = partsHTML;
+    
+    // Render Custom Items
+    let customHTML = '';
+    if (invoice.customItems && invoice.customItems.length > 0) {
+        customHTML = '<div class="invoice-items-section"><h4>➕ Custom Items</h4>';
+        invoice.customItems.forEach((item, index) => {
+            const total = item.total || (item.unitPrice * item.quantity) || 0;
+            customHTML += `
+                <div class="invoice-line-item custom-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Custom Item'}</div>
+                    <div class="line-item-quantity">${item.quantity || 1}</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(item.unitPrice || 0)}</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(total)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('custom', ${index})">✏️</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeInvoiceLineItem('custom', ${index})">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+        customHTML += '</div>';
+    }
+    document.getElementById('invoice-custom-items-list').innerHTML = customHTML;
+}
+
+// Edit a line item in the invoice
+function editInvoiceLineItem(type, index) {
+    const item = type === 'service' ? invoiceLineItems.services[index] :
+                 type === 'part' ? invoiceLineItems.parts[index] :
+                 invoiceLineItems.custom[index];
+    
+    if (!item) return;
+    
+    const currentPrice = type === 'service' ? (item.price || item.total || 0) :
+                         type === 'part' ? (item.unitPrice || item.price || 0) :
+                         (item.unitPrice || 0);
+    
+    const newPrice = prompt(`Enter new price for ${item.name || type}:`, currentPrice);
+    
+    if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
+        const price = parseFloat(newPrice);
+        if (type === 'service') {
+            item.price = price;
+            item.total = price;
+        } else if (type === 'part') {
+            item.unitPrice = price;
+            item.price = price;
+            item.total = price * (item.quantity || 1);
+        } else if (type === 'custom') {
+            item.unitPrice = price;
+            item.total = price * (item.quantity || 1);
+        }
+        
+        // Re-render from invoiceLineItems
+        const invoice = invoices.find(i => i.id === editingInvoiceId);
+        if (invoice) {
+            invoice.services = invoiceLineItems.services;
+            invoice.parts = invoiceLineItems.parts;
+            invoice.customItems = invoiceLineItems.custom;
+            renderInvoiceItemsFromInvoice(invoice);
+            recalculateInvoiceTotal();
+        }
+    }
+}
+
+// Remove a line item from the invoice
+function removeInvoiceLineItem(type, index) {
+    if (!confirm('Remove this item?')) return;
+    
+    if (type === 'custom') {
+        invoiceLineItems.custom.splice(index, 1);
+    }
+    
+    // Re-render
+    const invoice = invoices.find(i => i.id === editingInvoiceId);
+    if (invoice) {
+        invoice.customItems = invoiceLineItems.custom;
+        renderInvoiceItemsFromInvoice(invoice);
+        recalculateInvoiceTotal();
+    }
+}
+
+function editInvoice(id) {
+    const invoice = invoices.find(i => i.id === id);
+    if (!invoice) {
+        showNotification('Invoice not found', 'error');
+        return;
+    }
+    
+    // Store the current editing invoice
+    editingInvoiceId = id;
+    
+    // Open the create invoice modal (reusing for edit)
+    openModal('create-invoice-modal');
+    
+    // Update modal title
+    document.querySelector('#create-invoice-modal .modal-header h2').textContent = 'Edit Invoice';
+    
+    // Populate work order dropdown
+    const workOrderSelect = document.getElementById('invoice-work-order');
+    workOrderSelect.innerHTML = '<option value="">Select Work Order</option>';
+    
+    workOrders.forEach(wo => {
+        const customer = customers.find(c => c.id === wo.customerId);
+        const vehicle = vehicles.find(v => v.id === wo.vehicleId);
+        const option = document.createElement('option');
+        option.value = wo.id;
+        option.textContent = `WO-${wo.id.substring(0, 8).toUpperCase()} - ${customer ? customer.firstName + ' ' + customer.lastName : 'Unknown'} - ${vehicle ? vehicle.registrationNumber : 'N/A'}`;
+        workOrderSelect.appendChild(option);
+    });
+    
+    // Set the work order
+    workOrderSelect.value = invoice.workOrderId || '';
+    
+    // Set customer and vehicle
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const vehicle = vehicles.find(v => v.id === invoice.vehicleId);
+    
+    document.getElementById('invoice-customer').value = customer ? `${customer.firstName} ${customer.lastName}` : 'N/A';
+    document.getElementById('invoice-vehicle').value = vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A';
+    
+    // Load invoice items
+    invoiceLineItems = {
+        services: invoice.services || [],
+        parts: invoice.parts || [],
+        custom: invoice.customItems || []
+    };
+
+    // Store original parts for stock adjustment on save
+    invoice._originalParts = JSON.parse(JSON.stringify(invoice.parts || []));
+
+    // Render items for editing (from invoice data, not work order)
+    renderInvoiceItemsFromInvoice(invoice);
+    
+    // Set labor values
+    if (document.getElementById('invoice-labor')) {
+        document.getElementById('invoice-labor').value = invoice.laborHours || 0;
+    }
+    if (document.getElementById('invoice-labor-rate')) {
+        document.getElementById('invoice-labor-rate').value = invoice.laborRate || 75;
+    }
+    if (document.getElementById('invoice-discount')) {
+        document.getElementById('invoice-discount').value = invoice.discount !== undefined ? invoice.discount : 0;
+    }
+    if (document.getElementById('invoice-tax-rate')) {
+        // Use invoice taxRate as-is (even if 0), only fall back to global if undefined
+        document.getElementById('invoice-tax-rate').value = invoice.taxRate !== undefined ? invoice.taxRate : getTaxRate();
+    }
+    
+    // Recalculate totals display
+    recalculateInvoiceTotal();
+    
+    // Enable edit mode banner WITHOUT calling renderEditableInvoiceItems (which reads work order)
+    invoiceEditMode = true;
+    const banner = document.getElementById('invoice-edit-banner');
+    if (banner) banner.style.display = 'flex';
+    
+    // Show the actions bar
+    document.getElementById('invoice-actions-bar').style.display = 'flex';
+    
+    // Remove the createInvoice handler and add the edit handler
+    const form = document.getElementById('create-invoice-form');
+    detachCreateInvoiceHandler();
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        saveEditedInvoice();
+    };
+
+    // Change submit button text for edit mode
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.textContent = 'Save Changes';
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-success');
+    }
+}
+
+function saveEditedInvoice() {
+    if (!editingInvoiceId) return;
+    
+    const invoice = invoices.find(i => i.id === editingInvoiceId);
+    if (!invoice) return;
+    
+    // Get labor values from form
+    const laborHours = parseFloat(document.getElementById('invoice-labor')?.value) || invoice.laborHours || 0;
+    const laborRate = parseFloat(document.getElementById('invoice-labor-rate')?.value) || invoice.laborRate || 75;
+    const laborTotal = laborHours * laborRate;
+    
+    // Get discount from form
+    const discount = parseFloat(document.getElementById('invoice-discount')?.value) || invoice.discount || 0;
+    
+    // Get tax rate from form or settings (use 0 if explicitly set to 0)
+    const taxRateField = document.getElementById('invoice-tax-rate');
+    const taxRate = taxRateField && taxRateField.value !== '' ? parseFloat(taxRateField.value) : (settings.taxRate !== undefined ? settings.taxRate : 15);
+    
+    // Update invoice items (make copies to avoid reference issues)
+    invoice.services = JSON.parse(JSON.stringify(invoiceLineItems.services));
+    invoice.parts = JSON.parse(JSON.stringify(invoiceLineItems.parts));
+    invoice.customItems = JSON.parse(JSON.stringify(invoiceLineItems.custom));
+    
+    // Recalculate totals from items
+    let servicesTotal = 0;
+    invoice.services.forEach(item => {
+        servicesTotal += parseFloat(item.price) || parseFloat(item.total) || 0;
+    });
+    
+    let partsTotal = 0;
+    invoice.parts.forEach(item => {
+        partsTotal += parseFloat(item.total) || 0;
+    });
+    
+    let customTotal = 0;
+    invoice.customItems.forEach(item => {
+        customTotal += parseFloat(item.total) || 0;
+    });
+    
+    const subtotal = servicesTotal + partsTotal + customTotal + laborTotal;
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const taxAmount = taxableAmount * (taxRate / 100);
+    const total = taxableAmount + taxAmount;
+    
+    // Update invoice with all calculated values
+    invoice.laborHours = laborHours;
+    invoice.laborRate = laborRate;
+    invoice.laborTotal = laborTotal;
+    invoice.servicesTotal = servicesTotal;
+    invoice.partsTotal = partsTotal;
+    invoice.customTotal = customTotal;
+    invoice.subtotal = subtotal;
+    invoice.discount = discount;
+    invoice.taxRate = taxRate;
+    invoice.taxAmount = taxAmount;
+    invoice.total = total;
+    invoice.balanceDue = total - (invoice.amountPaid || 0);
+    invoice.updatedAt = new Date().toISOString();
+
+    // Adjust stock for parts - handle quantity changes
+    // First, restore stock from old parts (reverse the original deduction)
+    if (invoice._originalParts) {
+        invoice._originalParts.forEach(oldPart => {
+            const part = parts.find(p => p.id === oldPart.partId);
+            if (part) {
+                part.stockQuantity += oldPart.quantity;
+            }
+        });
+    }
+
+    // Then, deduct stock for new parts
+    invoice.parts.forEach(newPart => {
+        const part = parts.find(p => p.id === newPart.partId);
+        if (part) {
+            part.stockQuantity = Math.max(0, part.stockQuantity - newPart.quantity);
+        }
+    });
+
+    // Clean up temporary tracking
+    delete invoice._originalParts;
+
+    // Save to localStorage
+    saveBillingData();
+
+    // Close modal and refresh list
+    closeModal('create-invoice-modal');
+    renderInvoicesList();
+    renderPartsList(); // Refresh parts list to show updated stock
+    updateDashboard();
+
+    // Reset form and re-add the createInvoice handler
+    const form = document.getElementById('create-invoice-form');
+    form.onsubmit = null;
+    attachCreateInvoiceHandler();
+    document.querySelector('#create-invoice-modal .modal-header h2').textContent = 'Create Invoice';
+    editingInvoiceId = null;
+
+    showNotification('Invoice updated successfully! Stock adjusted for parts changes.', 'success');
+}
+
+function calculateSubtotal() {
+    let subtotal = 0;
+    
+    // Services use 'price' field (not 'total')
+    invoiceLineItems.services.forEach(item => {
+        subtotal += parseFloat(item.price) || parseFloat(item.total) || 0;
+    });
+    
+    // Parts use 'total' field
+    invoiceLineItems.parts.forEach(item => {
+        subtotal += parseFloat(item.total) || 0;
+    });
+    
+    // Custom items use 'total' field
+    invoiceLineItems.custom.forEach(item => {
+        subtotal += parseFloat(item.total) || 0;
+    });
+    
+    return subtotal;
+}
+
+function calculateLaborTotal() {
+    let total = 0;
+    
+    invoiceLineItems.services.forEach(item => {
+        if (item.type === 'labor' || item.name?.toLowerCase().includes('labor')) {
+            total += item.total || 0;
+        }
+    });
+    
+    return total;
+}
+
 function deleteInvoice(id) {
     if (!confirm('Are you sure you want to delete this invoice?')) return;
     
@@ -738,78 +1475,67 @@ function deleteInvoice(id) {
 function downloadInvoicePDF() {
     if (!currentViewingInvoice) return;
     
-    const customer = customers.find(c => c.id === currentViewingInvoice.customerId);
-    const vehicle = vehicles.find(v => v.id === currentViewingInvoice.vehicleId);
+    const invoiceDetails = document.getElementById('invoice-details');
     const shopName = getShopName();
     const shopSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
     
-    let invoiceText = `
-================================================================================
-                           ${shopName.toUpperCase()} - INVOICE
-${shopSettings.shopPhone ? '                         Tel: ' + shopSettings.shopPhone : ''}
-${shopSettings.shopEmail ? '                         Email: ' + shopSettings.shopEmail : ''}
-${shopSettings.shopAddress ? '                         ' + shopSettings.shopAddress : ''}
-================================================================================
-
-Invoice Number: ${currentViewingInvoice.invoiceNumber}
-Date: ${new Date(currentViewingInvoice.createdAt).toLocaleDateString()}
-Status: ${currentViewingInvoice.status.toUpperCase()}
-
---------------------------------------------------------------------------------
-BILL TO:
-${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}
-${customer ? customer.email : ''}
-${customer ? customer.phone : ''}
-${customer ? customer.address || '' : ''}
-
---------------------------------------------------------------------------------
-VEHICLE:
-${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}
-${vehicle ? `License Plate: ${vehicle.plate}` : ''}
-
---------------------------------------------------------------------------------
-SERVICES:
-${currentViewingInvoice.services.map(s => `  ${s.name}............................. ${formatCurrency(s.price)}`).join('\n')}
-
-${currentViewingInvoice.parts && currentViewingInvoice.parts.length > 0 ? `
-PARTS:
-${currentViewingInvoice.parts.map(p => `  ${p.name} (x${p.quantity})......................... ${formatCurrency(p.total)}`).join('\n')}
-` : ''}
-
-LABOR:
-  Labor Charges (${currentViewingInvoice.laborHours} hrs @ ${formatCurrency(currentViewingInvoice.laborRate)}/hr).... ${formatCurrency(currentViewingInvoice.laborTotal)}
-
---------------------------------------------------------------------------------
-SUMMARY:
-  Subtotal: ${formatCurrency(currentViewingInvoice.subtotal)}
-  Discount: -${formatCurrency(currentViewingInvoice.discount)}
-  Tax (${currentViewingInvoice.taxRate}%): ${formatCurrency(currentViewingInvoice.taxAmount)}
-  ---------------------------------------------------
-  TOTAL: ${formatCurrency(currentViewingInvoice.total)}
-
-${currentViewingInvoice.notes ? `
-NOTES:
-${currentViewingInvoice.notes}
-` : ''}
-
-================================================================================
-                    Thank you for choosing ${shopName}!
-================================================================================
-    `;
+    const printWindow = window.open('', '_blank');
+    const printContent = invoiceDetails.innerHTML;
     
-    // Create a blob and download
-    const blob = new Blob([invoiceText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentViewingInvoice.invoiceNumber}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Invoice - ${currentViewingInvoice.invoiceNumber}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+                .shop-info { text-align: center; margin-bottom: 30px; }
+                .shop-info h2 { font-size: 24px; margin-bottom: 10px; }
+                .shop-info p { font-size: 14px; margin-bottom: 5px; color: #666; }
+                .invoice-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                .invoice-header h1 { font-size: 28px; margin-bottom: 10px; }
+                .invoice-header h2 { font-size: 22px; color: #666; }
+                .invoice-header p { font-size: 16px; font-weight: bold; }
+                .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                .invoice-info-section { width: 48%; }
+                .invoice-info-section h3 { font-size: 14px; color: #666; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+                .invoice-info-section p { font-size: 14px; margin-bottom: 5px; }
+                h3 { font-size: 18px; margin-bottom: 15px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+                table.invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                table.invoice-table th, table.invoice-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+                table.invoice-table th { background: #f5f5f5; font-weight: bold; }
+                .invoice-totals { margin-top: 20px; float: right; width: 300px; }
+                .invoice-totals-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }
+                .invoice-totals-row:last-child { border-bottom: none; font-size: 18px; font-weight: bold; }
+                @media print { body { padding: 20px; } }
+            </style>
+        </head>
+        <body>
+            <div class="shop-info">
+                <h2>${shopName}</h2>
+                ${shopSettings.shopAddress ? `<p>${shopSettings.shopAddress}</p>` : ''}
+                ${shopSettings.shopPhone ? `<p>Tel: ${shopSettings.shopPhone}</p>` : ''}
+                ${shopSettings.shopEmail ? `<p>Email: ${shopSettings.shopEmail}</p>` : ''}
+            </div>
+            ${printContent}
+            <div style="clear: both; margin-top: 40px; text-align: center; font-size: 14px; color: #666;">
+                <p>Thank you for your business!</p>
+                ${shopSettings.shopWebsite ? `<p>Visit us at: ${shopSettings.shopWebsite}</p>` : ''}
+            </div>
+        </body>
+        </html>
+    `);
     
-    showNotification('Invoice downloaded!', 'success');
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(() => {
+        printWindow.print();
+        showNotification('PDF generation started. Choose "Save as PDF" in the print dialog.', 'success');
+    }, 250);
 }
+
 
 // Get shop name from settings
 function getShopName() {
@@ -946,8 +1672,29 @@ function initializePartsManagement() {
     });
 }
 
+// Store reference to the createInvoice handler so we can remove it during edit
+let createInvoiceHandler = null;
+let invoiceFormListenerAttached = false;
+
+function attachCreateInvoiceHandler() {
+    const form = document.getElementById('create-invoice-form');
+    if (!invoiceFormListenerAttached && createInvoiceHandler) {
+        form.addEventListener('submit', createInvoiceHandler);
+        invoiceFormListenerAttached = true;
+    }
+}
+
+function detachCreateInvoiceHandler() {
+    const form = document.getElementById('create-invoice-form');
+    if (invoiceFormListenerAttached && createInvoiceHandler) {
+        form.removeEventListener('submit', createInvoiceHandler);
+        invoiceFormListenerAttached = false;
+    }
+}
+
 function initializeInvoices() {
-    document.getElementById('create-invoice-form').addEventListener('submit', createInvoice);
+    createInvoiceHandler = createInvoice;
+    attachCreateInvoiceHandler();
     
     // Initialize invoice search
     document.getElementById('invoice-search').addEventListener('input', function(e) {
@@ -980,6 +1727,7 @@ function renderFilteredParts(filteredParts) {
                 <th>Image</th>
                 <th>Part Name</th>
                 <th>SKU</th>
+                <th>Serial Number</th>
                 <th>Cost</th>
                 <th>Selling Price</th>
                 <th>Stock</th>
@@ -990,14 +1738,19 @@ function renderFilteredParts(filteredParts) {
         <tbody>
             ${filteredParts.map(part => {
                 const stockClass = part.stockQuantity <= 5 ? 'stock-low' : part.stockQuantity <= 20 ? 'stock-medium' : 'stock-good';
-                const imageHTML = part.image 
-                    ? `<img src="${part.image}" class="vehicle-thumbnail" onclick="showPartImage('${part.id}')" alt="Part Image">` 
-                    : '<span style="color: var(--text-light); font-size: 0.8rem;">No image</span>';
+                const pImgs = part.images && part.images.length ? part.images : (part.image ? [part.image] : []);
+                const imageHTML = pImgs.length
+                    ? `<div style=&quot;position:relative;display:inline-block\&quot;>` +
+                       `<img src=&quot;${pImgs[0]}\&quot; class=&quot;vehicle-thumbnail\&quot; onclick=&quot;showPartImages('${part.id}')\&quot; alt=&quot;Part Image\&quot;>` +
+                       (pImgs.length > 1 ? `<span style=&quot;position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:1px 4px;border-radius:3px;\&quot;>${pImgs.length}📷</span>` : '') +
+                       `</div>`
+                    : '<span style=&quot;color: var(--text-light); font-size: 0.8rem;\&quot;>No image</span>';
                 return `
                 <tr>
                     <td>${imageHTML}</td>
                     <td>${part.name}</td>
                     <td>${part.sku || 'N/A'}</td>
+                    <td>${part.serialNumber || 'N/A'}</td>
                     <td>${formatCurrency(part.costPrice)}</td>
                     <td>${formatCurrency(part.sellingPrice)}</td>
                     <td><span class="stock-badge ${stockClass}">${part.stockQuantity}</span></td>
@@ -1665,32 +2418,51 @@ function removeCustomLineItem(itemId) {
 }
 
 function recalculateInvoiceTotal() {
-    const workOrderId = document.getElementById('invoice-work-order').value;
-    const workOrder = workOrders.find(w => w.id === workOrderId);
-    
-    if (!workOrder) return;
-    
-    // Calculate services total
     let servicesTotal = 0;
-    workOrder.services.forEach(serviceId => {
-        const service = services.find(s => s.id === serviceId);
-        const modifiedItem = invoiceLineItems.services.find(s => s.id === serviceId);
-        servicesTotal += modifiedItem ? modifiedItem.price : (service ? service.price : 0);
-    });
-    
-    // Calculate parts total
     let partsTotal = 0;
-    if (workOrder.parts) {
-        workOrder.parts.forEach(partItem => {
-            const part = parts.find(p => p.id === partItem.partId);
-            const modifiedItem = invoiceLineItems.parts.find(p => p.id === partItem.partId);
-            const price = modifiedItem ? modifiedItem.price : (part ? part.sellingPrice : 0);
-            partsTotal += price * partItem.quantity;
-        });
-    }
+    let customTotal = 0;
     
-    // Calculate custom items total
-    let customTotal = invoiceLineItems.custom.reduce((sum, item) => sum + item.total, 0);
+    // If editing an existing invoice, calculate from invoiceLineItems directly
+    if (editingInvoiceId) {
+        // Calculate services total from invoiceLineItems
+        invoiceLineItems.services.forEach(item => {
+            servicesTotal += parseFloat(item.price) || parseFloat(item.total) || 0;
+        });
+        
+        // Calculate parts total from invoiceLineItems
+        invoiceLineItems.parts.forEach(item => {
+            partsTotal += parseFloat(item.total) || 0;
+        });
+        
+        // Calculate custom items total
+        customTotal = invoiceLineItems.custom.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+    } else {
+        // Creating new invoice - calculate from work order
+        const workOrderId = document.getElementById('invoice-work-order').value;
+        const workOrder = workOrders.find(w => w.id === workOrderId);
+        
+        if (!workOrder) return;
+        
+        // Calculate services total
+        workOrder.services.forEach(serviceId => {
+            const service = services.find(s => s.id === serviceId);
+            const modifiedItem = invoiceLineItems.services.find(s => s.id === serviceId);
+            servicesTotal += modifiedItem ? modifiedItem.price : (service ? service.price : 0);
+        });
+        
+        // Calculate parts total
+        if (workOrder.parts) {
+            workOrder.parts.forEach(partItem => {
+                const part = parts.find(p => p.id === partItem.partId);
+                const modifiedItem = invoiceLineItems.parts.find(p => p.id === partItem.partId);
+                const price = modifiedItem ? modifiedItem.price : (part ? part.sellingPrice : 0);
+                partsTotal += price * partItem.quantity;
+            });
+        }
+        
+        // Calculate custom items total
+        customTotal = invoiceLineItems.custom.reduce((sum, item) => sum + item.total, 0);
+    }
     
     // Calculate labor
     const laborHours = parseFloat(document.getElementById('invoice-labor').value) || 0;
@@ -1700,13 +2472,16 @@ function recalculateInvoiceTotal() {
     // Calculate totals
     const subtotal = servicesTotal + partsTotal + customTotal;
     const discount = parseFloat(document.getElementById('invoice-discount').value) || 0;
-    const taxRate = parseFloat(document.getElementById('invoice-tax-rate').value) || 0;
-    const taxableAmount = Math.max(0, subtotal + laborTotal - discount);
+    // Use 0 if explicitly set to 0 (don't use || fallback which treats 0 as falsy)
+    const taxRateEl = document.getElementById('invoice-tax-rate');
+    const taxRate = taxRateEl && taxRateEl.value !== '' ? parseFloat(taxRateEl.value) : 0;
+    const grandSubtotal = servicesTotal + partsTotal + customTotal + laborTotal;
+    const taxableAmount = Math.max(0, grandSubtotal - discount);
     const tax = taxableAmount * (taxRate / 100);
     const grandTotal = taxableAmount + tax;
     
-    // Update display
-    document.getElementById('invoice-subtotal').textContent = formatCurrency(subtotal);
+    // Update display - subtotal includes all items + labor for accuracy
+    document.getElementById('invoice-subtotal').textContent = formatCurrency(grandSubtotal);
     document.getElementById('invoice-labor-display').textContent = laborHours;
     document.getElementById('invoice-labor-total').textContent = formatCurrency(laborTotal);
     document.getElementById('invoice-discount-display').textContent = '-' + formatCurrency(discount);
@@ -1720,6 +2495,11 @@ function resetInvoiceEditMode() {
     invoiceEditMode = false;
     customLineItems = [];
     invoiceLineItems = { services: [], parts: [], custom: [] };
+    
+    // Re-add the createInvoice handler if it was removed
+    const form = document.getElementById('create-invoice-form');
+    form.onsubmit = null;
+    attachCreateInvoiceHandler();
     
     const banner = document.getElementById('invoice-edit-banner');
     const actionsBar = document.getElementById('invoice-actions-bar');
@@ -1747,7 +2527,9 @@ function openSupplierModal(id = null) {
     resetSupplierLogoPreview();
     
     if (id) {
+        console.log('Opening supplier modal for ID:', id);
         const supplier = suppliers.find(s => s.id === id);
+        console.log('Found supplier:', supplier);
         if (supplier) {
             document.getElementById('supplier-id').value = supplier.id;
             document.getElementById('supplier-name').value = supplier.name;
@@ -1903,8 +2685,8 @@ function renderSuppliersList() {
                 ${websiteHtml}
             </div>
             <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')">✏️ Edit</button>
-                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>
             </div>
         </div>`;
     }).join('');
@@ -1957,16 +2739,28 @@ function togglePriceMode() {
     }
 }
 
-// Calculate Part Pricing
+// Track which VAT field is being actively edited to prevent infinite loops
+let _partVatEditingField = null;
+
+// Get VAT rate from global settings (fallback to 15%)
+function getPartVatRate() {
+    const s = JSON.parse(localStorage.getItem('globalSettings') || '{}');
+    return parseFloat(s.taxRate) || 15;
+}
+
+// Calculate Part Pricing (triggered by Ex VAT change)
 function calculatePartPricing() {
+    if (_partVatEditingField === 'inc') return; // prevent loop
+    _partVatEditingField = 'ex';
+
     const costExVat = parseFloat(document.getElementById('part-cost-ex-vat').value) || 0;
     const mode = document.getElementById('part-price-mode').value;
-    const vatRate = 15; // South African VAT rate
-    
+    const vatRate = getPartVatRate();
+
     // Calculate cost including VAT
     const costIncVat = costExVat * (1 + vatRate / 100);
     document.getElementById('part-cost-inc-vat').value = costIncVat.toFixed(2);
-    
+
     // Calculate selling price based on mode
     let sellingPrice = 0;
     if (mode === 'percentage') {
@@ -1976,9 +2770,35 @@ function calculatePartPricing() {
     } else {
         sellingPrice = parseFloat(document.getElementById('part-price').value) || 0;
     }
-    
+
     // Calculate and display profit
     calculatePartProfit();
+    _partVatEditingField = null;
+}
+
+// Calculate Part Pricing from Inc VAT (triggered by Inc VAT change)
+function calculatePartPricingFromIncVat() {
+    if (_partVatEditingField === 'ex') return; // prevent loop
+    _partVatEditingField = 'inc';
+
+    const costIncVat = parseFloat(document.getElementById('part-cost-inc-vat').value) || 0;
+    const vatRate = getPartVatRate();
+
+    // Reverse-calculate ex VAT: exVat = incVat / (1 + vatRate/100)
+    const costExVat = costIncVat / (1 + vatRate / 100);
+    document.getElementById('part-cost-ex-vat').value = costExVat.toFixed(2);
+
+    // Calculate selling price based on mode
+    const mode = document.getElementById('part-price-mode').value;
+    if (mode === 'percentage') {
+        const markupPercent = parseFloat(document.getElementById('part-markup-percent').value) || 0;
+        const sellingPrice = costExVat * (1 + markupPercent / 100);
+        document.getElementById('part-price').value = sellingPrice.toFixed(2);
+    }
+
+    // Calculate and display profit
+    calculatePartProfit();
+    _partVatEditingField = null;
 }
 
 // Calculate Part Profit
@@ -2007,6 +2827,9 @@ function calculatePartProfit() {
 // BOOK IN PARTS FUNCTIONALITY
 // ===========================================
 
+// Book In Images Storage
+let currentBookInImages = [];
+
 // Open Book In Modal
 function openBookInModal() {
     document.getElementById('book-in-form').reset();
@@ -2020,6 +2843,10 @@ function openBookInModal() {
     const hint = document.getElementById('book-in-calculated-subtotal');
     if (hint) hint.textContent = '';
     
+    // Reset images
+    currentBookInImages = [];
+    renderBookInImageGallery();
+    
     // Update modal title for new record
     const modalTitle = document.querySelector('#book-in-modal .modal-header h2');
     if (modalTitle) modalTitle.textContent = '📦 Book In Parts from Supplier';
@@ -2030,25 +2857,103 @@ function openBookInModal() {
     openModal('book-in-modal');
 }
 
+// Add Book In Images
+function addBookInImages(input) {
+    const MAX_IMAGES = 5;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+
+    const remaining = MAX_IMAGES - currentBookInImages.length;
+    if (remaining <= 0) {
+        showNotification(`Maximum ${MAX_IMAGES} images allowed.`, 'error');
+        input.value = '';
+        return;
+    }
+
+    const toLoad = files.slice(0, remaining);
+    if (files.length > remaining) {
+        showNotification(`Only ${remaining} more image(s) can be added.`, 'error');
+    }
+
+    let loaded = 0;
+    toLoad.forEach(file => {
+        if (!file.type.match('image.*')) return;
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('Each image must be under 5MB.', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentBookInImages.push(e.target.result);
+            loaded++;
+            if (loaded === toLoad.length) renderBookInImageGallery();
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+// Render Book In Image Gallery
+function renderBookInImageGallery() {
+    const gallery = document.getElementById('book-in-image-gallery');
+    if (!gallery) return;
+
+    const MAX_IMAGES = 5;
+    let html = '';
+
+    currentBookInImages.forEach((src, idx) => {
+        html += `
+            <div class="image-gallery-item">
+                <img src="${src}" alt="Invoice image ${idx+1}" onclick="openImageLightbox(currentBookInImages, ${idx})">
+                <button class="img-remove-btn" onclick="removeBookInImage(${idx})" title="Remove">✕</button>
+            </div>`;
+    });
+
+    if (currentBookInImages.length < MAX_IMAGES) {
+        html += `
+            <div class="image-gallery-add" onclick="document.getElementById('book-in-images').click()" title="Add images">
+                <span>📷</span><span>Add Images</span>
+            </div>`;
+    }
+
+    gallery.innerHTML = html;
+}
+
+// Remove Book In Image
+function removeBookInImage(idx) {
+    if (confirm('Are you sure you want to remove this image?')) {
+        currentBookInImages.splice(idx, 1);
+        renderBookInImageGallery();
+    }
+}
+
 // Add Book In Part Row (optionally pre-fill with existing part data)
 function addBookInPartRow(partData = null) {
     const container = document.getElementById('book-in-parts-container');
     const rowId = generateId();
     
+    // Get global tax rate from settings
+    const globalSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
+    const taxRate = globalSettings.taxRate || 15;
+    
     const name = partData ? partData.name : '';
     const qty = partData ? partData.quantity : 1;
     const cost = partData ? partData.costExVat : '';
+    const costIncVat = partData && partData.costIncVat ? partData.costIncVat : '';
     const lineTotal = partData ? formatCurrency(partData.quantity * partData.costExVat) : 'R0.00';
+    const taxAmount = cost ? (parseFloat(cost) * (taxRate / 100)).toFixed(2) : '0.00';
     
     const row = document.createElement('div');
     row.className = 'book-in-part-row';
     row.id = `book-in-row-${rowId}`;
     row.innerHTML = `
-        <input type="text" placeholder="Part Name *" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="name" value="${name}">
-        <input type="number" placeholder="Qty *" min="1" value="${qty}" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="quantity">
-        <input type="number" placeholder="Cost Ex VAT" min="0" step="0.01" value="${cost}" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="cost">
-        <span class="book-in-part-total">${lineTotal}</span>
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeBookInPartRow('${rowId}')">✕</button>
+        <input type="text" placeholder="Part Name *" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="name" value="${name}" style="flex:2;">
+        <input type="number" placeholder="Qty *" min="1" value="${qty}" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="quantity" style="flex:0.5;">
+        <input type="number" placeholder="Cost Ex VAT" min="0" step="0.01" value="${cost}" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="cost" style="flex:0.8;">
+        <input type="number" placeholder="Cost Inc VAT" min="0" step="0.01" value="${costIncVat}" onchange="updateBookInTotal()" oninput="updateBookInTotal()" data-field="costIncVat" style="flex:0.8;">
+        <span class="book-in-part-tax" data-tax-rate="${taxRate}" style="flex:0.5;text-align:center;color:var(--text-light);font-size:0.85rem;">${taxAmount}</span>
+        <span class="book-in-part-total" style="flex:0.6;">${lineTotal}</span>
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeBookInPartRow('${rowId}')" style="flex:0.3;">✕</button>
     `;
     
     container.appendChild(row);
@@ -2069,9 +2974,23 @@ function updateBookInTotal() {
     const rows = container.querySelectorAll('.book-in-part-row');
     let total = 0;
     
+    // Get global tax rate from settings
+    const globalSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
+    const taxRate = globalSettings.taxRate || 15;
+    
     rows.forEach(row => {
         const qty = parseFloat(row.querySelector('[data-field="quantity"]').value) || 0;
         const cost = parseFloat(row.querySelector('[data-field="cost"]').value) || 0;
+        const costIncVat = parseFloat(row.querySelector('[data-field="costIncVat"]').value) || 0;
+        
+        // Calculate tax amount based on ex VAT cost
+        const taxAmount = cost * (taxRate / 100);
+        const taxSpan = row.querySelector('.book-in-part-tax');
+        if (taxSpan) {
+            taxSpan.textContent = taxAmount.toFixed(2);
+            taxSpan.dataset.taxRate = taxRate;
+        }
+        
         const lineTotal = qty * cost;
         
         row.querySelector('.book-in-part-total').textContent = formatCurrency(lineTotal);
@@ -2101,6 +3020,9 @@ function saveBookIn(e) {
         const name = row.querySelector('[data-field="name"]').value.trim();
         const quantity = parseInt(row.querySelector('[data-field="quantity"]').value) || 0;
         const cost = parseFloat(row.querySelector('[data-field="cost"]').value) || 0;
+        const costIncVat = parseFloat(row.querySelector('[data-field="costIncVat"]').value) || 0;
+        const taxRate = parseFloat(row.querySelector('.book-in-part-tax')?.dataset.taxRate) || 15;
+        const taxAmount = cost * (taxRate / 100);
         
         if (name && quantity > 0) {
             bookedParts.push({
@@ -2108,6 +3030,9 @@ function saveBookIn(e) {
                 name: name,
                 quantity: quantity,
                 costExVat: cost,
+                costIncVat: costIncVat,
+                taxAmount: taxAmount,
+                taxRate: taxRate,
                 total: quantity * cost
             });
         }
@@ -2133,6 +3058,7 @@ function saveBookIn(e) {
         totalValue: parseFloat(document.getElementById('book-in-total-value').value) || 0,
         parts: bookedParts,
         notes: document.getElementById('book-in-notes').value,
+        images: currentBookInImages.length ? [...currentBookInImages] : [],
         createdAt: isEdit ? bookInRecords.find(r => r.id === existingId).createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -2291,6 +3217,10 @@ function editBookIn(id) {
     const subtotal = record.parts.reduce((sum, p) => sum + (p.quantity * p.costExVat), 0);
     if (hint) hint.textContent = 'Parts subtotal: ' + formatCurrency(subtotal);
     
+    // Load existing images
+    currentBookInImages = record.images && record.images.length ? [...record.images] : [];
+    renderBookInImageGallery();
+    
     openModal('book-in-modal');
 }
 
@@ -2339,6 +3269,8 @@ function switchPartsTab(tabId) {
     // Refresh specific tab content
     if (tabId === 'parts-list-tab') {
         renderPartsList();
+    } else if (tabId === 'stock-levels-tab') {
+        renderStockLevelsList();
     } else if (tabId === 'parts-returns-tab') {
         renderPartsReturnsList();
     } else if (tabId === 'parts-book-in-tab') {
@@ -2381,12 +3313,70 @@ initializeBilling = function() {
 // ===========================================
 
 let techItems = JSON.parse(localStorage.getItem('techItems')) || [];
+let techImages = []; // Temporary storage for images during upload
 
 const TECH_TYPE_CONFIG = {
     article:  { icon: '📄', label: 'Article',  listId: 'tech-articles-list',  countId: 'total-articles-count',  searchId: 'tech-articles-search'  },
     bulletin: { icon: '📋', label: 'Bulletin', listId: 'tech-bulletins-list', countId: 'total-bulletins-count', searchId: 'tech-bulletins-search' },
     tip:      { icon: '💡', label: 'Tip',      listId: 'tech-tips-list',      countId: 'total-tips-count',      searchId: 'tech-tips-search'      }
 };
+
+// Handle tech image upload
+function handleTechImageUpload(event) {
+    const files = Array.from(event.target.files);
+    const maxImages = 5;
+    
+    if (techImages.length + files.length > maxImages) {
+        showNotification(`Maximum ${maxImages} images allowed`, 'error');
+        return;
+    }
+    
+    files.forEach(file => {
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please select image files only', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            techImages.push({
+                data: e.target.result,
+                name: file.name
+            });
+            renderTechImagePreviews();
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Clear the input so the same file can be selected again
+    event.target.value = '';
+}
+
+function renderTechImagePreviews() {
+    const container = document.getElementById('tech-images-preview');
+    if (!container) return;
+    
+    container.innerHTML = techImages.map((img, index) => `
+        <div class="tech-image-preview-item">
+            <img src="${img.data}" alt="${img.name}">
+            <button type="button" class="remove-image" onclick="removeTechImage(${index})">&times;</button>
+        </div>
+    `).join('');
+}
+
+function removeTechImage(index) {
+    if (!confirm('Are you sure you want to remove this image?')) return;
+    techImages.splice(index, 1);
+    renderTechImagePreviews();
+}
+
+function openImageLightbox(src) {
+    const lightbox = document.createElement('div');
+    lightbox.className = 'image-lightbox';
+    lightbox.onclick = () => lightbox.remove();
+    lightbox.innerHTML = `<img src="${src}" alt="Image">`;
+    document.body.appendChild(lightbox);
+}
 
 function openTechModal(type, id = null) {
     const cfg = TECH_TYPE_CONFIG[type];
@@ -2396,6 +3386,10 @@ function openTechModal(type, id = null) {
     document.getElementById('tech-form').reset();
     document.getElementById('tech-item-id').value = '';
     document.getElementById('tech-item-type').value = type;
+    
+    // Reset images
+    techImages = [];
+    renderTechImagePreviews();
 
     if (id) {
         const item = techItems.find(i => i.id === id);
@@ -2410,6 +3404,12 @@ function openTechModal(type, id = null) {
         document.getElementById('tech-author').value = item.author || '';
         document.getElementById('tech-priority').value = item.priority || 'normal';
         document.getElementById('tech-tags').value = (item.tags || []).join(', ');
+        
+        // Load existing images
+        if (item.images && item.images.length > 0) {
+            techImages = [...item.images];
+            renderTechImagePreviews();
+        }
     } else {
         titleEl.textContent = `${cfg.icon} Add ${cfg.label}`;
         saveBtn.textContent = `Save ${cfg.label}`;
@@ -2438,6 +3438,7 @@ function saveTechItem(e) {
         author: document.getElementById('tech-author').value.trim(),
         priority: document.getElementById('tech-priority').value,
         tags: tags,
+        images: techImages,
         createdAt: isEdit ? techItems.find(i => i.id === existingId).createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -2524,6 +3525,15 @@ function renderTechList(type, filter = '') {
         if (item.author) metaParts.push(`👤 ${item.author}`);
         metaParts.push(`🕒 ${new Date(item.updatedAt).toLocaleDateString()}`);
         const metaHtml = `<div class="tech-card-meta">${metaParts.map(m => `<span>${m}</span>`).join('')}</div>`;
+        
+        // Images HTML
+        const imagesHtml = item.images && item.images.length > 0
+            ? `<div class="tech-card-images">${item.images.map(img => `
+                <div class="tech-card-image" onclick="openImageLightbox('${img.data}')">
+                    <img src="${img.data}" alt="${img.name || 'Image'}">
+                </div>
+            `).join('')}</div>`
+            : '';
 
         return `
         <div class="tech-knowledge-card priority-${item.priority}">
@@ -2540,6 +3550,7 @@ function renderTechList(type, filter = '') {
             ${metaHtml}
             <div class="tech-card-content" id="tech-content-${item.id}">${item.content}</div>
             <button class="tech-read-more" id="tech-read-more-${item.id}" onclick="toggleTechContent('${item.id}')">Read more ▼</button>
+            ${imagesHtml}
             ${tagsHtml}
         </div>`;
     }).join('');
@@ -2594,3 +3605,82 @@ function initTechKnowledgeBase() {
     updateTechSummary('bulletin');
     updateTechSummary('tip');
 }
+
+// Part image hover tooltip functions
+let partImageHover = null;
+
+function showPartImageHover(e) {
+    const row = e.currentTarget;
+    const images = JSON.parse(row.dataset.images || '[]');
+    
+    if (!images || images.length === 0) return;
+    
+    // Create hover tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'part-image-hover-tooltip';
+    tooltip.innerHTML = `
+        <div class="hover-tooltip-header">
+            <strong>Part Images</strong>
+            <span class="hover-tooltip-close">&times;</span>
+        </div>
+        <div class="hover-tooltip-images">
+            ${images.map(img => `<img src="${img}" alt="Part Image">`).join('')}
+        </div>
+    `;
+    
+    // Position tooltip
+    const rect = row.getBoundingClientRect();
+    tooltip.style.left = rect.right + 10 + 'px';
+    tooltip.style.top = rect.top + 'px';
+    
+    document.body.appendChild(tooltip);
+    partImageHover = tooltip;
+    
+    // Close button handler
+    tooltip.querySelector('.hover-tooltip-close').addEventListener('click', hidePartImageHover);
+    
+    // Prevent tooltip from going off screen
+    const tooltipRect = tooltip.getBoundingClientRect();
+    if (tooltipRect.right > window.innerWidth) {
+        tooltip.style.left = (rect.left - tooltipRect.width - 10) + 'px';
+    }
+}
+
+function hidePartImageHover() {
+    if (partImageHover) {
+        partImageHover.remove();
+        partImageHover = null;
+    }
+}
+
+// Invoice Notes Functions
+function openInvoiceNotesModal(id) {
+    const invoice = invoices.find(i => i.id === id);
+    if (!invoice) return;
+    
+    document.getElementById('invoice-notes-id').value = id;
+    document.getElementById('invoice-notes-text').value = invoice.notes || '';
+    
+    openModal('invoice-notes-modal');
+}
+
+// Handle invoice notes form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const notesForm = document.getElementById('invoice-notes-form');
+    if (notesForm) {
+        notesForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('invoice-notes-id').value;
+            const notes = document.getElementById('invoice-notes-text').value;
+            
+            const invoiceIndex = invoices.findIndex(i => i.id === id);
+            if (invoiceIndex >= 0) {
+                invoices[invoiceIndex].notes = notes;
+                saveData();
+                closeModal('invoice-notes-modal');
+                showNotification('Invoice notes saved successfully!', 'success');
+            }
+        });
+    }
+});
