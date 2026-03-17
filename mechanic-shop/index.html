@@ -18,10 +18,22 @@
             <div class="header-right">
                 <div id="current-date"></div>
                 <div class="weather-widget" id="weather-widget">
-                    <span class="weather-icon" id="weather-icon">🌡️</span>
-                    <div class="weather-info">
-                        <span class="weather-temp" id="weather-temp">--°C</span>
-                        <span class="weather-desc" id="weather-desc">Loading...</span>
+                    <div class="weather-current">
+                        <span class="weather-icon" id="weather-icon">🌡️</span>
+                        <div class="weather-info">
+                            <span class="weather-temp" id="weather-temp">--°C</span>
+                            <span class="weather-desc" id="weather-desc">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="weather-forecast">
+                        <div class="weather-forecast-item">
+                            <span class="forecast-label">Today</span>
+                            <span class="forecast-temp" id="today-forecast">--°C</span>
+                        </div>
+                        <div class="weather-forecast-item">
+                            <span class="forecast-label">Tomorrow</span>
+                            <span class="forecast-temp" id="tomorrow-forecast">--°C</span>
+                        </div>
                     </div>
                     <span class="weather-location" id="weather-location">📍 JHB</span>
                 </div>
@@ -43,6 +55,9 @@
             <li><button data-section="invoices">Invoices</button></li>
             <li><button data-section="technical">Technical</button></li>
             <li><button data-section="reminders">Reminders</button></li>
+            <li><button data-section="reports">Reports</button></li>
+            <li><button data-section="technicians">Technicians</button></li>
+            <li><button data-section="expenses">Expenses</button></li>
             <li><button data-section="settings">Settings</button></li>
         </ul>
     </nav>
@@ -111,7 +126,10 @@
         <section id="services">
             <div class="card">
                 <h2>🔧 Service Catalog</h2>
-                <button class="btn btn-primary" onclick="openServiceModal()">+ Add Service</button>
+                <div class="search-box">
+                    <input type="text" id="service-search" placeholder="Search services..." oninput="filterServicesList()">
+                    <button class="btn btn-primary" onclick="openServiceModal()">+ Add Service</button>
+                </div>
                 <div id="services-list" style="margin-top: 1.5rem;"></div>
             </div>
         </section>
@@ -147,6 +165,7 @@
                 <!-- Parts Sub-tabs -->
                 <div class="sub-tabs">
                     <button class="sub-tab active" data-tab="parts-list-tab" onclick="switchPartsTab('parts-list-tab')">Parts Inventory</button>
+                    <button class="sub-tab" data-tab="stock-levels-tab" onclick="switchPartsTab('stock-levels-tab')">Stock Levels</button>
                     <button class="sub-tab" data-tab="parts-returns-tab" onclick="switchPartsTab('parts-returns-tab')">Parts Returns</button>
                     <button class="sub-tab" data-tab="parts-book-in-tab" onclick="switchPartsTab('parts-book-in-tab')">Book In Parts</button>
                 </div>
@@ -158,6 +177,21 @@
                         <button class="btn btn-primary" onclick="openPartModal()">+ Add Part</button>
                     </div>
                     <div id="parts-list"></div>
+                </div>
+                
+                <!-- Stock Levels Tab -->
+                <div id="stock-levels-tab" class="tab-content">
+                    <div class="stock-levels-summary" id="stock-levels-summary">
+                        <div class="summary-card">
+                            <h4>Parts to Reorder</h4>
+                            <span id="reorder-count">0</span>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Estimated Order Value</h4>
+                            <span id="reorder-value">R0.00</span>
+                        </div>
+                    </div>
+                    <div id="stock-levels-list"></div>
                 </div>
                 
                 <!-- Parts Returns Tab -->
@@ -305,6 +339,225 @@
             </div>
         </section>
 
+
+        
+
+
+        
+
+
+        <!-- Reports Section -->
+        <section id="reports">
+            <div class="card">
+                <h2>📊 Financial Reports</h2>
+                
+                <div class="report-controls" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Report Period</label>
+                        <select id="report-period" onchange="handlePeriodChange()">
+                            <option value="this-month">This Month</option>
+                            <option value="last-month">Last Month</option>
+                            <option value="this-quarter">This Quarter</option>
+                            <option value="last-quarter">Last Quarter</option>
+                            <option value="this-year">This Year</option>
+                            <option value="last-year">Last Year</option>
+                            <option value="all-time">All Time</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="custom-date-range" style="display: none; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>From Date</label>
+                            <input type="date" id="report-from-date">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>To Date</label>
+                            <input type="date" id="report-to-date">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateReports()">Generate Reports</button>
+                    <button class="btn btn-secondary" onclick="downloadReportPDF()">📄 Download PDF</button>
+                    <button class="btn btn-secondary" onclick="downloadReportExcel()">📊 Download Excel</button>
+                </div>
+
+                <div class="report-tabs">
+                    <button class="report-tab active" onclick="switchReportTab('cashflow')">Cashflow</button>
+                    <button class="report-tab" onclick="switchReportTab('profitloss')">Profit & Loss</button>
+                </div>
+
+                <!-- Cashflow Report -->
+                <div id="cashflow-report" class="report-content active">
+                    <h3>💰 Cashflow Statement</h3>
+                    <div class="report-summary">
+                        <div class="summary-card income">
+                            <h4>Total Inflows</h4>
+                            <p id="cashflow-inflows">R0.00</p>
+                        </div>
+                        <div class="summary-card expense">
+                            <h4>Total Outflows</h4>
+                            <p id="cashflow-outflows">R0.00</p>
+                        </div>
+                        <div class="summary-card net">
+                            <h4>Net Cashflow</h4>
+                            <p id="cashflow-net">R0.00</p>
+                        </div>
+                    </div>
+                    <div class="report-details">
+                        <h4>Cash Inflows (Paid Invoices)</h4>
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cashflow-inflows-list">
+                            </tbody>
+                        </table>
+                        
+                        <h4 style="margin-top: 1.5rem;">Cash Outflows (Expenses)</h4>
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cashflow-outflows-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Profit & Loss Report -->
+                <div id="profitloss-report" class="report-content" style="display: none;">
+                    <h3>📈 Profit & Loss Statement</h3>
+                    <div class="report-summary">
+                        <div class="summary-card income">
+                            <h4>Total Revenue</h4>
+                            <p id="pnl-revenue">R0.00</p>
+                        </div>
+                        <div class="summary-card expense">
+                            <h4>Total Expenses</h4>
+                            <p id="pnl-expenses">R0.00</p>
+                        </div>
+                        <div class="summary-card net">
+                            <h4>Net Profit/Loss</h4>
+                            <p id="pnl-profit">R0.00</p>
+                        </div>
+                    </div>
+                    
+                    <div class="report-details">
+                        <h4>Revenue Breakdown</h4>
+                        <div class="revenue-breakdown">
+                            <div class="breakdown-item">
+                                <span>Labor Income</span>
+                                <span id="revenue-labor">R0.00</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Parts Sales</span>
+                                <span id="revenue-parts">R0.00</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Service Charges</span>
+                                <span id="revenue-services">R0.00</span>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 1.5rem;">Expense Breakdown</h4>
+                        <div id="expense-breakdown">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technicians Section -->
+        <section id="technicians">
+            <div class="card">
+                <h2>👨‍🔧 Technicians</h2>
+                <div class="section-header">
+                    <input type="text" id="technician-search" placeholder="Search technicians...">
+                    <button class="btn btn-primary" onclick="openTechnicianModal()">+ Add Technician</button>
+                </div>
+                <div id="technicians-list"></div>
+            </div>
+        </section>
+
+        <!-- Expenses Section -->
+        <section id="expenses">
+            <div class="card">
+                <h2>💸 Business Costs & Expenses</h2>
+
+                <!-- Summary Cards -->
+                <div class="stats-grid" style="margin-bottom:1.5rem;">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3>This Month</h3>
+                            <p id="expense-month-total">R0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📆</div>
+                        <div class="stat-info">
+                            <h3>This Year</h3>
+                            <p id="expense-year-total">R0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔢</div>
+                        <div class="stat-info">
+                            <h3>Total Records</h3>
+                            <p id="expense-count">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3>Avg Monthly</h3>
+                            <p id="expense-avg-monthly">R0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters & Actions -->
+                <div class="section-header" style="flex-wrap:wrap;gap:0.5rem;">
+                    <input type="text" id="expense-search" placeholder="Search expenses..." style="flex:1;min-width:150px;">
+                    <select id="expense-filter-category" onchange="renderExpensesList()" style="min-width:150px;">
+                        <option value="">All Categories</option>
+                        <option value="Parts & Supplies">Parts & Supplies</option>
+                        <option value="Tools & Equipment">Tools & Equipment</option>
+                        <option value="Rent & Utilities">Rent & Utilities</option>
+                        <option value="Salaries & Wages">Salaries & Wages</option>
+                        <option value="Vehicle Expenses">Vehicle Expenses</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Marketing & Advertising">Marketing & Advertising</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Professional Services">Professional Services</option>
+                        <option value="Maintenance & Repairs">Maintenance & Repairs</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <select id="expense-filter-month" onchange="renderExpensesList()" style="min-width:130px;">
+                        <option value="">All Time</option>
+                        <option value="this-month">This Month</option>
+                        <option value="last-month">Last Month</option>
+                        <option value="this-year">This Year</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="openExpenseModal()">+ Add Expense</button>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div id="expense-category-breakdown" style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+
+                <div id="expenses-list"></div>
+            </div>
+        </section>
+
         <!-- Settings Section -->
         <section id="settings">
             <div class="card">
@@ -344,10 +597,40 @@
                             <input type="email" id="settings-shop-email">
                         </div>
                     </div>
+
+                    <!-- Weather Location Settings -->
+                    <div class="settings-section-divider">
+                        <span>🌤️ Weather Widget Location</span>
+                    </div>
+                    <p style="font-size:0.85rem;color:#888;margin:-0.5rem 0 1rem 0;">Set a default location for the weather widget. Leave blank to use browser geolocation.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>City Name <span style="font-size:0.78rem;color:#888;font-weight:400;">(display label)</span></label>
+                            <input type="text" id="settings-weather-city" placeholder="e.g. Johannesburg">
+                        </div>
+                        <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="lookupWeatherCity()">🔍 Look Up Coordinates</button>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" id="settings-weather-lat" step="0.0001" placeholder="-26.2041 (Johannesburg)">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" id="settings-weather-lon" step="0.0001" placeholder="28.0473 (Johannesburg)">
+                        </div>
+                    </div>
                     <button type="submit" class="btn btn-primary">Save Settings</button>
                 </form>
             </div>
         </section>
+
+        
+
+        
+
     </main>
 
     <!-- Customer Modal -->
@@ -430,6 +713,10 @@
                     <input type="text" id="vehicle-vin">
                 </div>
                 <div class="form-group">
+                    <label>Engine Code</label>
+                    <input type="text" id="vehicle-engine-code" placeholder="e.g., 2.0 TSI, B48, etc.">
+                </div>
+                <div class="form-group">
                     <label>Color</label>
                     <select id="vehicle-color">
                         <option value="">Select Color</option>
@@ -463,30 +750,29 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Vehicle Image</label>
-                    <div class="image-upload-container">
-                        <input type="file" id="vehicle-image" accept="image/*" onchange="previewVehicleImage(this)">
-                        <label for="vehicle-image" class="image-upload-label">
-                            📷 Click to upload vehicle image
-                        </label>
+                    <label>Licence Disc Photo</label>
+                    <input type="file" id="vehicle-licence-disc" accept="image/*" style="display:none" onchange="handleLicenceDiscUpload(this)">
+                    <div id="licence-disc-preview" class="licence-disc-preview" onclick="document.getElementById('vehicle-licence-disc').click()">
+                        <div class="licence-disc-placeholder">
+                            <span>📋</span><span>Click to add licence disc photo</span>
+                        </div>
                     </div>
-                    <div id="vehicle-image-preview" style="margin-top: 0.5rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Photos <span style="font-size:0.8rem;color:#888;font-weight:400;">(up to 8 images)</span></label>
+                    <input type="file" id="vehicle-image" accept="image/*" multiple style="display:none" onchange="addVehicleImages(this)">
+                    <div id="vehicle-image-gallery" class="image-gallery">
+                        <div class="image-gallery-add" onclick="document.getElementById('vehicle-image').click()" title="Add photos">
+                            <span>📷</span><span>Add Photo</span>
+                        </div>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Save Vehicle</button>
             </form>
         </div>
     </div>
 
-    <!-- Vehicle Image Modal -->
-    <div id="vehicle-image-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Vehicle Image</h2>
-                <button class="close-btn" onclick="closeModal('vehicle-image-modal')">&times;</button>
-            </div>
-            <div id="vehicle-image-display" style="text-align: center;"></div>
-        </div>
-    </div>
+    <!-- Vehicle Image Lightbox (injected by JS) -->
 
     <!-- Service Modal -->
     <div id="service-modal" class="modal">
@@ -506,7 +792,7 @@
                     <textarea id="service-description" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Price ($) *</label>
+                    <label>Price (R) *</label>
                     <input type="number" id="service-price" min="0" step="0.01" required>
                 </div>
                 <div class="form-group">
@@ -584,6 +870,12 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Assigned Technician</label>
+                    <select id="work-order-technician">
+                        <option value="">Select Technician</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Services *</label>
                     <div id="work-order-services"></div>
                 </div>
@@ -603,12 +895,16 @@
                 </div>
                 <div class="form-group">
                     <label>Status</label>
-                    <select id="work-order-status">
+                    <select id="work-order-status" onchange="toggleCompletedDate()">
                         <option value="pending">Pending</option>
                         <option value="in-progress">In Progress</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
+                </div>
+                <div class="form-group" id="completed-date-group" style="display: none;">
+                    <label>Completed Date</label>
+                    <input type="date" id="work-order-completed-date">
                 </div>
                 <button type="submit" class="btn btn-primary">Save Work Order</button>
             </form>
@@ -628,9 +924,15 @@
                     <label>Part Name *</label>
                     <input type="text" id="part-name" required>
                 </div>
-                <div class="form-group">
-                    <label>Part Number/SKU</label>
-                    <input type="text" id="part-sku">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Part Number/SKU</label>
+                        <input type="text" id="part-sku">
+                    </div>
+                    <div class="form-group">
+                        <label>Serial Number</label>
+                        <input type="text" id="part-serial-number" placeholder="Enter serial number">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
@@ -675,6 +977,16 @@
                         <input type="number" id="part-stock" min="0" required>
                     </div>
                 </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Min Stock Level</label>
+                        <input type="number" id="part-min-stock" min="0" placeholder="Reorder threshold">
+                    </div>
+                    <div class="form-group">
+                        <label>Reorder Quantity</label>
+                        <input type="number" id="part-reorder-qty" min="1" placeholder="Qty to order">
+                    </div>
+                </div>
                 <!-- Profit Display -->
                 <div class="profit-display" id="profit-display">
                     <div class="profit-row">
@@ -695,16 +1007,128 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Part Image</label>
-                    <div class="image-upload-container">
-                        <input type="file" id="part-image" accept="image/*" onchange="previewPartImage(this)">
-                        <label for="part-image" class="image-upload-label">
-                            📷 Click to upload part image
-                        </label>
+                    <label>Part Photos <span style="font-size:0.8rem;color:#888;font-weight:400;">(up to 8 images)</span></label>
+                    <input type="file" id="part-image" accept="image/*" multiple style="display:none" onchange="addPartImages(this)">
+                    <div id="part-image-gallery" class="image-gallery">
+                        <div class="image-gallery-add" onclick="document.getElementById('part-image').click()" title="Add photos">
+                            <span>📷</span><span>Add Photo</span>
+                        </div>
                     </div>
-                    <div id="part-image-preview" style="margin-top: 0.5rem;"></div>
                 </div>
                 <button type="submit" class="btn btn-primary">Save Part</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Technician Modal -->
+    <div id="technician-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Technician</h2>
+                <button class="close-btn" onclick="closeModal('technician-modal')">&times;</button>
+            </div>
+            <form id="technician-form">
+                <input type="hidden" id="technician-id">
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" id="technician-first-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" id="technician-last-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="technician-email">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="technician-phone">
+                </div>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" id="technician-specialization" placeholder="e.g., Engine Repair, Electrical Systems">
+                </div>
+                <div class="form-group">
+                    <label>Hourly Rate (R)</label>
+                    <input type="number" id="technician-hourly-rate" min="0" step="0.01" placeholder="e.g., 150.00">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="technician-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="technician-notes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Technician</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expense-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Expense</h2>
+                <button class="close-btn" onclick="closeModal('expense-modal')">&times;</button>
+            </div>
+            <form id="expense-form">
+                <input type="hidden" id="expense-id">
+                <div class="form-group">
+                    <label>Description *</label>
+                    <input type="text" id="expense-description" required placeholder="e.g., Oil purchase, Tool rental">
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="expense-category" required>
+                        <option value="">Select Category</option>
+                        <option value="Parts & Supplies">Parts & Supplies</option>
+                        <option value="Tools & Equipment">Tools & Equipment</option>
+                        <option value="Rent & Utilities">Rent & Utilities</option>
+                        <option value="Salaries & Wages">Salaries & Wages</option>
+                        <option value="Vehicle Expenses">Vehicle Expenses</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Marketing & Advertising">Marketing & Advertising</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Professional Services">Professional Services</option>
+                        <option value="Maintenance & Repairs">Maintenance & Repairs</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount (R) *</label>
+                    <input type="number" id="expense-amount" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="expense-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="expense-payment-method">
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="EFT">EFT</option>
+                        <option value="Credit">Credit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Vendor/Supplier</label>
+                    <input type="text" id="expense-vendor" placeholder="Where was this purchased?">
+                </div>
+                <div class="form-group">
+                    <label>Receipt/Reference Number</label>
+                    <input type="text" id="expense-reference" placeholder="Invoice or receipt number">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="expense-notes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Expense</button>
             </form>
         </div>
     </div>
@@ -771,6 +1195,24 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Website</label>
+                        <div style="display:flex;gap:0.4rem;">
+                            <input type="text" id="supplier-website" placeholder="example.com or https://example.com" style="flex:1">
+                            <button type="button" class="btn btn-secondary" onclick="previewSupplierWebsite()" title="Preview Website">🔍</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Company Logo</label>
+                        <input type="file" id="supplier-logo-input" accept="image/*" style="display:none" onchange="previewSupplierLogo(this)">
+                        <div id="supplier-logo-preview" class="supplier-logo-upload-area" onclick="document.getElementById('supplier-logo-input').click()">
+                            <span style="font-size:2.5rem;">🏭</span>
+                            <p style="margin:0.4rem 0 0 0;font-size:0.82rem;color:#888;">Click to upload logo or photo</p>
+                        </div>
+                        <button type="button" class="btn btn-sm" style="margin-top:0.4rem;font-size:0.8rem;" onclick="clearSupplierLogo()">Remove Logo</button>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Notes</label>
                     <textarea id="supplier-notes" rows="2" placeholder="Additional notes about this supplier..."></textarea>
@@ -817,7 +1259,17 @@
                 <div class="book-in-parts-section">
                     <h4>Parts Being Booked In</h4>
                     <button type="button" class="btn btn-secondary" onclick="addBookInPartRow()">+ Add Part</button>
-                    <div id="book-in-parts-container" style="margin-top: 1rem;">
+                    <!-- Column Headers -->
+                    <div class="book-in-part-header" style="display:flex;gap:0.5rem;margin-top:0.5rem;padding:0.5rem;background:var(--bg-secondary);border-radius:4px;font-size:0.8rem;font-weight:600;color:var(--text-light);">
+                        <span style="flex:2;">Part Name</span>
+                        <span style="flex:0.5;text-align:center;">Qty</span>
+                        <span style="flex:0.8;text-align:center;">Cost Ex VAT</span>
+                        <span style="flex:0.8;text-align:center;">Cost Inc VAT</span>
+                        <span style="flex:0.5;text-align:center;">Tax Amt</span>
+                        <span style="flex:0.6;text-align:center;">Line Total</span>
+                        <span style="flex:0.3;"></span>
+                    </div>
+                    <div id="book-in-parts-container" style="margin-top: 0.5rem;">
                         <!-- Part rows will be added here -->
                     </div>
                 </div>
@@ -826,6 +1278,18 @@
                     <label>Notes</label>
                     <textarea id="book-in-notes" rows="2" placeholder="Additional notes..."></textarea>
                 </div>
+                
+                <!-- Invoice Images -->
+                <div class="form-group">
+                    <label>Invoice Images <span style="font-size:0.8rem;color:#888;font-weight:400;">(up to 5 images)</span></label>
+                    <input type="file" id="book-in-images" accept="image/*" multiple style="display:none" onchange="addBookInImages(this)">
+                    <div id="book-in-image-gallery" class="image-gallery">
+                        <div class="image-gallery-add" onclick="document.getElementById('book-in-images').click()" title="Add invoice images">
+                            <span>📷</span><span>Add Images</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <button type="submit" class="btn btn-primary">Book In Parts</button>
             </form>
         </div>
@@ -880,21 +1344,19 @@
                     <label>Tags <span style="font-size:0.8rem;color:#888;">(comma-separated)</span></label>
                     <input type="text" id="tech-tags" placeholder="e.g. oil leak, timing belt, recall...">
                 </div>
+                <div class="form-group">
+                    <label>Images <span style="font-size:0.8rem;color:#888;">(optional - up to 5 images)</span></label>
+                    <div class="tech-images-upload">
+                        <input type="file" id="tech-images-input" accept="image/*" multiple onchange="handleTechImageUpload(event)">
+                        <div id="tech-images-preview" class="tech-images-preview"></div>
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-primary" id="tech-save-btn">Save</button>
             </form>
         </div>
     </div>
 
-    <!-- Part Image Modal -->
-    <div id="part-image-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Part Image</h2>
-                <button class="close-btn" onclick="closeModal('part-image-modal')">&times;</button>
-            </div>
-            <div id="part-image-display" style="text-align: center;"></div>
-        </div>
-    </div>
+    <!-- Part Image Lightbox (injected by JS) -->
 
     <!-- Select Part for Work Order Modal (Full Page Style) -->
     <div id="select-part-modal" class="modal">
@@ -1135,6 +1597,27 @@
         </div>
     </div>
 
+    <!-- Invoice Notes Modal -->
+    <div id="invoice-notes-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Invoice Notes</h2>
+                <button class="close-btn" onclick="closeModal('invoice-notes-modal')">&times;</button>
+            </div>
+            <form id="invoice-notes-form">
+                <input type="hidden" id="invoice-notes-id">
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="invoice-notes-text" rows="5" placeholder="Add notes for this invoice..."></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Notes</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('invoice-notes-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Parts Return Modal -->
     <div id="return-modal" class="modal">
         <div class="modal-content">
@@ -1205,5 +1688,10 @@
     <script src="billing.js"></script>
     <script src="settings.js"></script>
     <script src="reminders.js"></script>
+<!-- Build Version -->
+    <div id="build-version" style="position: fixed; bottom: 10px; right: 10px; font-size: 11px; color: #888; z-index: 1000;">
+        v1.0.7 - 2026-03-17
+    </div>
+
 </body>
 </html>
