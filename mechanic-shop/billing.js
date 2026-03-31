@@ -1763,20 +1763,31 @@ function renderSuppliersList() {
         return;
     }
     
-    container.innerHTML = suppliers.map(supplier => `
+    container.innerHTML = suppliers.map(supplier => {
+        const logoHtml = supplier.logo
+            ? `<img src="${supplier.logo}" class="supplier-logo-thumb" alt="${supplier.name} logo">`
+            : `<div class="supplier-logo-placeholder">🏭</div>`;
+        
+        const websiteHtml = supplier.website
+            ? `<p>🌐 <a href="${supplier.website}" target="_blank" style="color:var(--primary-color);text-decoration:none;font-weight:500;" onclick="event.stopPropagation()">${supplier.website.replace(/^https?:\/\//, '')}</a></p>`
+            : '';
+
+        return `
         <div class="supplier-item">
+            ${logoHtml}
             <div class="supplier-info">
                 <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
                 <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
                 <p>👤 ${supplier.contact || 'No contact person'}</p>
-                ${supplier.accountNumber ? `<p>Account: ${supplier.accountNumber}</p>` : ''}
+                ${supplier.accountNumber ? `<p>🔑 Account: ${supplier.accountNumber}</p>` : ''}
+                ${websiteHtml}
             </div>
             <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')">Edit</button>
-                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')">Delete</button>
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Update Suppliers Summary

@@ -1,0 +1,200 @@
+100a101,111
+> // Navigate to a specific section (used by dashboard stat cards)
+> function navigateToSection(sectionId) {
+>     // Find and click the corresponding nav button
+>     const navButtons = document.querySelectorAll('nav button');
+>     navButtons.forEach(btn => {
+>         if (btn.dataset.section === sectionId) {
+>             btn.click();
+>         }
+>     });
+> }
+> 
+397c408
+<                 <tr>
+---
+>                 <tr onclick="viewCustomerDetails('${customer.id}')" style="cursor: pointer;" title="Click to view details">
+402c413
+<                         <div class="action-buttons">
+---
+>                         <div class="action-buttons" onclick="event.stopPropagation()">
+416a428,478
+> function viewCustomerDetails(id) {
+>     const customer = customers.find(c => c.id === id);
+>     if (!customer) return;
+>     
+>     const customerVehicles = vehicles.filter(v => v.customerId === id);
+>     
+>     let vehiclesHtml = '';
+>     if (customerVehicles.length > 0) {
+>         vehiclesHtml = customerVehicles.map(v => `
+>             <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+>                 <span><strong>${v.year} ${v.make} ${v.model}</strong> - ${v.plate}</span>
+>             </div>
+>         `).join('');
+>     } else {
+>         vehiclesHtml = '<p style="color: #6c757d;">No vehicles registered</p>';
+>     }
+>     
+>     const html = `
+>         <div class="customer-view-container">
+>             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+>                 <div><strong>👤 Name</strong><br>${customer.firstName} ${customer.lastName}</div>
+>                 <div><strong>📧 Email</strong><br>${customer.email || 'N/A'}</div>
+>                 <div><strong>📞 Phone</strong><br>${customer.phone || 'N/A'}</div>
+>             </div>
+>             
+>             <div style="margin-bottom: 1.5rem;">
+>                 <h4 style="margin: 0 0 10px 0;">🏠 Address</h4>
+>                 <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">
+>                     ${customer.address || 'No address provided'}
+>                 </div>
+>             </div>
+>             
+>             <div style="margin-bottom: 1.5rem;">
+>                 <h4 style="margin: 0 0 10px 0;">🚗 Vehicles (${customerVehicles.length})</h4>
+>                 ${vehiclesHtml}
+>             </div>
+>             
+>             <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+>                 <button class="btn btn-primary" onclick="editCustomer('${customer.id}'); closeModal('customer-view-modal');">✏️ Edit</button>
+>                 <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}'); closeModal('customer-view-modal');">🚗 Vehicles</button>
+>                 <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}'); closeModal('customer-view-modal');">🗑️ Delete</button>
+>                 <button class="btn btn-secondary" onclick="closeModal('customer-view-modal');">Close</button>
+>             </div>
+>         </div>
+>     `;
+>     
+>     document.getElementById('customer-view-content').innerHTML = html;
+>     document.getElementById('customer-view-title').textContent = `👤 ${customer.firstName} ${customer.lastName}`;
+>     openModal('customer-view-modal');
+> }
+> 
+488a551
+>             document.getElementById('vehicle-notes').value = vehicle.notes || '';
+620a684
+>         notes: document.getElementById('vehicle-notes').value || '',
+724c788
+<                 <tr>
+---
+>                 <tr onclick="viewVehicleDetails('${vehicle.id}')" style="cursor: pointer;" title="Click to view details">
+732c796
+<                         <div class="action-buttons">
+---
+>                         <div class="action-buttons" onclick="event.stopPropagation()">
+789a854,915
+> function viewVehicleDetails(id) {
+>     const vehicle = vehicles.find(v => v.id === id);
+>     if (!vehicle) return;
+>     
+>     const customer = customers.find(c => c.id === vehicle.customerId);
+>     const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+>     
+>     let imagesHtml = '';
+>     if (vImgs.length > 0) {
+>         imagesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">' +
+>             vImgs.map((img, idx) => `<img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="openImageLightbox('${img}')">`).join('') +
+>             '</div>';
+>     } else {
+>         imagesHtml = '<p style="color: #6c757d;">No images available</p>';
+>     }
+>     
+>     const html = `
+>         <div class="vehicle-view-container">
+>             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+>                 <div><strong>🚗 Vehicle</strong><br>${vehicle.year} ${vehicle.make} ${vehicle.model}</div>
+>                 <div><strong>🔤 Plate</strong><br>${vehicle.plate || 'N/A'}</div>
+>                 <div><strong>🔧 Engine Code</strong><br>${vehicle.engineCode || 'N/A'}</div>
+>                 <div><strong>📏 Mileage</strong><br>${vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : 'N/A'}</div>
+>             </div>
+>             
+>             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+>                 <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+>                     <h4 style="margin: 0 0 10px 0;">👤 Owner</h4>
+>                     <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+>                     <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+>                 </div>
+>                 <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+>                     <h4 style="margin: 0 0 10px 0;">📋 VIN</h4>
+>                     <p style="margin: 4px 0; font-size: 14px; word-break: break-all;">${vehicle.vin || 'N/A'}</p>
+>                 </div>
+>             </div>
+>             
+>             <div style="margin-bottom: 1.5rem;">
+>                 <h4 style="margin: 0 0 10px 0;">📷 Vehicle Images</h4>
+>                 ${imagesHtml}
+>             </div>
+>             
+>             ${vehicle.notes ? `
+>             <div style="margin-bottom: 1.5rem;">
+>                 <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+>                 <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">${vehicle.notes}</div>
+>             </div>
+>             ` : ''}
+>             
+>             <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+>                 <button class="btn btn-primary" onclick="editVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">✏️ Edit</button>
+>                 <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">🗑️ Delete</button>
+>                 <button class="btn btn-secondary" onclick="closeModal('vehicle-view-modal');">Close</button>
+>             </div>
+>         </div>
+>     `;
+>     
+>     document.getElementById('vehicle-view-content').innerHTML = html;
+>     document.getElementById('vehicle-view-title').textContent = `🚗 ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+>     openModal('vehicle-view-modal');
+> }
+> 
+845a972,978
+>     
+>     // Populate brand dropdown
+>     populateServiceBrandDropdown();
+>     
+>     // Populate year dropdown
+>     populateServiceYearDropdown();
+>     
+848a982,1021
+> // Populate Service Brand Dropdown
+> function populateServiceBrandDropdown() {
+>     const brandSelect = document.getElementById('service-brand');
+>     brandSelect.innerHTML = '<option value="">All Brands</option>';
+>     
+>     const brands = Object.keys(carBrandsAndModels).sort();
+>     brands.forEach(brand => {
+>         brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+>     });
+> }
+> 
+> // Update Service Model Dropdown based on selected Brand
+> function updateServiceModelDropdown() {
+>     const brandSelect = document.getElementById('service-brand');
+>     const modelSelect = document.getElementById('service-vehicle-type');
+>     const selectedBrand = brandSelect.value;
+>     
+>     modelSelect.innerHTML = '<option value="">All Vehicle Types</option>';
+>     
+>     if (!selectedBrand) {
+>         return;
+>     }
+>     
+>     const models = carBrandsAndModels[selectedBrand] || [];
+>     models.forEach(model => {
+>         modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+>     });
+> }
+> 
+> // Populate Service Year Dropdown
+> function populateServiceYearDropdown() {
+>     const yearSelect = document.getElementById('service-year');
+>     yearSelect.innerHTML = '<option value="">All Years</option>';
+>     
+>     const currentYear = new Date().getFullYear();
+>     for (let year = currentYear + 1; year >= 1990; year--) {
+>         yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+>     }
+> }
+> 
+856a1030,1032
+>         brand: document.getElementById('service-brand').value || '',
+>         vehicleType: document.getElementById('service-vehicle-type').value || '',
+>         year: document.getElementById('service-year').value || '',

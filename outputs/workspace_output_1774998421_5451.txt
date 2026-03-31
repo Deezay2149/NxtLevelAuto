@@ -1,0 +1,1 @@
+2877:            <div><strong>Supplier:</strong> ${part.supplier || 'N/A'}</div>

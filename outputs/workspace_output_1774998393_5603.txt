@@ -1,0 +1,100 @@
+51d50
+<             <li><button data-section="suppliers">Suppliers</button></li>
+52a52
+>             <li><button data-section="suppliers">Suppliers</button></li>
+54a55
+>             <li><button data-section="quotes">Quotes</button></li>
+58d58
+<             <li><button data-section="reports">Reports</button></li>
+60a61
+>             <li><button data-section="reports">Reports</button></li>
+70c71
+<                 <div class="stat-card">
+---
+>                 <div class="stat-card clickable" onclick="navigateToSection('customers')" title="Go to Customers">
+74c75
+<                 <div class="stat-card">
+---
+>                 <div class="stat-card clickable" onclick="navigateToSection('vehicles')" title="Go to Vehicles">
+78c79
+<                 <div class="stat-card">
+---
+>                 <div class="stat-card clickable" onclick="navigateToSection('appointments')" title="Go to Appointments">
+82c83
+<                 <div class="stat-card">
+---
+>                 <div class="stat-card clickable" onclick="navigateToSection('work-orders')" title="Go to Work Orders">
+242c243
+<                     <input type="text" id="suppliers-search" placeholder="Search suppliers...">
+---
+>                     <input type="text" id="suppliers-search" placeholder="Search suppliers by name, contact, phone, email..." oninput="filterSuppliers()">
+270a272,296
+>         <!-- Quotes Section -->
+>         <section id="quotes">
+>             <div class="card">
+>                 <h2>📋 Quote Management</h2>
+>                 <div class="search-box" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+>                     <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+>                     <button class="btn btn-primary" onclick="openCreateQuoteModal()">+ Create Quote</button>
+>                 </div>
+>                 <div id="quotes-list"></div>
+>             </div>
+>         </section>
+> 
+>     <!-- Quote View Modal -->
+>     <div id="quote-view-modal" class="modal">
+>         <div class="modal-content modal-large">
+>             <div class="modal-header">
+>                 <h2>📋 Quote Details</h2>
+>                 <button class="close-btn" onclick="closeModal('quote-view-modal')">&times;</button>
+>             </div>
+>             <div id="quote-view-content" class="modal-body">
+>                 <!-- Content will be injected here -->
+>             </div>
+>         </div>
+>     </div>
+> 
+671a698,710
+>     <!-- Customer View Modal -->
+>     <div id="customer-view-modal" class="modal">
+>         <div class="modal-content modal-large">
+>             <div class="modal-header">
+>                 <h2 id="customer-view-title">👤 Customer Details</h2>
+>                 <button class="close-btn" onclick="closeModal('customer-view-modal')">&times;</button>
+>             </div>
+>             <div id="customer-view-content" class="modal-body">
+>                 <!-- Content will be injected here -->
+>             </div>
+>         </div>
+>     </div>
+> 
+769a809,812
+>                 <div class="form-group">
+>                     <label>Notes</label>
+>                     <textarea id="vehicle-notes" rows="3" placeholder="Add any notes about this vehicle..."></textarea>
+>                 </div>
+774a818,830
+>     <!-- Vehicle View Modal -->
+>     <div id="vehicle-view-modal" class="modal">
+>         <div class="modal-content modal-large">
+>             <div class="modal-header">
+>                 <h2 id="vehicle-view-title">🚗 Vehicle Details</h2>
+>                 <button class="close-btn" onclick="closeModal('vehicle-view-modal')">&times;</button>
+>             </div>
+>             <div id="vehicle-view-content" class="modal-body">
+>                 <!-- Content will be injected here -->
+>             </div>
+>         </div>
+>     </div>
+> 
+794a851,870
+>                     <label>Category: Brand</label>
+>                     <select id="service-brand" onchange="updateServiceModelDropdown()">
+>                         <option value="">All Brands</option>
+>                     </select>
+>                 </div>
+>                 <div class="form-grid">
+>                     <div class="form-group">
+>                         <label>Category: Vehicle Type</label>
+>                         <select id="service-vehicle-type">
+>                             <option value="">All Vehicle Types</option>

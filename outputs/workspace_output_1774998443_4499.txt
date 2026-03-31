@@ -1,0 +1,5 @@
+2682:    renderSuppliersList();
+2805:    renderSuppliersList();
+2817:    renderSuppliersList();
+2824:function renderSuppliersList() {
+2825:    const container = document.getElementById('suppliers-list');

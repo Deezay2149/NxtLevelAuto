@@ -1,0 +1,4 @@
+50:.logo {
+58:.logo span {
+2481:.licence-disc-placeholder {
+2489:.licence-disc-placeholder span:first-child {

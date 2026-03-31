@@ -1,0 +1,50 @@
+/workspace/mechanic-shop/app.js:3441:            <div><strong>Supplier:</strong> ${part.supplier || 'N/A'}</div>
+/workspace/mechanic-shop/app.js:3808:    // Calculate outflows from PAID booked-in supplier invoices
+/workspace/mechanic-shop/app.js:3823:    // Add paid booked-in supplier invoices to outflows
+/workspace/mechanic-shop/app.js:3828:            description: 'Booked-In: ' + (record.supplierName || 'Unknown Supplier'),
+/workspace/mechanic-shop/app.js:3960:    // Add PAID booked-in supplier invoices to expenses
+/workspace/mechanic-shop/app.js:3975:    // Add paid booked-in supplier invoices to expense categories
+/workspace/mechanic-shop/billing.js:31:    // Populate supplier dropdown
+/workspace/mechanic-shop/billing.js:43:    const supplierId = document.getElementById('part-supplier').value;
+/workspace/mechanic-shop/billing.js:44:    const supplier = suppliers.find(s => s.id === supplierId);
+/workspace/mechanic-shop/billing.js:55:        supplierId: supplierId,
+/workspace/mechanic-shop/billing.js:56:        supplier: supplier ? supplier.name : '',
+/workspace/mechanic-shop/billing.js:112:                    <td>${part.supplier || 'N/A'}</td>
+/workspace/mechanic-shop/billing.js:140:    document.getElementById('part-supplier').value = part.supplierId || '';
+/workspace/mechanic-shop/billing.js:885:            (p.supplier && p.supplier.toLowerCase().includes(searchTerm))
+/workspace/mechanic-shop/billing.js:946:                    <td>${part.supplier || 'N/A'}</td>
+/workspace/mechanic-shop/billing.js:1017:        { id: generateId(), name: 'Oil Filter', sku: 'OF-001', description: 'Standard oil filter', costPrice: 8.00, sellingPrice: 15.00, stockQuantity: 50, supplier: 'AutoParts Co', createdAt: new Date().toISOString() },
+/workspace/mechanic-shop/billing.js:1018:        { id: generateId(), name: 'Brake Pads (Front)', sku: 'BP-001', description: 'Ceramic brake pads front', costPrice: 25.00, sellingPrice: 45.00, stockQuantity: 30, supplier: 'BrakeMaster', createdAt: new Date().toISOString() },
+/workspace/mechanic-shop/billing.js:1019:        { id: generateId(), name: 'Air Filter', sku: 'AF-001', description: 'Engine air filter', costPrice: 10.00, sellingPrice: 20.00, stockQuantity: 40, supplier: 'AutoParts Co', createdAt: new Date().toISOString() },
+/workspace/mechanic-shop/billing.js:1020:        { id: generateId(), name: 'Spark Plugs', sku: 'SP-001', description: 'Set of 4 spark plugs', costPrice: 15.00, sellingPrice: 30.00, stockQuantity: 25, supplier: 'IgnitionPro', createdAt: new Date().toISOString() },
+/workspace/mechanic-shop/billing.js:1021:        { id: generateId(), name: 'Wiper Blades', sku: 'WB-001', description: 'Pair of wiper blades', costPrice: 12.00, sellingPrice: 25.00, stockQuantity: 35, supplier: 'VisionAuto', createdAt: new Date().toISOString() },
+/workspace/mechanic-shop/billing.js:1022:        { id: generateId(), name: 'Engine Oil (5W-30)', sku: 'EO-001', description: '5 quarts synthetic oil', costPrice: 18.00, sellingPrice: 35.00, stockQuantity: 60, supplier: 'LubeMaster', createdAt: new Date().toISOString() }
+/workspace/mechanic-shop/billing.js:1675:let suppliers = JSON.parse(localStorage.getItem('suppliers')) || [];
+/workspace/mechanic-shop/billing.js:1686:    document.getElementById('supplier-form').reset();
+/workspace/mechanic-shop/billing.js:1687:    document.getElementById('supplier-id').value = '';
+/workspace/mechanic-shop/billing.js:1690:        const supplier = suppliers.find(s => s.id === id);
+/workspace/mechanic-shop/billing.js:1691:        if (supplier) {
+/workspace/mechanic-shop/billing.js:1692:            document.getElementById('supplier-id').value = supplier.id;
+/workspace/mechanic-shop/billing.js:1693:            document.getElementById('supplier-name').value = supplier.name;
+/workspace/mechanic-shop/billing.js:1694:            document.getElementById('supplier-contact').value = supplier.contact || '';
+/workspace/mechanic-shop/billing.js:1695:            document.getElementById('supplier-phone').value = supplier.phone || '';
+/workspace/mechanic-shop/billing.js:1696:            document.getElementById('supplier-email').value = supplier.email || '';
+/workspace/mechanic-shop/billing.js:1697:            document.getElementById('supplier-address').value = supplier.address || '';
+/workspace/mechanic-shop/billing.js:1698:            document.getElementById('supplier-account-number').value = supplier.accountNumber || '';
+/workspace/mechanic-shop/billing.js:1699:            document.getElementById('supplier-vat-number').value = supplier.vatNumber || '';
+/workspace/mechanic-shop/billing.js:1700:            document.getElementById('supplier-payment-terms').value = supplier.paymentTerms || 'net30';
+/workspace/mechanic-shop/billing.js:1701:            document.getElementById('supplier-status').value = supplier.status || 'active';
+/workspace/mechanic-shop/billing.js:1702:            document.getElementById('supplier-notes').value = supplier.notes || '';
+/workspace/mechanic-shop/billing.js:1706:    openModal('supplier-modal');
+/workspace/mechanic-shop/billing.js:1713:    const id = document.getElementById('supplier-id').value || generateId();
+/workspace/mechanic-shop/billing.js:1714:    const existingIndex = suppliers.findIndex(s => s.id === id);
+/workspace/mechanic-shop/billing.js:1716:    const supplier = {
+/workspace/mechanic-shop/billing.js:1718:        name: document.getElementById('supplier-name').value,
+/workspace/mechanic-shop/billing.js:1719:        contact: document.getElementById('supplier-contact').value,
+/workspace/mechanic-shop/billing.js:1720:        phone: document.getElementById('supplier-phone').value,
+/workspace/mechanic-shop/billing.js:1721:        email: document.getElementById('supplier-email').value,
+/workspace/mechanic-shop/billing.js:1722:        address: document.getElementById('supplier-address').value,
+/workspace/mechanic-shop/billing.js:1723:        accountNumber: document.getElementById('supplier-account-number').value,
+/workspace/mechanic-shop/billing.js:1724:        vatNumber: document.getElementById('supplier-vat-number').value,
+/workspace/mechanic-shop/billing.js:1725:        paymentTerms: document.getElementById('supplier-payment-terms').value,
+/workspace/mechanic-shop/billing.js:1726:        status: document.getElementById('supplier-status').value,

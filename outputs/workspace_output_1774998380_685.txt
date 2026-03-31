@@ -1,0 +1,16 @@
+total 108
+drwxr-xr-x  5 root root  4096 Mar 31 23:06 .
+drwxrwxrwt 18 root root  4096 Mar 31 23:06 ..
+drwxr-xr-x  8 root root  4096 Mar 31 23:06 .git
+-rw-r--r--  1 root root  2518 Mar 31 23:06 .gitattributes
+-rw-r--r--  1 root root  6223 Mar 31 23:06 .gitignore
+-rw-r--r--  1 root root  6127 Mar 31 23:06 MumsBatch.csproj
+-rw-r--r--  1 root root 12533 Mar 31 23:06 MumsBatchBusiness.cs
+-rw-r--r--  1 root root   217 Mar 31 23:06 MumsBatchConstants.cs
+-rw-r--r--  1 root root 16547 Mar 31 23:06 MumsBatchProcess.cs
+-rw-r--r--  1 root root   975 Mar 31 23:06 Program.cs
+drwxr-xr-x  2 root root  4096 Mar 31 23:06 Properties
+-rw-r--r--  1 root root  2695 Mar 31 23:06 StandingDataStoredProcedures.cs
+-rw-r--r--  1 root root  9940 Mar 31 23:06 app.config
+-rw-r--r--  1 root root  4725 Mar 31 23:06 connectionStrings.config
+drwxr-xr-x  2 root root  4096 Mar 31 23:06 mechanic-shop

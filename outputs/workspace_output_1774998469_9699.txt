@@ -1,0 +1,12 @@
+1316:.suppliers-summary,
+1345:.supplier-item {
+1358:.supplier-item:hover {
+1363:.supplier-info h4 {
+1368:.supplier-info p {
+1374:.supplier-status {
+1382:.supplier-status.active {
+1387:.supplier-status.inactive {
+1504:.stock-levels-supplier-group {
+1511:.stock-levels-supplier-group .supplier-header {
+1547:.stock-levels-table tfoot .supplier-total {
+1597:    .supplier-item {

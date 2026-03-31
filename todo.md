@@ -1,11 +1,7 @@
 # Todo List
 
-## Current Task
-- [ ] Fix quote management page buttons to match customer page button format
-  - [ ] Investigate current quote button implementation
-  - [ ] Compare with customer page button structure
-  - [ ] Identify and fix the styling issue
-  - [ ] Deploy to production
-
 ## Completed Tasks
 - [x] Fix navigation menu order (quotes before invoices, reports before settings, suppliers after parts)
+- [x] Fix quote management page buttons to match customer page button format
+- [x] Fix homepage layout issue (restored original styles.css)
+- [x] Fix suppliers page - added logo/pic support with row styling

@@ -1,0 +1,93 @@
+function renderSuppliersList() {
+    const container = document.getElementById('suppliers-list');
+    
+    if (suppliers.length === 0) {
+        container.innerHTML = '<p class="empty-state">No suppliers found. Add your first supplier!</p>';
+        return;
+    }
+    
+    container.innerHTML = suppliers.map(supplier => `
+        <div class="supplier-item">
+            <div class="supplier-info">
+                <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
+                <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
+                <p>👤 ${supplier.contact || 'No contact person'}</p>
+                ${supplier.accountNumber ? `<p>Account: ${supplier.accountNumber}</p>` : ''}
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Update Suppliers Summary
+function updateSuppliersSummary() {
+    const totalEl = document.getElementById('total-suppliers-count');
+    const activeEl = document.getElementById('active-suppliers-count');
+    
+    if (totalEl) totalEl.textContent = suppliers.length;
+    if (activeEl) activeEl.textContent = suppliers.filter(s => s.status === 'active').length;
+}
+
+// Populate Supplier Dropdowns
+function populateSupplierDropdowns() {
+    const dropdowns = [
+        document.getElementById('part-supplier'),
+        document.getElementById('book-in-supplier')
+    ];
+    
+    dropdowns.forEach(dropdown => {
+        if (!dropdown) return;
+        
+        const currentValue = dropdown.value;
+        dropdown.innerHTML = '<option value="">Select Supplier</option>';
+        
+        suppliers.filter(s => s.status === 'active').forEach(supplier => {
+            dropdown.innerHTML += `<option value="${supplier.id}">${supplier.name}</option>`;
+        });
+        
+        dropdown.value = currentValue;
+    });
+}
+
+// ===========================================
+// PARTS PRICING CALCULATIONS
+// ===========================================
+
+// Toggle Price Mode (Manual vs Percentage)
+function togglePriceMode() {
+    const mode = document.getElementById('part-price-mode').value;
+    const markupGroup = document.getElementById('markup-percentage-group');
+    
+    if (mode === 'percentage') {
+        markupGroup.style.display = 'block';
+        calculatePartPricing();
+    } else {
+        markupGroup.style.display = 'none';
+    }
+}
+
+// Calculate Part Pricing
+function calculatePartPricing() {
+    const costExVat = parseFloat(document.getElementById('part-cost-ex-vat').value) || 0;
+    const mode = document.getElementById('part-price-mode').value;
+    const vatRate = 15; // South African VAT rate
+    
+    // Calculate cost including VAT
+    const costIncVat = costExVat * (1 + vatRate / 100);
+    document.getElementById('part-cost-inc-vat').value = costIncVat.toFixed(2);
+    
+    // Calculate selling price based on mode
+    let sellingPrice = 0;
+    if (mode === 'percentage') {
+        const markupPercent = parseFloat(document.getElementById('part-markup-percent').value) || 0;
+        sellingPrice = costExVat * (1 + markupPercent / 100);
+        document.getElementById('part-price').value = sellingPrice.toFixed(2);
+    } else {
+        sellingPrice = parseFloat(document.getElementById('part-price').value) || 0;
+    }
+    
+    // Calculate and display profit
+    calculatePartProfit();

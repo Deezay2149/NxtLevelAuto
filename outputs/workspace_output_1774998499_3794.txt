@@ -1,0 +1,16 @@
+}
+
+.supplier-status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Book In Parts Section */
+.book-in-parts-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.book-in-parts-section h4 {

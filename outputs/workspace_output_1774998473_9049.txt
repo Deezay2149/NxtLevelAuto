@@ -1,0 +1,66 @@
+.supplier-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.supplier-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.supplier-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.supplier-info p {
+    margin: 0.25rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.supplier-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.supplier-status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.supplier-status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Book In Parts Section */
+.book-in-parts-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.book-in-parts-section h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+}
+
+.book-in-part-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem;
