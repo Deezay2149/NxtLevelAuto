@@ -60,9 +60,24 @@ const carBrandsAndModels = {
 // Data Store
 let customers = JSON.parse(localStorage.getItem('customers')) || [];
 let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+
+// Sorting state variables
+let customerSortColumn = 'name';
+let customerSortDirection = 'asc';
+let vehicleSortColumn = 'plate';
+let vehicleSortDirection = 'asc';
+let serviceSortColumn = 'name';
+let serviceSortDirection = 'asc';
+let appointmentSortColumn = 'date';
+let appointmentSortDirection = 'asc';
+
 let services = JSON.parse(localStorage.getItem('services')) || [];
 let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
 let workOrders = JSON.parse(localStorage.getItem('workOrders')) || [];
+let workOrderSortColumn = 'date';
+let workOrderSortDirection = 'desc';
+let technicians = JSON.parse(localStorage.getItem('technicians')) || [];
+let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
@@ -83,6 +98,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Navigation
+// Navigate to a specific section (used by dashboard stat cards)
+function navigateToSection(sectionId) {
+    // Find and click the corresponding nav button
+    const navButtons = document.querySelectorAll('nav button');
+    navButtons.forEach(btn => {
+        if (btn.dataset.section === sectionId) {
+            btn.click();
+        }
+    });
+}
+
 function initializeNavigation() {
     const navButtons = document.querySelectorAll('nav button');
     navButtons.forEach(button => {
@@ -116,15 +142,21 @@ async function initWeatherWidget() {
     // Default location: Johannesburg, South Africa
     const defaultLat = -26.2041;
     const defaultLon = 28.0473;
-    
-    // Try to get user's location
+
+    // Check if user has saved a custom location in Global Settings
+    const saved = JSON.parse(localStorage.getItem('globalSettings')) || {};
+    if (saved.weatherLat && saved.weatherLon) {
+        fetchWeather(saved.weatherLat, saved.weatherLon, saved.weatherCity || '');
+        return;
+    }
+
+    // Fall back to browser geolocation, then Johannesburg default
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 fetchWeather(position.coords.latitude, position.coords.longitude);
             },
             () => {
-                // If location denied, use default (Johannesburg)
                 fetchWeather(defaultLat, defaultLon);
             }
         );
@@ -133,31 +165,111 @@ async function initWeatherWidget() {
     }
 }
 
-async function fetchWeather(lat, lon) {
+async function fetchWeather(lat, lon, cityOverride) {
     const weatherIcon = document.getElementById('weather-icon');
     const weatherTemp = document.getElementById('weather-temp');
+    const weatherDesc = document.getElementById('weather-desc');
+    const weatherLocation = document.getElementById('weather-location');
+    const todayForecast = document.getElementById('today-forecast');
+    const tomorrowForecast = document.getElementById('tomorrow-forecast');
     
     try {
-        // Using Open-Meteo API (free, no API key required)
-        const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=celsius`
-        );
+        const [weatherResponse, geoResponse] = await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`),
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+        ]);
         
-        if (!response.ok) throw new Error('Weather fetch failed');
+        if (!weatherResponse.ok) throw new Error('Weather fetch failed');
         
-        const data = await response.json();
+        const data = await weatherResponse.json();
         const currentWeather = data.current_weather;
         
-        // Update temperature
-        weatherTemp.textContent = `${Math.round(currentWeather.temperature)}°C`;
+        if (weatherTemp) weatherTemp.textContent = `${Math.round(currentWeather.temperature)}°C`;
+        if (weatherIcon) weatherIcon.textContent = getWeatherIcon(currentWeather.weathercode, currentWeather.is_day);
+        if (weatherDesc) weatherDesc.textContent = getWeatherDescription(currentWeather.weathercode);
         
-        // Update icon based on weather code
-        weatherIcon.textContent = getWeatherIcon(currentWeather.weathercode, currentWeather.is_day);
+        if (weatherLocation) {
+            if (cityOverride) {
+                weatherLocation.textContent = `📍 ${cityOverride}`;
+            } else if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                const city = geoData.address?.city || geoData.address?.town || geoData.address?.suburb || geoData.address?.county || 'Your Area';
+                weatherLocation.textContent = `📍 ${city}`;
+            }
+        }
+        
+        // Populate today and tomorrow forecasts from daily data
+        if (data.daily && todayForecast) {
+            const todayMax = data.daily.temperature_2m_max[0];
+            const todayMin = data.daily.temperature_2m_min[0];
+            todayForecast.textContent = `${Math.round(todayMax)}°C / ${Math.round(todayMin)}°C`;
+        }
+        
+        if (data.daily && tomorrowForecast) {
+            const tomorrowMax = data.daily.temperature_2m_max[1];
+            const tomorrowMin = data.daily.temperature_2m_min[1];
+            tomorrowForecast.textContent = `${Math.round(tomorrowMax)}°C / ${Math.round(tomorrowMin)}°C`;
+        }
         
     } catch (error) {
         console.error('Weather error:', error);
-        weatherTemp.textContent = '--°C';
-        weatherIcon.textContent = '🌡️';
+        if (weatherTemp) weatherTemp.textContent = '--°C';
+        if (weatherIcon) weatherIcon.textContent = '🌡️';
+        if (weatherDesc) weatherDesc.textContent = 'Unavailable';
+        if (weatherLocation) weatherLocation.textContent = '📍 --';
+    }
+}
+
+function getWeatherDescription(code) {
+    const descriptions = {
+        0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+        45: 'Foggy', 48: 'Rime Fog', 51: 'Light Drizzle', 53: 'Drizzle',
+        55: 'Heavy Drizzle', 61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain',
+        71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
+        80: 'Rain Showers', 81: 'Showers', 82: 'Heavy Showers',
+        85: 'Snow Showers', 86: 'Heavy Snow Showers',
+        95: 'Thunderstorm', 96: 'Thunderstorm + Hail', 99: 'Heavy Thunderstorm'
+    };
+    return descriptions[code] || 'Unknown';
+}
+
+
+// Look up lat/lon for a typed city name using Nominatim (OpenStreetMap)
+async function lookupWeatherCity() {
+    const cityInput = document.getElementById('settings-weather-city');
+    const latInput  = document.getElementById('settings-weather-lat');
+    const lonInput  = document.getElementById('settings-weather-lon');
+    if (!cityInput) return;
+
+    const cityName = cityInput.value.trim();
+    if (!cityName) {
+        showNotification('Please enter a city name first.', 'error');
+        return;
+    }
+
+    showNotification('Looking up coordinates for "' + cityName + '"…', 'info');
+
+    try {
+        const resp = await fetch(
+            `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityName)}&format=json&limit=1`,
+            { headers: { 'Accept-Language': 'en' } }
+        );
+        if (!resp.ok) throw new Error('Nominatim request failed');
+        const results = await resp.json();
+        if (!results || results.length === 0) {
+            showNotification('City not found. Try a different name.', 'error');
+            return;
+        }
+        const { lat, lon, display_name } = results[0];
+        if (latInput) latInput.value = parseFloat(lat).toFixed(4);
+        if (lonInput) lonInput.value = parseFloat(lon).toFixed(4);
+        // Update city field with the canonical name returned
+        const shortName = display_name.split(',')[0].trim();
+        cityInput.value = shortName;
+        showNotification(`Found: ${shortName} (${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)})`, 'success');
+    } catch (err) {
+        console.error('lookupWeatherCity error:', err);
+        showNotification('Could not look up coordinates. Check your connection.', 'error');
     }
 }
 
@@ -215,13 +327,16 @@ function openCustomerModal() {
 function saveCustomer(e) {
     e.preventDefault();
     
+    const phone = getValidatedPhone('customer-phone', true);
+    if (phone === null) return; // Validation failed
+    
     const id = document.getElementById('customer-id').value || generateId();
     const customer = {
         id: id,
         firstName: document.getElementById('customer-firstname').value,
         lastName: document.getElementById('customer-lastname').value,
         email: document.getElementById('customer-email').value,
-        phone: document.getElementById('customer-phone').value,
+        phone: phone,
         address: document.getElementById('customer-address').value,
         createdAt: new Date().toISOString()
     };
@@ -249,24 +364,53 @@ function renderCustomersList() {
         return;
     }
     
+    // Sort customers
+    const sortedCustomers = [...customers].sort((a, b) => {
+        let aVal, bVal;
+        switch (customerSortColumn) {
+            case 'name':
+                aVal = `${a.firstName} ${a.lastName}`.toLowerCase();
+                bVal = `${b.firstName} ${b.lastName}`.toLowerCase();
+                break;
+            case 'email':
+                aVal = (a.email || '').toLowerCase();
+                bVal = (b.email || '').toLowerCase();
+                break;
+            case 'phone':
+                aVal = (a.phone || '').toLowerCase();
+                bVal = (b.phone || '').toLowerCase();
+                break;
+            default:
+                aVal = `${a.firstName} ${a.lastName}`.toLowerCase();
+                bVal = `${b.firstName} ${b.lastName}`.toLowerCase();
+        }
+        if (customerSortDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
+    
+    const sortIndicator = (col) => customerSortColumn === col ? (customerSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
+                <th class="sortable${asc('name',customerSortColumn)}" onclick="sortCustomers('name')">Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('email',customerSortColumn)}" onclick="sortCustomers('email')">Email${sortIndicator('email')}</th>
+                <th class="sortable${asc('phone',customerSortColumn)}" onclick="sortCustomers('phone')">Phone${sortIndicator('phone')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            ${customers.map(customer => `
-                <tr>
+            ${sortedCustomers.map(customer => `
+                <tr onclick="viewCustomerDetails('${customer.id}')" style="cursor: pointer;" title="Click to view details">
                     <td>${customer.firstName} ${customer.lastName}</td>
                     <td>${customer.email}</td>
                     <td>${customer.phone}</td>
                     <td>
-                        <div class="action-buttons">
+                        <div class="action-buttons" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')">Edit</button>
                             <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}')">Vehicles</button>
                             <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')">Delete</button>
@@ -279,6 +423,57 @@ function renderCustomersList() {
     
     container.innerHTML = '';
     container.appendChild(table);
+}
+
+function viewCustomerDetails(id) {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    
+    const customerVehicles = vehicles.filter(v => v.customerId === id);
+    
+    let vehiclesHtml = '';
+    if (customerVehicles.length > 0) {
+        vehiclesHtml = customerVehicles.map(v => `
+            <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span><strong>${v.year} ${v.make} ${v.model}</strong> - ${v.plate}</span>
+            </div>
+        `).join('');
+    } else {
+        vehiclesHtml = '<p style="color: #6c757d;">No vehicles registered</p>';
+    }
+    
+    const html = `
+        <div class="customer-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>👤 Name</strong><br>${customer.firstName} ${customer.lastName}</div>
+                <div><strong>📧 Email</strong><br>${customer.email || 'N/A'}</div>
+                <div><strong>📞 Phone</strong><br>${customer.phone || 'N/A'}</div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🏠 Address</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">
+                    ${customer.address || 'No address provided'}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🚗 Vehicles (${customerVehicles.length})</h4>
+                ${vehiclesHtml}
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editCustomer('${customer.id}'); closeModal('customer-view-modal');">✏️ Edit</button>
+                <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}'); closeModal('customer-view-modal');">🚗 Vehicles</button>
+                <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}'); closeModal('customer-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('customer-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('customer-view-content').innerHTML = html;
+    document.getElementById('customer-view-title').textContent = `👤 ${customer.firstName} ${customer.lastName}`;
+    openModal('customer-view-modal');
 }
 
 function editCustomer(id) {
@@ -327,13 +522,48 @@ function viewCustomerVehicles(customerId) {
 }
 
 // Vehicle Functions
-function openVehicleModal() {
+function openVehicleModal(vehicleId = null) {
     document.getElementById('vehicle-form').reset();
     document.getElementById('vehicle-id').value = '';
-    currentVehicleImageData = null;
-    document.getElementById('vehicle-image-preview').innerHTML = '';
+    currentVehicleImages = [];
+    currentLicenceDisc = null;
+    renderVehicleImageGallery();
+    renderLicenceDiscPreview();
     populateCustomerDropdowns();
     populateBrandDropdown();
+    
+    // If editing, load existing vehicle data
+    if (vehicleId) {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (vehicle) {
+            document.getElementById('vehicle-id').value = vehicle.id;
+            document.getElementById('vehicle-customer').value = vehicle.customerId;
+            document.getElementById('vehicle-make').value = vehicle.make;
+            updateModelDropdown();
+            document.getElementById('vehicle-model').value = vehicle.model;
+            document.getElementById('vehicle-year').value = vehicle.year;
+            document.getElementById('vehicle-plate').value = vehicle.plate;
+            document.getElementById('vehicle-vin').value = vehicle.vin || '';
+            document.getElementById('vehicle-engine-code').value = vehicle.engineCode || '';
+            document.getElementById('vehicle-color').value = vehicle.color || '';
+            document.getElementById('vehicle-mileage').value = vehicle.mileage || '';
+            document.getElementById('vehicle-last-service-mileage').value = vehicle.lastServiceMileage || '';
+            document.getElementById('vehicle-notes').value = vehicle.notes || '';
+            
+            // Load existing images
+            if (vehicle.images && vehicle.images.length) {
+                currentVehicleImages = [...vehicle.images];
+                renderVehicleImageGallery();
+            }
+            
+            // Load existing licence disc
+            if (vehicle.licenceDisc) {
+                currentLicenceDisc = vehicle.licenceDisc;
+                renderLicenceDiscPreview();
+            }
+        }
+    }
+    
     openModal('vehicle-modal');
 }
 
@@ -371,13 +601,73 @@ function updateModelDropdown() {
     });
 }
 
-let currentVehicleImageData = null;
+let currentVehicleImages = [];  // array of base64 strings
+let currentLicenceDisc = null;  // base64 string for licence disc
+let isEditingVehicle = false;  // track if we're editing an existing vehicle
+
+// Handle licence disc image upload
+function handleLicenceDiscUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please select an image file', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentLicenceDisc = e.target.result;
+        renderLicenceDiscPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderLicenceDiscPreview() {
+    const container = document.getElementById('licence-disc-preview');
+    if (!container) return;
+    
+    if (currentLicenceDisc) {
+        container.classList.add('has-image');
+        container.innerHTML = `
+            <div class="licence-disc-image-container">
+                <img src="${currentLicenceDisc}" alt="Licence Disc" onclick="event.stopPropagation(); openImageLightbox('${currentLicenceDisc}')">
+                <button type="button" class="remove-disc" onclick="event.stopPropagation(); removeLicenceDisc()">&times;</button>
+            </div>
+        `;
+    } else {
+        container.classList.remove('has-image');
+        container.innerHTML = `
+            <div class="licence-disc-placeholder">
+                <span>📋</span>
+                <span>Click to add licence disc photo</span>
+            </div>
+        `;
+    }
+}
+
+function removeLicenceDisc() {
+    if (!confirm('Are you sure you want to remove the licence disc photo?')) return;
+    currentLicenceDisc = null;
+    document.getElementById('vehicle-licence-disc').value = '';
+    renderLicenceDiscPreview();
+}
 
 function saveVehicle(e) {
     e.preventDefault();
     
     const id = document.getElementById('vehicle-id').value || generateId();
     const existingVehicle = vehicles.find(v => v.id === id);
+    
+    // When editing, use currentVehicleImages (even if empty - user may have removed all images)
+    // When creating new, use currentVehicleImages
+    let imagesToSave = currentVehicleImages;
+    
+    // If we're editing and no changes were made to images, keep existing
+    // But if user explicitly removed images, currentVehicleImages reflects that
+    if (isEditingVehicle) {
+        imagesToSave = currentVehicleImages; // Use whatever is in current array (could be empty)
+    }
     
     const vehicle = {
         id: id,
@@ -387,10 +677,13 @@ function saveVehicle(e) {
         year: parseInt(document.getElementById('vehicle-year').value),
         plate: document.getElementById('vehicle-plate').value,
         vin: document.getElementById('vehicle-vin').value,
+        engineCode: document.getElementById('vehicle-engine-code').value,
         color: document.getElementById('vehicle-color').value,
         mileage: parseInt(document.getElementById('vehicle-mileage').value) || 0,
         lastServiceMileage: parseInt(document.getElementById('vehicle-last-service-mileage').value) || 0,
-        image: currentVehicleImageData || (existingVehicle ? existingVehicle.image : null),
+        notes: document.getElementById('vehicle-notes').value || '',
+        licenceDisc: currentLicenceDisc, // Can be null if removed
+        images: imagesToSave,
         createdAt: existingVehicle ? existingVehicle.createdAt : new Date().toISOString()
     };
     
@@ -406,45 +699,101 @@ function saveVehicle(e) {
     renderVehiclesList();
     updateDashboard();
     showNotification('Vehicle saved successfully!', 'success');
-    currentVehicleImageData = null;
+    currentVehicleImages = [];
+    currentLicenceDisc = null;
+    isEditingVehicle = false;
 }
 
 function renderVehiclesList() {
     const container = document.getElementById('vehicles-list');
-    
+
     if (vehicles.length === 0) {
         container.innerHTML = '<p class="empty-state">No vehicles found. Add your first vehicle!</p>';
         return;
     }
-    
+
+    // Sort vehicles
+    const sortedVehicles = [...vehicles].sort((a, b) => {
+        let aVal, bVal;
+
+        switch (vehicleSortColumn) {
+            case 'vehicle':
+                aVal = `${a.year} ${a.make} ${a.model}`.toLowerCase();
+                bVal = `${b.year} ${b.make} ${b.model}`.toLowerCase();
+                break;
+            case 'plate':
+                aVal = (a.plate || '').toLowerCase();
+                bVal = (b.plate || '').toLowerCase();
+                break;
+            case 'engineCode':
+                aVal = (a.engineCode || '').toLowerCase();
+                bVal = (b.engineCode || '').toLowerCase();
+                break;
+            case 'mileage':
+                aVal = a.mileage || 0;
+                bVal = b.mileage || 0;
+                break;
+            case 'customer':
+                const aCust = customers.find(c => c.id === a.customerId);
+                const bCust = customers.find(c => c.id === b.customerId);
+                aVal = aCust ? `${aCust.firstName} ${aCust.lastName}`.toLowerCase() : '';
+                bVal = bCust ? `${bCust.firstName} ${bCust.lastName}`.toLowerCase() : '';
+                break;
+            default:
+                aVal = a[vehicleSortColumn] || '';
+                bVal = b[vehicleSortColumn] || '';
+        }
+
+        if (vehicleSortDirection === 'asc') {
+            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        } else {
+            return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+        }
+    });
+
+    // Generate sort indicator
+    const sortIndicator = (col) => {
+        if (vehicleSortColumn === col) {
+            return vehicleSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>';
+        }
+        return '';
+    };
+
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
                 <th>Image</th>
-                <th>Vehicle</th>
-                <th>License Plate</th>
-                <th>Mileage (km)</th>
-                <th>Customer</th>
+                <th class="sortable${asc('vehicle',vehicleSortColumn)}" onclick="sortVehicles('vehicle')">Vehicle${sortIndicator('vehicle')}</th>
+                <th class="sortable${asc('plate',vehicleSortColumn)}" onclick="sortVehicles('plate')">License Plate${sortIndicator('plate')}</th>
+                <th class="sortable${asc('engineCode',vehicleSortColumn)}" onclick="sortVehicles('engineCode')">Engine Code${sortIndicator('engineCode')}</th>
+                <th class="sortable${asc('mileage',vehicleSortColumn)}" onclick="sortVehicles('mileage')">Mileage (km)${sortIndicator('mileage')}</th>
+                <th class="sortable${asc('customer',vehicleSortColumn)}" onclick="sortVehicles('customer')">Customer${sortIndicator('customer')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            ${vehicles.map(vehicle => {
+            ${sortedVehicles.map(vehicle => {
                 const customer = customers.find(c => c.id === vehicle.customerId);
-                const imageHTML = vehicle.image 
-                    ? `<img src="${vehicle.image}" class="vehicle-thumbnail" onclick="showVehicleImage('${vehicle.id}')" alt="Vehicle Image">` 
+                const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+                const imageHTML = vImgs.length
+                    ? `<div style="position:relative;display:inline-block">` +
+                       `<img src="${vImgs[0]}" class="vehicle-thumbnail" onclick="showVehicleImages('${vehicle.id}')" alt="Vehicle Image">` +
+                       (vImgs.length > 1 ? `<span style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:1px 4px;border-radius:3px;">${vImgs.length}📷</span>` : '') +
+                       `</div>`
                     : '<span style="color: var(--text-light); font-size: 0.8rem;">No image</span>';
                 const mileage = vehicle.mileage ? vehicle.mileage.toLocaleString() : '0';
+                const engineCode = vehicle.engineCode || '-';
                 return `
-                <tr>
+                <tr onclick="viewVehicleDetails('${vehicle.id}')" style="cursor: pointer;" title="Click to view details">
                     <td>${imageHTML}</td>
                     <td>${vehicle.year} ${vehicle.make} ${vehicle.model}</td>
                     <td>${vehicle.plate}</td>
+                    <td>${engineCode}</td>
                     <td>${mileage}</td>
                     <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
                     <td>
-                        <div class="action-buttons">
+                        <div class="action-buttons" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary" onclick="editVehicle('${vehicle.id}')">Edit</button>
                             <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
                         </div>
@@ -454,14 +803,122 @@ function renderVehiclesList() {
             }).join('')}
         </tbody>
     `;
-    
+
     container.innerHTML = '';
     container.appendChild(table);
+}
+
+function sortVehicles(column) {
+    if (vehicleSortColumn === column) {
+        vehicleSortDirection = vehicleSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        vehicleSortColumn = column;
+        vehicleSortDirection = 'asc';
+    }
+    renderVehiclesList();
+}
+
+// Sort Customers
+function sortCustomers(column) {
+    if (customerSortColumn === column) {
+        customerSortDirection = customerSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        customerSortColumn = column;
+        customerSortDirection = 'asc';
+    }
+    renderCustomersList();
+}
+
+// Sort Services
+function sortServices(column) {
+    if (serviceSortColumn === column) {
+        serviceSortDirection = serviceSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        serviceSortColumn = column;
+        serviceSortDirection = 'asc';
+    }
+    renderServicesList();
+}
+
+// Sort Appointments
+function sortAppointments(column) {
+    if (appointmentSortColumn === column) {
+        appointmentSortDirection = appointmentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        appointmentSortColumn = column;
+        appointmentSortDirection = 'asc';
+    }
+    renderAppointmentsList();
+}
+
+function viewVehicleDetails(id) {
+    const vehicle = vehicles.find(v => v.id === id);
+    if (!vehicle) return;
+    
+    const customer = customers.find(c => c.id === vehicle.customerId);
+    const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+    
+    let imagesHtml = '';
+    if (vImgs.length > 0) {
+        imagesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">' +
+            vImgs.map((img, idx) => `<img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="openImageLightbox('${img}')">`).join('') +
+            '</div>';
+    } else {
+        imagesHtml = '<p style="color: #6c757d;">No images available</p>';
+    }
+    
+    const html = `
+        <div class="vehicle-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>🚗 Vehicle</strong><br>${vehicle.year} ${vehicle.make} ${vehicle.model}</div>
+                <div><strong>🔤 Plate</strong><br>${vehicle.plate || 'N/A'}</div>
+                <div><strong>🔧 Engine Code</strong><br>${vehicle.engineCode || 'N/A'}</div>
+                <div><strong>📏 Mileage</strong><br>${vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : 'N/A'}</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h4 style="margin: 0 0 10px 0;">👤 Owner</h4>
+                    <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+                </div>
+                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h4 style="margin: 0 0 10px 0;">📋 VIN</h4>
+                    <p style="margin: 4px 0; font-size: 14px; word-break: break-all;">${vehicle.vin || 'N/A'}</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📷 Vehicle Images</h4>
+                ${imagesHtml}
+            </div>
+            
+            ${vehicle.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">${vehicle.notes}</div>
+            </div>
+            ` : ''}
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('vehicle-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('vehicle-view-content').innerHTML = html;
+    document.getElementById('vehicle-view-title').textContent = `🚗 ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+    openModal('vehicle-view-modal');
 }
 
 function editVehicle(id) {
     const vehicle = vehicles.find(v => v.id === id);
     if (!vehicle) return;
+    
+    // Set editing mode
+    isEditingVehicle = true;
     
     populateCustomerDropdowns();
     populateBrandDropdown();
@@ -480,23 +937,21 @@ function editVehicle(id) {
     document.getElementById('vehicle-year').value = vehicle.year;
     document.getElementById('vehicle-plate').value = vehicle.plate;
     document.getElementById('vehicle-vin').value = vehicle.vin || '';
+    document.getElementById('vehicle-engine-code').value = vehicle.engineCode || '';
     document.getElementById('vehicle-color').value = vehicle.color || '';
     document.getElementById('vehicle-mileage').value = vehicle.mileage || 0;
     document.getElementById('vehicle-last-service-mileage').value = vehicle.lastServiceMileage || 0;
     
-    // Display existing image if present
-    const previewContainer = document.getElementById('vehicle-image-preview');
-    if (vehicle.image) {
-        currentVehicleImageData = vehicle.image;
-        previewContainer.innerHTML = `
-            <img src="${vehicle.image}" class="vehicle-image-preview" onclick="document.getElementById('vehicle-image').click()">
-            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem;">Click to change image</p>
-        `;
-    } else {
-        currentVehicleImageData = null;
-        previewContainer.innerHTML = '';
-    }
+    // Load existing images into gallery
+    currentVehicleImages = vehicle.images && vehicle.images.length
+        ? [...vehicle.images]
+        : (vehicle.image ? [vehicle.image] : []);
+    renderVehicleImageGallery();
     
+    // Load existing licence disc
+    currentLicenceDisc = vehicle.licenceDisc || null;
+    renderLicenceDiscPreview();
+
     openModal('vehicle-modal');
 }
 
@@ -514,7 +969,54 @@ function deleteVehicle(id) {
 function openServiceModal() {
     document.getElementById('service-form').reset();
     document.getElementById('service-id').value = '';
+    
+    // Populate brand dropdown
+    populateServiceBrandDropdown();
+    
+    // Populate year dropdown
+    populateServiceYearDropdown();
+    
     openModal('service-modal');
+}
+
+// Populate Service Brand Dropdown
+function populateServiceBrandDropdown() {
+    const brandSelect = document.getElementById('service-brand');
+    brandSelect.innerHTML = '<option value="">All Brands</option>';
+    
+    const brands = Object.keys(carBrandsAndModels).sort();
+    brands.forEach(brand => {
+        brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+    });
+}
+
+// Update Service Model Dropdown based on selected Brand
+function updateServiceModelDropdown() {
+    const brandSelect = document.getElementById('service-brand');
+    const modelSelect = document.getElementById('service-vehicle-type');
+    const selectedBrand = brandSelect.value;
+    
+    modelSelect.innerHTML = '<option value="">All Vehicle Types</option>';
+    
+    if (!selectedBrand) {
+        return;
+    }
+    
+    const models = carBrandsAndModels[selectedBrand] || [];
+    models.forEach(model => {
+        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+    });
+}
+
+// Populate Service Year Dropdown
+function populateServiceYearDropdown() {
+    const yearSelect = document.getElementById('service-year');
+    yearSelect.innerHTML = '<option value="">All Years</option>';
+    
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear + 1; year >= 1990; year--) {
+        yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+    }
 }
 
 function saveService(e) {
@@ -525,6 +1027,10 @@ function saveService(e) {
         id: id,
         name: document.getElementById('service-name').value,
         description: document.getElementById('service-description').value,
+        brand: document.getElementById('service-brand').value || '',
+        vehicleType: document.getElementById('service-vehicle-type').value || '',
+        year: document.getElementById('service-year').value || '',
+        engineBrand: document.getElementById('service-engine-brand').value.trim() || '',
         price: parseFloat(document.getElementById('service-price').value),
         estimatedTime: parseFloat(document.getElementById('service-time').value) || 0
     };
@@ -542,40 +1048,86 @@ function saveService(e) {
     showNotification('Service saved successfully!', 'success');
 }
 
-function renderServicesList() {
+function renderServicesList(filteredServices = null) {
     const container = document.getElementById('services-list');
+    let displayServices = filteredServices || [...services];
     
-    if (services.length === 0) {
-        container.innerHTML = '<p class="empty-state">No services available. Add your first service!</p>';
+    if (displayServices.length === 0) {
+        container.innerHTML = '<p class="empty-state">No services found. Add your first service!</p>';
         return;
     }
+    
+    // Sort services (only if not filtered)
+    if (!filteredServices) {
+        displayServices.sort((a, b) => {
+            let aVal, bVal;
+            switch (serviceSortColumn) {
+                case 'name':
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+                    break;
+                case 'description':
+                    aVal = (a.description || '').toLowerCase();
+                    bVal = (b.description || '').toLowerCase();
+                    break;
+                case 'price':
+                    aVal = parseFloat(a.price) || 0;
+                    bVal = parseFloat(b.price) || 0;
+                    break;
+                case 'time':
+                    aVal = parseFloat(a.estimatedTime) || 0;
+                    bVal = parseFloat(b.estimatedTime) || 0;
+                    break;
+                default:
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+            }
+            if (serviceSortDirection === 'asc') {
+                return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+            } else {
+                return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+            }
+        });
+    }
+    
+    const sortIndicator = (col) => serviceSortColumn === col ? (serviceSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
     
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
-                <th>Service Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Est. Time</th>
+                <th class="sortable${asc('name',serviceSortColumn)}" onclick="sortServices('name')">Service Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('description',serviceSortColumn)}" onclick="sortServices('description')">Description${sortIndicator('description')}</th>
+                <th>Category</th>
+                <th>Engine Brand</th>
+                <th class="sortable${asc('price',serviceSortColumn)}" onclick="sortServices('price')">Price${sortIndicator('price')}</th>
+                <th class="sortable${asc('time',serviceSortColumn)}" onclick="sortServices('time')">Est. Time${sortIndicator('time')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            ${services.map(service => `
-                <tr>
+            ${displayServices.map(service => {
+                let categoryInfo = [];
+                if (service.brand) categoryInfo.push(service.brand);
+                if (service.vehicleType) categoryInfo.push(service.vehicleType);
+                if (service.year) categoryInfo.push(service.year);
+                const categoryDisplay = categoryInfo.length > 0 ? categoryInfo.join(' • ') : '<span style="color:var(--text-light);font-style:italic;">All Vehicles</span>';
+                return `
+                <tr onclick="viewServiceDetails('${service.id}')" style="cursor: pointer;" title="Click to view details">
                     <td>${service.name}</td>
                     <td>${service.description || 'N/A'}</td>
+                    <td>${categoryDisplay}</td>
+                    <td>${service.engineBrand || '<span style="color:var(--text-light);font-style:italic;">Any</span>'}</td>
                     <td>${formatCurrency(service.price)}</td>
                     <td>${service.estimatedTime ? service.estimatedTime + ' hrs' : 'N/A'}</td>
                     <td>
-                        <div class="action-buttons">
+                        <div class="action-buttons" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary" onclick="editService('${service.id}')">Edit</button>
                             <button class="btn btn-danger" onclick="deleteService('${service.id}')">Delete</button>
                         </div>
                     </td>
                 </tr>
-            `).join('')}
+            `;}).join('')}
         </tbody>
     `;
     
@@ -583,15 +1135,94 @@ function renderServicesList() {
     container.appendChild(table);
 }
 
+function filterServicesList() {
+    const searchTerm = document.getElementById('service-search').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        renderServicesList();
+        return;
+    }
+    
+    const filtered = services.filter(service => 
+        service.name.toLowerCase().includes(searchTerm) ||
+        (service.description && service.description.toLowerCase().includes(searchTerm)) ||
+        formatCurrency(service.price).toLowerCase().includes(searchTerm)
+    );
+    
+    renderServicesList(filtered);
+}
+
+function viewServiceDetails(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+    
+    // Build category display
+    let categoryInfo = [];
+    if (service.brand) categoryInfo.push(service.brand);
+    if (service.vehicleType) categoryInfo.push(service.vehicleType);
+    if (service.year) categoryInfo.push(service.year);
+    const categoryDisplay = categoryInfo.length > 0 ? categoryInfo.join(' • ') : 'All Vehicles';
+    
+    const html = `
+        <div class="service-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>🔧 Service</strong><br>${service.name}</div>
+                <div><strong>💰 Price</strong><br>${formatCurrency(service.price)}</div>
+                <div><strong>⏱️ Est. Time</strong><br>${service.estimatedTime ? service.estimatedTime + ' hrs' : 'N/A'}</div>
+                <div><strong>🏷️ Engine Brand</strong><br>${service.engineBrand || 'Any'}</div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                <h4 style="margin: 0 0 10px 0;">📦 Category</h4>
+                <p style="margin: 0;">${categoryDisplay}</p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Description</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">
+                    ${service.description || 'No description provided'}
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editService('${service.id}'); closeModal('service-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteService('${service.id}'); closeModal('service-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('service-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('service-view-content').innerHTML = html;
+    document.getElementById('service-view-title').textContent = `🔧 ${service.name}`;
+    openModal('service-view-modal');
+}
+
 function editService(id) {
     const service = services.find(s => s.id === id);
     if (!service) return;
     
+    // Populate dropdowns first
+    populateServiceBrandDropdown();
+    populateServiceYearDropdown();
+    
     document.getElementById('service-id').value = service.id;
     document.getElementById('service-name').value = service.name;
     document.getElementById('service-description').value = service.description || '';
+    document.getElementById('service-engine-brand').value = service.engineBrand || '';
     document.getElementById('service-price').value = service.price;
     document.getElementById('service-time').value = service.estimatedTime || '';
+    
+    // Set category values
+    if (service.brand) {
+        document.getElementById('service-brand').value = service.brand;
+        updateServiceModelDropdown();
+        if (service.vehicleType) {
+            document.getElementById('service-vehicle-type').value = service.vehicleType;
+        }
+    }
+    if (service.year) {
+        document.getElementById('service-year').value = service.year;
+    }
     
     openModal('service-modal');
 }
@@ -653,6 +1284,9 @@ function saveAppointment(e) {
     e.preventDefault();
     
     const id = document.getElementById('appointment-id').value || generateId();
+    const existingAppointment = appointments.find(a => a.id === id);
+    const isEdit = !!existingAppointment;
+    
     const appointment = {
         id: id,
         customerId: document.getElementById('appointment-customer').value,
@@ -661,8 +1295,9 @@ function saveAppointment(e) {
         date: document.getElementById('appointment-date').value,
         time: document.getElementById('appointment-time').value,
         notes: document.getElementById('appointment-notes').value,
-        status: 'scheduled',
-        createdAt: new Date().toISOString()
+        status: existingAppointment ? existingAppointment.status : 'scheduled',
+        createdAt: existingAppointment ? existingAppointment.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
     
     const existingIndex = appointments.findIndex(a => a.id === id);
@@ -674,9 +1309,13 @@ function saveAppointment(e) {
     
     saveData();
     closeModal('appointment-modal');
+    
+    // Reset modal title
+    document.querySelector('#appointment-modal .modal-header h2').textContent = 'Schedule Appointment';
+    
     renderAppointmentsList();
     updateDashboard();
-    showNotification('Appointment scheduled successfully!', 'success');
+    showNotification(isEdit ? 'Appointment updated successfully!' : 'Appointment scheduled successfully!', 'success');
 }
 
 function renderAppointmentsList() {
@@ -687,20 +1326,69 @@ function renderAppointmentsList() {
         return;
     }
     
-    // Sort by date
-    const sortedAppointments = [...appointments].sort((a, b) => 
-        new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time)
-    );
+    // Sort appointments
+    const sortedAppointments = [...appointments].sort((a, b) => {
+        let aVal, bVal;
+        const aCustomer = customers.find(c => c.id === a.customerId);
+        const bCustomer = customers.find(c => c.id === b.customerId);
+        const aVehicle = vehicles.find(v => v.id === a.vehicleId);
+        const bVehicle = vehicles.find(v => v.id === b.vehicleId);
+        const aService = services.find(s => s.id === a.serviceId);
+        const bService = services.find(s => s.id === b.serviceId);
+        
+        switch (appointmentSortColumn) {
+            case 'date':
+                aVal = new Date(a.date + ' ' + a.time).getTime();
+                bVal = new Date(b.date + ' ' + b.time).getTime();
+                break;
+            case 'customer':
+                aVal = aCustomer ? `${aCustomer.firstName} ${aCustomer.lastName}`.toLowerCase() : '';
+                bVal = bCustomer ? `${bCustomer.firstName} ${bCustomer.lastName}`.toLowerCase() : '';
+                break;
+            case 'vehicle':
+                aVal = aVehicle ? `${aVehicle.make} ${aVehicle.model}`.toLowerCase() : '';
+                bVal = bVehicle ? `${bVehicle.make} ${bVehicle.model}`.toLowerCase() : '';
+                break;
+            case 'service':
+                aVal = aService ? aService.name.toLowerCase() : '';
+                bVal = bService ? bService.name.toLowerCase() : '';
+                break;
+            case 'status':
+                aVal = (a.status || '').toLowerCase();
+                bVal = (b.status || '').toLowerCase();
+                break;
+            default:
+                aVal = new Date(a.date + ' ' + a.time).getTime();
+                bVal = new Date(b.date + ' ' + b.time).getTime();
+        }
+        if (appointmentSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+    
+    const sortIndicator = (col) => appointmentSortColumn === col ? (appointmentSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+
+    // Urgency helper: returns 'apt-due-tomorrow', 'apt-due-2days', or ''
+    function getAppointmentUrgency(apptDate) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const d = new Date(apptDate); d.setHours(0,0,0,0);
+        const diff = Math.round((d - today) / 86400000);
+        if (diff === 1) return 'apt-due-tomorrow';
+        if (diff === 2) return 'apt-due-2days';
+        return '';
+    }
     
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
-                <th>Date & Time</th>
-                <th>Customer</th>
-                <th>Vehicle</th>
-                <th>Service</th>
-                <th>Status</th>
+                <th class="sortable${asc('date',appointmentSortColumn)}" onclick="sortAppointments('date')">Date & Time${sortIndicator('date')}</th>
+                <th class="sortable${asc('customer',appointmentSortColumn)}" onclick="sortAppointments('customer')">Customer${sortIndicator('customer')}</th>
+                <th class="sortable${asc('vehicle',appointmentSortColumn)}" onclick="sortAppointments('vehicle')">Vehicle${sortIndicator('vehicle')}</th>
+                <th class="sortable${asc('service',appointmentSortColumn)}" onclick="sortAppointments('service')">Service${sortIndicator('service')}</th>
+                <th class="sortable${asc('status',appointmentSortColumn)}" onclick="sortAppointments('status')">Status${sortIndicator('status')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -709,18 +1397,26 @@ function renderAppointmentsList() {
                 const customer = customers.find(c => c.id === appointment.customerId);
                 const vehicle = vehicles.find(v => v.id === appointment.vehicleId);
                 const service = services.find(s => s.id === appointment.serviceId);
+                const urgencyClass = getAppointmentUrgency(appointment.date);
+                const urgencyBadge = urgencyClass === 'apt-due-tomorrow'
+                    ? '<span class="urgency-badge urgency-tomorrow">📅 Due Tomorrow</span>'
+                    : urgencyClass === 'apt-due-2days'
+                    ? '<span class="urgency-badge urgency-2days">🕐 Due in 2 Days</span>'
+                    : '';
                 return `
-                <tr>
-                    <td>${formatDate(appointment.date)} ${appointment.time}</td>
-                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
+                <tr class="${urgencyClass}" onclick="viewAppointmentDetails('${appointment.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${formatDate(appointment.date)} ${appointment.time}${urgencyBadge ? ' ' + urgencyBadge : ''}</td>
+                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}<br><small style="color:#888;">${customer && customer.phone ? customer.phone : ''}</small></td>
                     <td>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</td>
                     <td>${service ? service.name : 'N/A'}</td>
                     <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
                     <td>
-                        <div class="action-buttons">
+                        <div class="action-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
                             <button class="btn btn-success" onclick="completeAppointment('${appointment.id}')">Complete</button>
                             <button class="btn btn-warning" onclick="cancelAppointment('${appointment.id}')">Cancel</button>
                             <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}')">Delete</button>
+                            ${urgencyClass ? `<button class="btn btn-sms" onclick="sendSmsReminder('${appointment.id}')">📱 SMS</button><button class="btn btn-whatsapp" onclick="sendWhatsappReminder('${appointment.id}')">💬 WhatsApp</button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -728,8 +1424,7 @@ function renderAppointmentsList() {
         }).join('')}
         </tbody>
     `;
-    
-    container.innerHTML = '';
+        container.innerHTML = '';
     container.appendChild(table);
 }
 
@@ -744,6 +1439,109 @@ function completeAppointment(id) {
     }
 }
 
+function viewAppointmentDetails(id) {
+    const appointment = appointments.find(a => a.id === id);
+    if (!appointment) return;
+    
+    const customer = customers.find(c => c.id === appointment.customerId);
+    const vehicle = vehicles.find(v => v.id === appointment.vehicleId);
+    const service = services.find(s => s.id === appointment.serviceId);
+    
+    const statusColors = {
+        'scheduled': '#17a2b8',
+        'completed': '#28a745',
+        'cancelled': '#dc3545'
+    };
+    const statusColor = statusColors[appointment.status] || '#6c757d';
+    
+    const html = `
+        <div class="appointment-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>📅 Date</strong><br>${formatDate(appointment.date)}</div>
+                <div><strong>⏰ Time</strong><br>${appointment.time || 'N/A'}</div>
+                <div><strong>📊 Status</strong><br><span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">${appointment.status}</span></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h4 style="margin: 0 0 10px 0;">👤 Customer</h4>
+                    <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+                </div>
+                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h4 style="margin: 0 0 10px 0;">🚗 Vehicle</h4>
+                    <p style="margin: 4px 0;"><strong>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">🔤 ${vehicle ? vehicle.plate : 'N/A'}</p>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🔧 Service</h4>
+                <p style="margin: 4px 0;"><strong>${service ? service.name : 'N/A'}</strong></p>
+                <p style="margin: 4px 0; font-size: 14px;">💰 ${service ? formatCurrency(service.price) : 'N/A'}</p>
+            </div>
+            
+            ${appointment.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">${appointment.notes}</div>
+            </div>
+            ` : ''}
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-info" onclick="editAppointment('${appointment.id}'); closeModal('appointment-view-modal');">✏️ Edit</button>
+                <button class="btn btn-success" onclick="completeAppointment('${appointment.id}'); closeModal('appointment-view-modal');">✅ Complete</button>
+                <button class="btn btn-warning" onclick="cancelAppointment('${appointment.id}'); closeModal('appointment-view-modal');">❌ Cancel</button>
+                <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}'); closeModal('appointment-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('appointment-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('appointment-view-content').innerHTML = html;
+    document.getElementById('appointment-view-title').textContent = `📅 Appointment - ${formatDate(appointment.date)}`;
+    openModal('appointment-view-modal');
+}
+
+function editAppointment(id) {
+    const appointment = appointments.find(a => a.id === id);
+    if (!appointment) {
+        showNotification('Appointment not found', 'error');
+        return;
+    }
+    
+    // Reset form and set the ID
+    document.getElementById('appointment-form').reset();
+    document.getElementById('appointment-id').value = appointment.id;
+    
+    // Populate dropdowns first
+    populateAppointmentDropdowns();
+    
+    // Wait a bit for dropdowns to populate, then set values
+    setTimeout(() => {
+        document.getElementById('appointment-customer').value = appointment.customerId;
+        
+        // Trigger the customer change event to populate vehicles
+        const customerSelect = document.getElementById('appointment-customer');
+        const event = new Event('change');
+        customerSelect.dispatchEvent(event);
+        
+        // Wait for vehicles to populate
+        setTimeout(() => {
+            document.getElementById('appointment-vehicle').value = appointment.vehicleId;
+            document.getElementById('appointment-service').value = appointment.serviceId;
+            document.getElementById('appointment-date').value = appointment.date;
+            document.getElementById('appointment-time').value = appointment.time;
+            document.getElementById('appointment-notes').value = appointment.notes || '';
+            
+            // Update modal title
+            document.querySelector('#appointment-modal .modal-header h2').textContent = 'Edit Appointment';
+            
+            openModal('appointment-modal');
+        }, 100);
+    }, 100);
+}
+
 function cancelAppointment(id) {
     const index = appointments.findIndex(a => a.id === id);
     if (index >= 0) {
@@ -753,6 +1551,140 @@ function cancelAppointment(id) {
         updateDashboard();
         showNotification('Appointment cancelled!', 'warning');
     }
+}
+
+// ---- Appointment Reminder Functions ----
+function buildReminderMessage(appointment) {
+    const customer = customers.find(c => c.id === appointment.customerId);
+    const vehicle = vehicles.find(v => v.id === appointment.vehicleId);
+    const service = services.find(s => s.id === appointment.serviceId);
+    const globalSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
+    const shopName = globalSettings.shopName || 'NxtLevel Auto';
+    const shopPhone = globalSettings.shopPhone || '';
+
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}` : 'Valued Customer';
+    const vehicleStr = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'your vehicle';
+    const serviceStr = service ? service.name : 'your appointment';
+    const dateStr = new Date(appointment.date).toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = appointment.time || '';
+
+    const shopPhoneLine = shopPhone ? '\n\n\u{1F4DE} ' + shopPhone : '';
+    return 'Hi ' + customerName + ',\n\nThis is a friendly reminder from ' + shopName + ' that you have an upcoming appointment:\n\n\u{1F527} Service: ' + serviceStr + '\n\u{1F697} Vehicle: ' + vehicleStr + '\n\u{1F4C5} Date: ' + dateStr + '\n\u23F0 Time: ' + timeStr + '\n\nPlease confirm your attendance or contact us to reschedule.' + shopPhoneLine + '\n\nThank you!\n' + shopName + '\n';}
+
+function getCustomerPhone(appointment) {
+    const customer = customers.find(c => c.id === appointment.customerId);
+    return customer ? (customer.phone || '').replace(/\s+/g, '') : '';
+}
+
+function sendSmsReminder(appointmentId) {
+    const appointment = appointments.find(a => a.id === appointmentId);
+    if (!appointment) return;
+
+    const phone = getCustomerPhone(appointment);
+    const message = buildReminderMessage(appointment);
+
+    if (!phone) {
+        // Show modal to manually compose
+        openReminderModal(appointment, 'sms', message, '');
+        return;
+    }
+
+    // Normalize phone: remove leading 0, add country code +27 for SA numbers
+    let normalizedPhone = phone.replace(/[^+\d]/g, '');
+    if (normalizedPhone.startsWith('0')) {
+        normalizedPhone = '+27' + normalizedPhone.slice(1);
+    }
+
+    openReminderModal(appointment, 'sms', message, normalizedPhone);
+}
+
+function sendWhatsappReminder(appointmentId) {
+    const appointment = appointments.find(a => a.id === appointmentId);
+    if (!appointment) return;
+
+    const phone = getCustomerPhone(appointment);
+    const message = buildReminderMessage(appointment);
+
+    if (!phone) {
+        openReminderModal(appointment, 'whatsapp', message, '');
+        return;
+    }
+
+    let normalizedPhone = phone.replace(/[^+\d]/g, '');
+    if (normalizedPhone.startsWith('0')) {
+        normalizedPhone = '+27' + normalizedPhone.slice(1);
+    }
+
+    openReminderModal(appointment, 'whatsapp', message, normalizedPhone);
+}
+
+function openReminderModal(appointment, channel, message, phone) {
+    const customer = customers.find(c => c.id === appointment.customerId);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}` : 'Customer';
+    const channelLabel = channel === 'sms' ? '📱 SMS' : '💬 WhatsApp';
+    const channelColor = channel === 'sms' ? '#1976d2' : '#25D366';
+
+    const modalHtml = `
+        <div id="reminder-modal" class="modal active">
+            <div class="modal-content" style="max-width: 520px;">
+                <div class="modal-header" style="background:${channelColor}; color:#fff;">
+                    <h2>${channelLabel} Reminder — ${customerName}</h2>
+                    <button class="close-btn" onclick="closeReminderModal()" style="color:#fff;">&times;</button>
+                </div>
+                <div style="padding:1rem;">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="reminder-phone" value="${phone}" placeholder="+27 XX XXX XXXX" style="width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea id="reminder-message" rows="10" style="width:100%; font-size:0.9rem;">${message}</textarea>
+                    </div>
+                    <div class="action-buttons">
+                        ${channel === 'sms'
+                            ? `<a id="reminder-send-btn" href="#" class="btn btn-primary" onclick="launchSms()" style="background:#1976d2; border-color:#1976d2;">📱 Open SMS App</a>`
+                            : `<a id="reminder-send-btn" href="#" class="btn btn-primary" onclick="launchWhatsapp()" style="background:#25D366; border-color:#25D366;">💬 Open WhatsApp</a>`
+                        }
+                        <button class="btn btn-secondary" onclick="closeReminderModal()">Cancel</button>
+                    </div>
+                    <p style="font-size:0.78rem; color:#888; margin-top:0.75rem;">
+                        ${channel === 'sms'
+                            ? '📱 Clicking "Open SMS App" will open your default SMS application pre-filled with the message.'
+                            : '💬 Clicking "Open WhatsApp" will open WhatsApp Web/App with this message pre-filled. The customer must have WhatsApp.'}
+                    </p>
+                </div>
+            </div>
+        </div>`;
+
+    const existing = document.getElementById('reminder-modal');
+    if (existing) existing.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('reminder-modal')._channel = channel;
+}
+
+function closeReminderModal() {
+    const modal = document.getElementById('reminder-modal');
+    if (modal) modal.remove();
+}
+
+function launchSms() {
+    const phone = document.getElementById('reminder-phone').value.trim();
+    const message = document.getElementById('reminder-message').value.trim();
+    if (!phone) { alert('Please enter a phone number.'); return; }
+    const encoded = encodeURIComponent(message);
+    // sms: URI works on mobile; on desktop it opens the default SMS app
+    window.open(`sms:${phone}?body=${encoded}`, '_blank');
+    closeReminderModal();
+}
+
+function launchWhatsapp() {
+    const phone = document.getElementById('reminder-phone').value.trim().replace(/[^+\d]/g, '');
+    const message = document.getElementById('reminder-message').value.trim();
+    if (!phone) { alert('Please enter a phone number.'); return; }
+    const normalizedPhone = phone.startsWith('+') ? phone.slice(1) : phone;
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/${normalizedPhone}?text=${encoded}`, '_blank');
+    closeReminderModal();
 }
 
 function deleteAppointment(id) {
@@ -769,10 +1701,34 @@ function deleteAppointment(id) {
 function openWorkOrderModal() {
     document.getElementById('work-order-form').reset();
     document.getElementById('work-order-id').value = '';
+    document.getElementById('completed-date-group').style.display = 'none';
+    document.getElementById('evidence-group').style.display = 'none';
+    document.getElementById('work-order-completed-date').value = '';
     workOrderParts = [];
+    currentWorkOrderEvidence = [];
+    renderWorkOrderEvidencePreview();
     updateWorkOrderPartsList();
     populateWorkOrderDropdowns();
     openModal('work-order-modal');
+}
+
+function toggleCompletedDate() {
+    const status = document.getElementById('work-order-status').value;
+    const completedDateGroup = document.getElementById('completed-date-group');
+    const evidenceGroup = document.getElementById('evidence-group');
+    
+    if (status === 'completed') {
+        completedDateGroup.style.display = 'block';
+        evidenceGroup.style.display = 'block';
+        // Set today's date as default if not already set
+        if (!document.getElementById('work-order-completed-date').value) {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('work-order-completed-date').value = today;
+        }
+    } else {
+        completedDateGroup.style.display = 'none';
+        evidenceGroup.style.display = 'none';
+    }
 }
 
 function populateWorkOrderDropdowns() {
@@ -808,7 +1764,10 @@ function populateWorkOrderDropdowns() {
     
     // Add event listeners for service selection
     initializeServiceSelection();
-    
+
+    // Populate technicians
+    populateTechnicianDropdowns();
+
     // Vehicle select will be populated when customer changes
     vehicleSelect.innerHTML = '<option value="">Select Customer First</option>';
     vehicleSelect.disabled = true;
@@ -900,18 +1859,26 @@ function saveWorkOrder(e) {
     });
     
     const id = document.getElementById('work-order-id').value || generateId();
+    
+    // Get existing work order to preserve evidence if not changed
+    const existingWorkOrder = workOrders.find(w => w.id === id);
+    const existingEvidence = existingWorkOrder ? existingWorkOrder.evidence : [];
+    
     const workOrder = {
         id: id,
         customerId: document.getElementById('work-order-customer').value,
         vehicleId: document.getElementById('work-order-vehicle').value,
+        technicianId: document.getElementById('work-order-technician').value || null,
         services: selectedServices,
         parts: workOrderParts.map(p => ({ partId: p.partId, quantity: p.quantity, price: p.price })),
         laborHours: parseFloat(document.getElementById('work-order-labor').value) || 0,
         partsUsed: document.getElementById('work-order-parts').value,
         notes: document.getElementById('work-order-notes').value,
         status: document.getElementById('work-order-status').value,
+        completedDate: document.getElementById('work-order-completed-date').value || null,
+        evidence: currentWorkOrderEvidence.length > 0 ? currentWorkOrderEvidence : existingEvidence,
         totalCost: totalCost,
-        createdAt: new Date().toISOString()
+        createdAt: existingWorkOrder ? existingWorkOrder.createdAt : new Date().toISOString()
     };
     
     const existingIndex = workOrders.findIndex(w => w.id === id);
@@ -921,8 +1888,9 @@ function saveWorkOrder(e) {
         workOrders.push(workOrder);
     }
     
-    // Clear work order parts
+    // Clear work order parts and evidence
     workOrderParts = [];
+    currentWorkOrderEvidence = [];
     
     saveData();
     closeModal('work-order-modal');
@@ -931,46 +1899,114 @@ function saveWorkOrder(e) {
     showNotification('Work order created successfully!', 'success');
 }
 
-function renderWorkOrdersList() {
-    const container = document.getElementById('work-orders-list');
-    
-    if (workOrders.length === 0) {
-        container.innerHTML = '<p class="empty-state">No work orders found. Create your first work order!</p>';
-        return;
+function sortWorkOrders(column) {
+    if (workOrderSortColumn === column) {
+        workOrderSortDirection = workOrderSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        workOrderSortColumn = column;
+        workOrderSortDirection = 'asc';
     }
-    
-    // Sort by creation date (newest first)
-    const sortedWorkOrders = [...workOrders].sort((a, b) => 
-        new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    
+    const searchInput = document.getElementById('work-order-search');
+    if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filtered = workOrders.filter(w => {
+            const customer = customers.find(c => c.id === w.customerId);
+            return customer && (
+                customer.firstName.toLowerCase().includes(searchTerm) ||
+                customer.lastName.toLowerCase().includes(searchTerm) ||
+                w.id.includes(searchTerm)
+            );
+        });
+        renderFilteredWorkOrders(filtered);
+    } else {
+        renderWorkOrdersList();
+    }
+}
+
+function applyWorkOrderSort(list) {
+    return [...list].sort((a, b) => {
+        let valA, valB;
+        switch (workOrderSortColumn) {
+            case 'number':
+                valA = a.id.substring(0, 8).toUpperCase();
+                valB = b.id.substring(0, 8).toUpperCase();
+                break;
+            case 'date':
+                valA = new Date(a.createdAt);
+                valB = new Date(b.createdAt);
+                break;
+            case 'customer': {
+                const cA = customers.find(c => c.id === a.customerId);
+                const cB = customers.find(c => c.id === b.customerId);
+                valA = cA ? (cA.firstName + ' ' + cA.lastName).toLowerCase() : '';
+                valB = cB ? (cB.firstName + ' ' + cB.lastName).toLowerCase() : '';
+                break;
+            }
+            case 'vehicle': {
+                const vA = vehicles.find(v => v.id === a.vehicleId);
+                const vB = vehicles.find(v => v.id === b.vehicleId);
+                valA = vA ? (vA.year + ' ' + vA.make + ' ' + vA.model).toLowerCase() : '';
+                valB = vB ? (vB.year + ' ' + vB.make + ' ' + vB.model).toLowerCase() : '';
+                break;
+            }
+            case 'technician': {
+                const tA = technicians.find(t => t.id === a.technicianId);
+                const tB = technicians.find(t => t.id === b.technicianId);
+                valA = tA ? (tA.firstName + ' ' + tA.lastName).toLowerCase() : 'zzz';
+                valB = tB ? (tB.firstName + ' ' + tB.lastName).toLowerCase() : 'zzz';
+                break;
+            }
+            case 'total':
+                valA = parseFloat(a.totalCost) || 0;
+                valB = parseFloat(b.totalCost) || 0;
+                break;
+            case 'status':
+                valA = a.status || '';
+                valB = b.status || '';
+                break;
+            default:
+                valA = new Date(a.createdAt);
+                valB = new Date(b.createdAt);
+        }
+        if (valA < valB) return workOrderSortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return workOrderSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function buildWorkOrderTable(list) {
+    const si = (col) => workOrderSortColumn === col ? (workOrderSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    const sorted = applyWorkOrderSort(list);
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
-                <th>Work Order #</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Vehicle</th>
-                <th>Total Cost</th>
-                <th>Status</th>
+                <th class="sortable${asc('number',workOrderSortColumn)}" onclick="sortWorkOrders('number')">Work Order #${si('number')}</th>
+                <th class="sortable${asc('date',workOrderSortColumn)}" onclick="sortWorkOrders('date')">Date${si('date')}</th>
+                <th class="sortable${asc('customer',workOrderSortColumn)}" onclick="sortWorkOrders('customer')">Customer${si('customer')}</th>
+                <th class="sortable${asc('vehicle',workOrderSortColumn)}" onclick="sortWorkOrders('vehicle')">Vehicle${si('vehicle')}</th>
+                <th class="sortable${asc('technician',workOrderSortColumn)}" onclick="sortWorkOrders('technician')">Technician${si('technician')}</th>
+                <th class="sortable${asc('total',workOrderSortColumn)}" onclick="sortWorkOrders('total')">Total Cost${si('total')}</th>
+                <th class="sortable${asc('status',workOrderSortColumn)}" onclick="sortWorkOrders('status')">Status${si('status')}</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            ${sortedWorkOrders.map(workOrder => {
+            ${sorted.map(workOrder => {
                 const customer = customers.find(c => c.id === workOrder.customerId);
                 const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+                const technician = technicians.find(t => t.id === workOrder.technicianId);
                 return `
-                <tr>
+                <tr onclick="viewWorkOrderDetails('${workOrder.id}')" style="cursor: pointer;" title="Click to view details">
                     <td>#${workOrder.id.substring(0, 8).toUpperCase()}</td>
                     <td>${formatDate(workOrder.createdAt)}</td>
-                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
-                    <td>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</td>
+                    <td>${customer ? customer.firstName + ' ' + customer.lastName : 'N/A'}</td>
+                    <td>${vehicle ? vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model : 'N/A'}</td>
+                    <td>${technician ? technician.firstName + ' ' + technician.lastName : 'Unassigned'}</td>
                     <td>${formatCurrency(workOrder.totalCost)}</td>
                     <td><span class="status-badge status-${workOrder.status}">${workOrder.status}</span></td>
                     <td>
-                        <div class="action-buttons">
+                        <div class="action-buttons" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
                             <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}')">Edit</button>
                             <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}')">Delete</button>
@@ -978,12 +2014,20 @@ function renderWorkOrdersList() {
                     </td>
                 </tr>
             `;
-        }).join('')}
+            }).join('')}
         </tbody>
     `;
-    
+    return table;
+}
+
+function renderWorkOrdersList() {
+    const container = document.getElementById('work-orders-list');
+    if (workOrders.length === 0) {
+        container.innerHTML = '<p class="empty-state">No work orders found. Create your first work order!</p>';
+        return;
+    }
     container.innerHTML = '';
-    container.appendChild(table);
+    container.appendChild(buildWorkOrderTable(workOrders));
 }
 
 function viewWorkOrderDetails(id) {
@@ -992,40 +2036,147 @@ function viewWorkOrderDetails(id) {
     
     const customer = customers.find(c => c.id === workOrder.customerId);
     const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+    const technician = workOrder.technicianId ? technicians.find(t => t.id === workOrder.technicianId) : null;
     
-    let servicesList = '';
+    // Build services list
+    let servicesHtml = '';
     workOrder.services.forEach(serviceId => {
         const service = services.find(s => s.id === serviceId);
         if (service) {
-            servicesList += `- ${service.name}: ${formatCurrency(service.price)}\n`;
+            servicesHtml += `<div style="padding: 8px; background: #f8f9fa; margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                <span>${service.name}</span>
+                <strong>${formatCurrency(service.price)}</strong>
+            </div>`;
         }
     });
     
-    const details = `
-Work Order #${workOrder.id.substring(0, 8).toUpperCase()}
-====================================
-Date: ${new Date(workOrder.createdAt).toLocaleString()}
-Status: ${workOrder.status.toUpperCase()}
-
-Customer: ${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}
-Email: ${customer ? customer.email : 'N/A'}
-Phone: ${customer ? customer.phone : 'N/A'}
-
-Vehicle: ${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}
-License Plate: ${vehicle ? vehicle.plate : 'N/A'}
-
-Services:
-${servicesList}
-
-Total Cost: ${formatCurrency(workOrder.totalCost)}
-Labor Hours: ${workOrder.laborHours}
-Parts Used: ${workOrder.partsUsed || 'None'}
-
-Notes:
-${workOrder.notes || 'No notes'}
+    // Build parts list
+    let partsHtml = '';
+    if (workOrder.parts && workOrder.parts.length > 0) {
+        workOrder.parts.forEach(p => {
+            const part = parts.find(pt => pt.id === p.partId);
+            if (part) {
+                partsHtml += `<div style="padding: 8px; background: #f8f9fa; margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                    <span>${part.name} x ${p.quantity}</span>
+                    <strong>${formatCurrency(p.price * p.quantity)}</strong>
+                </div>`;
+            }
+        });
+    } else {
+        partsHtml = '<p style="color: #6c757d;">No parts used</p>';
+    }
+    
+    // Build evidence section
+    let evidenceHtml = '';
+    if (workOrder.evidence && workOrder.evidence.length > 0) {
+        evidenceHtml = '<div style="margin-top: 1.5rem;"><h4>📸 Evidence</h4><div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">';
+        workOrder.evidence.forEach(evidence => {
+            const isVideo = evidence.type.startsWith('video/');
+            const isImage = evidence.type.startsWith('image/');
+            
+            if (isImage) {
+                evidenceHtml += `<div style="position: relative;">
+                    <img src="${evidence.data}" alt="${evidence.name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #dee2e6;" onclick="openImageLightbox('${evidence.data}')">
+                </div>`;
+            } else if (isVideo) {
+                evidenceHtml += `<div style="position: relative;">
+                    <video src="${evidence.data}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #dee2e6;" onclick="openVideoViewer('${evidence.data}')"></video>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; pointer-events: none;">▶️</div>
+                </div>`;
+            }
+        });
+        evidenceHtml += '</div></div>';
+    }
+    
+    // Status badge color
+    const statusColors = {
+        'pending': '#ffc107',
+        'in-progress': '#17a2b8',
+        'completed': '#28a745',
+        'cancelled': '#dc3545'
+    };
+    const statusColor = statusColors[workOrder.status] || '#6c757d';
+    
+    const html = `
+        <div class="work-order-view-container">
+            <!-- Header Info -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>📋 Work Order #</strong><br>${workOrder.id.substring(0, 8).toUpperCase()}</div>
+                <div><strong>📅 Created</strong><br>${new Date(workOrder.createdAt).toLocaleString()}</div>
+                <div><strong>📊 Status</strong><br><span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">${workOrder.status}</span></div>
+                ${workOrder.completedDate ? `<div><strong>✅ Completed</strong><br>${new Date(workOrder.completedDate).toLocaleDateString()}</div>` : ''}
+            </div>
+            
+            <!-- Customer & Vehicle Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h4 style="margin: 0 0 10px 0;">👤 Customer</h4>
+                    <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">📧 ${customer ? customer.email : 'N/A'}</p>
+                    <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+                </div>
+                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h4 style="margin: 0 0 10px 0;">🚗 Vehicle</h4>
+                    <p style="margin: 4px 0;"><strong>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">🔤 Plate: ${vehicle ? vehicle.plate : 'N/A'}</p>
+                    <p style="margin: 4px 0; font-size: 14px;">🔧 VIN: ${vehicle ? (vehicle.vin || 'N/A') : 'N/A'}</p>
+                </div>
+            </div>
+            
+            ${technician ? `
+            <div style="padding: 1rem; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🔧 Technician</h4>
+                <p style="margin: 4px 0;"><strong>${technician.firstName} ${technician.lastName}</strong></p>
+            </div>
+            ` : ''}
+            
+            <!-- Services -->
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🛠️ Services</h4>
+                ${servicesHtml || '<p style="color: #6c757d;">No services</p>'}
+            </div>
+            
+            <!-- Parts -->
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🔩 Parts Used</h4>
+                ${partsHtml}
+            </div>
+            
+            <!-- Summary -->
+            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Labor Hours:</span>
+                    <strong>${workOrder.laborHours || 0} hrs</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid #dee2e6; padding-top: 8px; margin-top: 8px;">
+                    <span>Total Cost:</span>
+                    <span style="color: #28a745;">${formatCurrency(workOrder.totalCost)}</span>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            ${workOrder.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; white-space: pre-wrap;">${workOrder.notes}</div>
+            </div>
+            ` : ''}
+            
+            <!-- Evidence -->
+            ${evidenceHtml}
+            
+            <!-- Actions -->
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('work-order-view-modal');">Close</button>
+            </div>
+        </div>
     `;
     
-    alert(details);
+    document.getElementById('work-order-view-content').innerHTML = html;
+    document.getElementById('work-order-view-title').textContent = `📋 Work Order #${workOrder.id.substring(0, 8).toUpperCase()}`;
+    openModal('work-order-view-modal');
 }
 
 function deleteWorkOrder(id) {
@@ -1059,8 +2210,12 @@ function editWorkOrder(id) {
     // Set vehicle
     setTimeout(() => {
         document.getElementById('work-order-vehicle').value = workOrder.vehicleId;
+        // Set technician after vehicle
+        setTimeout(() => {
+            document.getElementById('work-order-technician').value = workOrder.technicianId || '';
+        }, 50);
     }, 100);
-    
+
     // Set services (checkboxes)
     setTimeout(() => {
         document.querySelectorAll('.service-checkbox').forEach(checkbox => {
@@ -1090,6 +2245,22 @@ function editWorkOrder(id) {
     document.getElementById('work-order-labor').value = workOrder.laborHours || 0;
     document.getElementById('work-order-notes').value = workOrder.notes || '';
     document.getElementById('work-order-status').value = workOrder.status;
+    
+    // Set completed date and toggle visibility
+    const completedDateGroup = document.getElementById('completed-date-group');
+    const evidenceGroup = document.getElementById('evidence-group');
+    if (workOrder.status === 'completed') {
+        completedDateGroup.style.display = 'block';
+        evidenceGroup.style.display = 'block';
+    } else {
+        completedDateGroup.style.display = 'none';
+        evidenceGroup.style.display = 'none';
+    }
+    document.getElementById('work-order-completed-date').value = workOrder.completedDate || '';
+    
+    // Load existing evidence
+    currentWorkOrderEvidence = workOrder.evidence ? [...workOrder.evidence] : [];
+    renderWorkOrderEvidencePreview();
     
     // Open modal
     openModal('work-order-modal');
@@ -1126,21 +2297,24 @@ function updateRecentActivity() {
         type: 'customer',
         action: 'added',
         name: `${c.firstName} ${c.lastName}`,
-        date: new Date(c.createdAt)
+        date: new Date(c.createdAt),
+        id: c.id
     }));
     
     vehicles.forEach(v => activities.push({
         type: 'vehicle',
         action: 'registered',
         name: `${v.year} ${v.make} ${v.model}`,
-        date: new Date(v.createdAt)
+        date: new Date(v.createdAt),
+        id: v.id
     }));
     
     workOrders.forEach(w => activities.push({
         type: 'workorder',
         action: 'created',
         name: `WO #${w.id.substring(0, 8).toUpperCase()}`,
-        date: new Date(w.createdAt)
+        date: new Date(w.createdAt),
+        id: w.id
     }));
     
     // Sort by date (newest first) and take top 5
@@ -1154,11 +2328,31 @@ function updateRecentActivity() {
     
     container.innerHTML = `
         <ul style="list-style: none; padding: 0;">
-            ${recentActivities.map(activity => `
-                <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
-                    <strong>${activity.name}</strong> - ${activity.action} (${formatTimeAgo(activity.date)})
-                </li>
-            `).join('')}
+            ${recentActivities.map(activity => {
+                let onclickAction = '';
+                let style = 'cursor: pointer; color: var(--primary-color);';
+                
+                switch(activity.type) {
+                    case 'customer':
+                        onclickAction = `editCustomer('${activity.id}')`;
+                        break;
+                    case 'vehicle':
+                        onclickAction = `editVehicle('${activity.id}')`;
+                        break;
+                    case 'workorder':
+                        onclickAction = `viewWorkOrder('${activity.id}')`;
+                        break;
+                }
+                
+                return `
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        <a href="#" onclick="event.preventDefault(); ${onclickAction}" style="${style} text-decoration: none;">
+                            <strong>${activity.name}</strong>
+                        </a> 
+                        - ${activity.action} (${formatTimeAgo(activity.date)})
+                    </li>
+                `;
+            }).join('')}
         </ul>
     `;
 }
@@ -1179,24 +2373,54 @@ function updateUpcomingAppointments() {
         return;
     }
     
+    // Urgency helper function
+    function getAppointmentUrgency(apptDate) {
+        const d = new Date(apptDate);
+        d.setHours(0, 0, 0, 0);
+        const diff = Math.round((d - today) / 86400000);
+        if (diff === 1) return 'apt-due-tomorrow';
+        if (diff === 2) return 'apt-due-2days';
+        return '';
+    }
+    
     const table = document.createElement('table');
     table.innerHTML = `
         <thead>
             <tr>
                 <th>Date & Time</th>
                 <th>Customer</th>
+                <th>Vehicle</th>
                 <th>Service</th>
+                <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             ${upcoming.map(appointment => {
                 const customer = customers.find(c => c.id === appointment.customerId);
+                const vehicle = vehicles.find(v => v.id === appointment.vehicleId);
                 const service = services.find(s => s.id === appointment.serviceId);
+                const urgencyClass = getAppointmentUrgency(appointment.date);
+                const urgencyBadge = urgencyClass === 'apt-due-tomorrow'
+                    ? '<span class="urgency-badge urgency-tomorrow">📅 Due Tomorrow</span>'
+                    : urgencyClass === 'apt-due-2days'
+                    ? '<span class="urgency-badge urgency-2days">⏰ Due in 2 Days</span>'
+                    : '';
                 return `
-                <tr>
-                    <td>${formatDate(appointment.date)} ${appointment.time}</td>
-                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
+                <tr class="${urgencyClass}">
+                    <td>${formatDate(appointment.date)} ${appointment.time}${urgencyBadge ? ' ' + urgencyBadge : ''}</td>
+                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}<br><small style="color:#888;">${customer && customer.phone ? customer.phone : ''}</small></td>
+                    <td>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</td>
                     <td>${service ? service.name : 'N/A'}</td>
+                    <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
+                            <button class="btn btn-success" onclick="completeAppointment('${appointment.id}')">Complete</button>
+                            <button class="btn btn-warning" onclick="cancelAppointment('${appointment.id}')">Cancel</button>
+                            ${urgencyClass ? `<button class="btn btn-sms" onclick="sendSmsReminder('${appointment.id}')">📱 SMS</button><button class="btn btn-whatsapp" onclick="sendWhatsappReminder('${appointment.id}')">💬 WhatsApp</button>` : ''}
+                        </div>
+                    </td>
                 </tr>
             `;
             }).join('')}
@@ -1210,6 +2434,122 @@ function updateUpcomingAppointments() {
 // Helper Functions
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Returns 'active-sort' class string when col matches the active sort column
+function asc(col, sortCol) {
+    return col === sortCol ? ' active-sort' : '';
+}
+
+// ===========================================
+// PHONE NUMBER VALIDATION & FORMATTING
+// Format enforced: +27 XX XXX XXXX
+// ===========================================
+
+/**
+ * Format a phone number into +27 XX XXX XXXX
+ * Accepts: 0721234567, 27721234567, +27721234567, +27 72 123 4567
+ * Returns formatted string or null if invalid
+ */
+function formatSAPhone(raw) {
+    // Strip everything except digits and leading +
+    let digits = raw.replace(/\s/g, '');
+    
+    // Remove all non-digit chars for processing
+    let nums = digits.replace(/\D/g, '');
+    
+    // Convert local format: 0XXXXXXXXX -> 27XXXXXXXXX
+    if (nums.startsWith('0') && nums.length === 10) {
+        nums = '27' + nums.substring(1);
+    }
+    
+    // Remove country code prefix if already has 27
+    if (nums.startsWith('27') && nums.length === 11) {
+        // Good: 27XXXXXXXXX
+    } else {
+        return null; // Invalid
+    }
+    
+    // Must be exactly 11 digits: 27 + 9 digits
+    if (nums.length !== 11) return null;
+    
+    // Format: +27 XX XXX XXXX
+    return `+${nums.substring(0,2)} ${nums.substring(2,4)} ${nums.substring(4,7)} ${nums.substring(7,11)}`;
+}
+
+/**
+ * Validate and format phone input on-the-fly.
+ * Call this on oninput of a phone field.
+ */
+function liveFormatPhone(input) {
+    // Only reformat if user has typed enough to try
+    const raw = input.value;
+    const digits = raw.replace(/\D/g, '');
+    
+    // Auto-insert +27 prefix if user starts typing with 0
+    if (raw === '0') {
+        input.value = '+27 ';
+        // Move cursor to end
+        setTimeout(() => { input.setSelectionRange(input.value.length, input.value.length); }, 0);
+        return;
+    }
+    
+    // Remove invalid style once user starts correcting
+    input.style.borderColor = '';
+}
+
+/**
+ * Validate phone on blur - shows error style if invalid.
+ * Returns true if valid, false if invalid.
+ */
+function validatePhoneField(input) {
+    const val = input.value.trim();
+    if (!val) {
+        // Empty - let required attr handle it
+        input.style.borderColor = '';
+        input.title = '';
+        return true;
+    }
+    const formatted = formatSAPhone(val);
+    if (!formatted) {
+        input.style.borderColor = '#e03131';
+        input.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
+        input.title = 'Invalid format. Use: +27 72 768 0826';
+        showNotification('Phone number must be in format: +27 72 768 0826', 'error');
+        return false;
+    }
+    // Auto-correct to formatted version
+    input.value = formatted;
+    input.style.borderColor = '#2f9e44';
+    input.style.boxShadow = '0 0 0 2px rgba(47,158,68,0.2)';
+    input.title = '';
+    return true;
+}
+
+/**
+ * Get validated phone value from an input field.
+ * Returns formatted value or shows error and returns null.
+ */
+function getValidatedPhone(inputId, required = true) {
+    const input = document.getElementById(inputId);
+    if (!input) return null;
+    const val = input.value.trim();
+    if (!val && !required) return '';
+    if (!val && required) {
+        input.style.borderColor = '#e03131';
+        showNotification('Phone number is required', 'error');
+        return null;
+    }
+    const formatted = formatSAPhone(val);
+    if (!formatted) {
+        input.style.borderColor = '#e03131';
+        input.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
+        showNotification('Phone number must be in format: +27 72 768 0826', 'error');
+        input.focus();
+        return null;
+    }
+    input.value = formatted;
+    return formatted;
 }
 
 function saveData() {
@@ -1276,6 +2616,8 @@ function initializeForms() {
     document.getElementById('service-form').addEventListener('submit', saveService);
     document.getElementById('appointment-form').addEventListener('submit', saveAppointment);
     document.getElementById('work-order-form').addEventListener('submit', saveWorkOrder);
+    document.getElementById('technician-form').addEventListener('submit', saveTechnician);
+    document.getElementById('expense-form').addEventListener('submit', saveExpense);
 }
 
 function initializeSearch() {
@@ -1329,6 +2671,31 @@ function initializeSearch() {
         });
         renderFilteredWorkOrders(filteredWorkOrders);
     });
+
+    // Expense search
+    const expenseSearch = document.getElementById('expense-search');
+    if (expenseSearch) {
+        expenseSearch.addEventListener('input', renderExpensesList);
+    }
+
+    // Technician search
+    const techSearch = document.getElementById('technician-search');
+    if (techSearch) {
+        techSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            if (!searchTerm) {
+                renderTechniciansList();
+                return;
+            }
+            const filtered = technicians.filter(t =>
+                (t.firstName + ' ' + t.lastName).toLowerCase().includes(searchTerm) ||
+                (t.email || '').toLowerCase().includes(searchTerm) ||
+                (t.phone || '').includes(searchTerm) ||
+                (t.specialization || '').toLowerCase().includes(searchTerm)
+            );
+            renderFilteredTechnicians(filtered);
+        });
+    }
 }
 
 function renderFilteredCustomers(filteredCustomers) {
@@ -1394,8 +2761,12 @@ function renderFilteredVehicles(filteredVehicles) {
         <tbody>
             ${filteredVehicles.map(vehicle => {
                 const customer = customers.find(c => c.id === vehicle.customerId);
-                const imageHTML = vehicle.image 
-                    ? `<img src="${vehicle.image}" class="vehicle-thumbnail" onclick="showVehicleImage('${vehicle.id}')" alt="Vehicle Image">` 
+                const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+                const imageHTML = vImgs.length
+                    ? `<div style="position:relative;display:inline-block">` +
+                       `<img src="${vImgs[0]}" class="vehicle-thumbnail" onclick="showVehicleImages('${vehicle.id}')" alt="Vehicle Image">` +
+                       (vImgs.length > 1 ? `<span style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:1px 4px;border-radius:3px;">${vImgs.length}📷</span>` : '') +
+                       `</div>`
                     : '<span style="color: var(--text-light); font-size: 0.8rem;">No image</span>';
                 const mileage = vehicle.mileage ? vehicle.mileage.toLocaleString() : '0';
                 return `
@@ -1455,6 +2826,7 @@ function renderFilteredAppointments(filteredAppointments) {
                     <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
                             <button class="btn btn-success" onclick="completeAppointment('${appointment.id}')">Complete</button>
                             <button class="btn btn-warning" onclick="cancelAppointment('${appointment.id}')">Cancel</button>
                             <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}')">Delete</button>
@@ -1472,52 +2844,12 @@ function renderFilteredAppointments(filteredAppointments) {
 
 function renderFilteredWorkOrders(filteredWorkOrders) {
     const container = document.getElementById('work-orders-list');
-    
     if (filteredWorkOrders.length === 0) {
         container.innerHTML = '<p class="empty-state">No work orders found matching your search.</p>';
         return;
     }
-    
-    const table = document.createElement('table');
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Work Order #</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Vehicle</th>
-                <th>Total Cost</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${filteredWorkOrders.map(workOrder => {
-                const customer = customers.find(c => c.id === workOrder.customerId);
-                const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
-                return `
-                <tr>
-                    <td>#${workOrder.id.substring(0, 8).toUpperCase()}</td>
-                    <td>${formatDate(workOrder.createdAt)}</td>
-                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
-                    <td>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</td>
-                    <td>${formatCurrency(workOrder.totalCost)}</td>
-                    <td><span class="status-badge status-${workOrder.status}">${workOrder.status}</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
-                            <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}')">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            }).join('')}
-        </tbody>
-    `;
-    
     container.innerHTML = '';
-    container.appendChild(table);
+    container.appendChild(buildWorkOrderTable(filteredWorkOrders));
 }
 
 function renderAllLists() {
@@ -1528,6 +2860,12 @@ function renderAllLists() {
     renderWorkOrdersList();
     renderPartsList();
     renderInvoicesList();
+    renderExpensesList();
+    renderTechniciansList();
+    // Quotes
+    if (typeof renderQuotesList === 'function') {
+        renderQuotesList();
+    }
     // Tech Knowledge Base
     if (typeof renderTechList === 'function') {
         renderTechList('article');
@@ -1541,50 +2879,125 @@ function renderAllLists() {
 
 // Load Sample Data
 // Vehicle Image Functions
-function previewVehicleImage(input) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        
-        // Check file size (limit to 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB');
-            input.value = '';
-            return;
-        }
-        
-        // Check file type
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file');
-            input.value = '';
-            return;
-        }
-        
+function addVehicleImages(input) {
+    const MAX_IMAGES = 8;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+
+    const remaining = MAX_IMAGES - currentVehicleImages.length;
+    if (remaining <= 0) {
+        showNotification(`Maximum ${MAX_IMAGES} photos allowed per vehicle.`, 'error');
+        input.value = '';
+        return;
+    }
+
+    const toLoad = files.slice(0, remaining);
+    if (files.length > remaining) {
+        showNotification(`Only ${remaining} more photo(s) can be added (max ${MAX_IMAGES}).`, 'error');
+    }
+
+    let loaded = 0;
+    toLoad.forEach(file => {
+        if (!file.type.match('image.*')) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            currentVehicleImageData = e.target.result;
-            const previewContainer = document.getElementById('vehicle-image-preview');
-            previewContainer.innerHTML = `
-                <img src="${currentVehicleImageData}" class="vehicle-image-preview" onclick="document.getElementById('vehicle-image').click()">
-                <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem;">Click to change image</p>
-            `;
+            currentVehicleImages.push(e.target.result);
+            loaded++;
+            if (loaded === toLoad.length) renderVehicleImageGallery();
         };
         reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function renderVehicleImageGallery() {
+    const gallery = document.getElementById('vehicle-image-gallery');
+    if (!gallery) return;
+
+    const MAX_IMAGES = 8;
+    let html = '';
+
+    currentVehicleImages.forEach((src, idx) => {
+        html += `
+            <div class="image-gallery-item">
+                <img src="${src}" alt="Vehicle photo ${idx+1}" onclick="openImageLightbox(currentVehicleImages, ${idx})">
+                <button class="img-remove-btn" onclick="removeVehicleImage(${idx})" title="Remove">✕</button>
+            </div>`;
+    });
+
+    if (currentVehicleImages.length < MAX_IMAGES) {
+        html += `
+            <div class="image-gallery-add" onclick="document.getElementById('vehicle-image').click()" title="Add photo">
+                <span>📷</span><span>Add Photo</span>
+            </div>`;
+    }
+
+    gallery.innerHTML = html;
+}
+
+function removeVehicleImage(idx) {
+    if (confirm('Are you sure you want to remove this image?')) {
+        currentVehicleImages.splice(idx, 1);
+        renderVehicleImageGallery();
     }
 }
 
-function showVehicleImage(id) {
+function showVehicleImages(id) {
     const vehicle = vehicles.find(v => v.id === id);
-    if (!vehicle || !vehicle.image) return;
-    
-    const displayContainer = document.getElementById('vehicle-image-display');
-    displayContainer.innerHTML = `
-        <img src="${vehicle.image}" class="vehicle-image-full" alt="Full Vehicle Image">
-        <p style="margin-top: 1rem; color: var(--text-light);">${vehicle.year} ${vehicle.make} ${vehicle.model}</p>
-        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="closeModal('vehicle-image-modal')">Close</button>
-    `;
-    
-    openModal('vehicle-image-modal');
+    if (!vehicle) return;
+    const imgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+    if (!imgs.length) return;
+    openImageLightbox(imgs, 0, `${vehicle.year} ${vehicle.make} ${vehicle.model}`);
 }
+
+// Keep legacy name as alias for backward compat
+function showVehicleImage(id) { showVehicleImages(id); }
+
+
+// ─── Universal Image Lightbox ────────────────────────────────────────────────
+// Opens a full-screen lightbox to browse an array of images
+let _lbImages = [];
+let _lbIndex  = 0;
+
+function openImageLightbox(images, startIndex, captionText) {
+    _lbImages = images || [];
+    _lbIndex  = startIndex || 0;
+    if (!_lbImages.length) return;
+
+    // Remove any existing lightbox
+    const existing = document.getElementById('img-lightbox');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'img-lightbox';
+    overlay.className = 'img-lightbox-overlay';
+    overlay.innerHTML = `
+        <button class="img-lightbox-close" onclick="document.getElementById('img-lightbox').remove()" title="Close">&times;</button>
+        <img id="lb-img" src="${_lbImages[_lbIndex]}" alt="Image ${_lbIndex+1}">
+        <div class="img-lightbox-nav" ${_lbImages.length < 2 ? 'style="display:none"' : ''}>
+            <button onclick="lbNav(-1)">&#8249; Prev</button>
+            <span class="img-lightbox-counter" id="lb-counter">${_lbIndex+1} / ${_lbImages.length}</span>
+            <button onclick="lbNav(1)">Next &#8250;</button>
+        </div>
+        ${captionText ? `<p style="color:rgba(255,255,255,0.8);font-size:0.9rem;margin:0">${captionText}</p>` : ''}
+    `;
+
+    // Close on overlay background click
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+}
+
+function lbNav(dir) {
+    _lbIndex = (_lbIndex + dir + _lbImages.length) % _lbImages.length;
+    const img = document.getElementById('lb-img');
+    const counter = document.getElementById('lb-counter');
+    if (img) img.src = _lbImages[_lbIndex];
+    if (counter) counter.textContent = `${_lbIndex+1} / ${_lbImages.length}`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function loadSampleData() {
     // Only load sample data if no data exists
@@ -1649,7 +3062,7 @@ function loadSampleData() {
         services: [services[0].id, services[2].id],
         parts: [],
         laborHours: 1,
-        partsUsed: 'Oil filter - $15.00',
+        partsUsed: 'Oil filter - R15.00',
         notes: 'Customer requested full service',
         status: 'completed',
         totalCost: 49.99 + 35.00,
@@ -1674,44 +3087,102 @@ function updateAllCurrencyDisplays() {
 
 // Work Order Parts Management
 let workOrderParts = [];
+let currentWorkOrderEvidence = [];
 
-function openAddPartToWorkOrder() {
-    if (typeof parts === 'undefined' || parts.length === 0) {
-        alert('No parts available. Please add parts in the Parts section first.');
-        return;
-    }
+// Handle evidence upload for work orders
+function handleWorkOrderEvidenceUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
     
-    const partId = prompt('Enter Part ID or select from console (F12):\n\n' + 
-        parts.map(p => `${p.id.substring(0,8)}: ${p.name} - ${formatCurrency(p.sellingPrice)}`).join('\n'));
-    
-    if (!partId) return;
-    
-    const part = parts.find(p => p.id.startsWith(partId) || p.id === partId);
-    if (!part) {
-        alert('Part not found');
-        return;
-    }
-    
-    const quantity = parseInt(prompt(`Enter quantity for ${part.name}:`, '1'));
-    if (!quantity || quantity < 1) return;
-    
-    // Check stock
-    if (part.stockQuantity < quantity) {
-        alert(`Insufficient stock. Available: ${part.stockQuantity}`);
-        return;
-    }
-    
-    // Add to work order parts
-    workOrderParts.push({
-        partId: part.id,
-        name: part.name,
-        quantity: quantity,
-        price: part.sellingPrice,
-        total: quantity * part.sellingPrice
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const evidence = {
+                id: generateId(),
+                name: file.name,
+                type: file.type,
+                data: e.target.result,
+                size: file.size,
+                uploadedAt: new Date().toISOString()
+            };
+            currentWorkOrderEvidence.push(evidence);
+            renderWorkOrderEvidencePreview();
+        };
+        reader.readAsDataURL(file);
     });
-    
-    updateWorkOrderPartsList();
 }
+
+// Render evidence preview in work order form
+function renderWorkOrderEvidencePreview() {
+    const container = document.getElementById('evidence-preview');
+    if (!container) return;
+    
+    if (currentWorkOrderEvidence.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = currentWorkOrderEvidence.map((evidence, index) => {
+        const isVideo = evidence.type.startsWith('video/');
+        const isImage = evidence.type.startsWith('image/');
+        
+        let preview = '';
+        if (isImage) {
+            preview = `<img src="${evidence.data}" alt="${evidence.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="openImageLightbox('${evidence.data}')">`;
+        } else if (isVideo) {
+            preview = `<video src="${evidence.data}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="openVideoViewer('${evidence.data}')"></video>`;
+        } else {
+            preview = `<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>`;
+        }
+        
+        return `
+            <div class="evidence-item" style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                ${preview}
+                <div style="font-size: 11px; color: #666; margin-top: 4px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${evidence.name}</div>
+                <button type="button" onclick="removeWorkOrderEvidence(${index})" style="font-size: 10px; padding: 2px 6px; margin-top: 4px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">Remove</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Remove evidence from work order
+function removeWorkOrderEvidence(index) {
+    currentWorkOrderEvidence.splice(index, 1);
+    renderWorkOrderEvidencePreview();
+}
+
+// Open video viewer
+function openVideoViewer(videoData) {
+    const modal = document.createElement('div');
+    modal.id = 'video-viewer-modal';
+    modal.className = 'modal active';
+    modal.style.cssText = 'display: flex; align-items: center; justify-content: center;';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px; padding: 20px;">
+            <div class="modal-header">
+                <h2>🎥 Video Viewer</h2>
+                <button class="close-btn" onclick="closeVideoViewer()">&times;</button>
+            </div>
+            <div style="text-align: center;">
+                <video controls style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+                    <source src="${videoData}">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Close video viewer
+function closeVideoViewer() {
+    const modal = document.getElementById('video-viewer-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+
 
 function updateWorkOrderPartsList() {
     const container = document.getElementById('work-order-parts-list');
@@ -2166,4 +3637,1236 @@ function deleteReturn(id) {
     updateReturnsSummary();
     renderPartsList();
     showNotification('Return record deleted!', 'success');
+}
+// ===========================================
+// REPORTS FUNCTIONALITY
+// ===========================================
+
+function handlePeriodChange() {
+    const period = document.getElementById('report-period').value;
+    const customRange = document.getElementById('custom-date-range');
+    
+    if (period === 'custom') {
+        customRange.style.display = 'flex';
+    } else {
+        customRange.style.display = 'none';
+    }
+}
+
+function getReportDateRange() {
+    const period = document.getElementById('report-period').value;
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch (period) {
+        case 'this-month':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            break;
+        case 'last-month':
+            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            break;
+        case 'this-quarter':
+            const quarterStart = Math.floor(today.getMonth() / 3) * 3;
+            startDate = new Date(today.getFullYear(), quarterStart, 1);
+            endDate = new Date(today.getFullYear(), quarterStart + 3, 0);
+            break;
+        case 'last-quarter':
+            const lastQuarterStart = Math.floor(today.getMonth() / 3) * 3 - 3;
+            startDate = new Date(today.getFullYear(), lastQuarterStart, 1);
+            endDate = new Date(today.getFullYear(), lastQuarterStart + 3, 0);
+            break;
+        case 'this-year':
+            startDate = new Date(today.getFullYear(), 0, 1);
+            endDate = new Date(today.getFullYear(), 11, 31);
+            break;
+        case 'last-year':
+            startDate = new Date(today.getFullYear() - 1, 0, 1);
+            endDate = new Date(today.getFullYear() - 1, 11, 31);
+            break;
+        case 'custom':
+            const fromVal = document.getElementById('report-from-date').value;
+            const toVal = document.getElementById('report-to-date').value;
+            if (!fromVal || !toVal) {
+                alert('Please select both from and to dates');
+                return null;
+            }
+            startDate = new Date(fromVal);
+            endDate = new Date(toVal);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'all-time':
+        default:
+            startDate = new Date(0);
+            endDate = new Date();
+            break;
+    }
+    
+    return { startDate, endDate };
+}
+
+function generateReports() {
+    try {
+        console.log('generateReports called');
+        const dateRange = getReportDateRange();
+        if (!dateRange) return;
+        
+        const { startDate, endDate } = dateRange;
+        console.log('Date range:', startDate, 'to', endDate);
+        
+        // Get invoices within date range - reload from localStorage
+        const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+        console.log('Total invoices:', invoices.length);
+    const filteredInvoices = invoices.filter(inv => {
+        // Use createdAt if date is not available
+        const invDate = new Date(inv.date || inv.createdAt);
+        return invDate >= startDate && invDate <= endDate;
+    });
+    console.log('Filtered invoices:', filteredInvoices.length);
+    
+    // Calculate cashflow data
+    generateCashflowReport(filteredInvoices, startDate, endDate);
+    
+    // Calculate profit & loss data
+    generateProfitLossReport(filteredInvoices, startDate, endDate);
+    
+    showNotification('Reports generated successfully!', 'success');
+    } catch (error) {
+        console.error('Error generating reports:', error);
+        showNotification('Error generating reports: ' + error.message, 'error');
+    }
+}
+
+function generateCashflowReport(invoices, startDate, endDate) {
+    console.log('generateCashflowReport called with', invoices.length, 'invoices');
+    
+    // Calculate inflows from PAID invoices only (actual cash received)
+    const paidInvoices = invoices.filter(inv => 
+        inv.status === 'paid' || inv.status === 'Paid' || 
+        (inv.amountPaid && inv.amountPaid > 0)
+    );
+    console.log('Paid invoices:', paidInvoices.length);
+    
+    let totalInflows = 0;
+    let inflowsList = [];
+    
+    // Only use paid invoices for cashflow inflows
+    paidInvoices.forEach(inv => {
+        const amount = parseFloat(inv.amountPaid || inv.total) || 0;
+        totalInflows += amount;
+        
+        // Get customer name - check both customers array and invoice's customerName
+        let customerName = 'Unknown';
+        if (inv.customerName) {
+            customerName = inv.customerName;
+        } else if (inv.customerId) {
+            const customer = customers.find(c => c.id === inv.customerId);
+            if (customer) {
+                customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.name || 'Unknown';
+            }
+        }
+        
+        inflowsList.push({
+            invoiceNumber: inv.invoiceNumber || inv.id.substring(0, 8).toUpperCase(),
+            customerName: customerName,
+            date: inv.paidDate || inv.date || inv.createdAt,
+            amount: amount
+        });
+    });
+    
+    // Sort inflows by date
+    inflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Calculate outflows from expenses
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    const filteredExpenses = expenses.filter(exp => {
+        if (!exp.date) return false;
+        // Parse date string (YYYY-MM-DD format) and create date at start of day
+        const expDateParts = exp.date.split('T')[0].split('-');
+        const expDate = new Date(parseInt(expDateParts[0]), parseInt(expDateParts[1]) - 1, parseInt(expDateParts[2]));
+        const expDateTime = expDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return expDateTime >= startTime && expDateTime <= endTime;
+    });
+    
+    let totalOutflows = 0;
+    let outflowsList = [];
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: exp.description || 'Expense',
+            category: exp.category || 'General',
+            date: exp.date,
+            amount: amount
+        });
+    });
+
+    // Calculate outflows from PAID booked-in supplier invoices
+    const bookInRecords = JSON.parse(localStorage.getItem('bookInRecords') || '[]');
+    const paidBookInRecords = bookInRecords.filter(record => {
+        if (!record.date) return false;
+        // Parse date string (YYYY-MM-DD format)
+        const recordDateParts = record.date.split('T')[0].split('-');
+        const recordDate = new Date(parseInt(recordDateParts[0]), parseInt(recordDateParts[1]) - 1, parseInt(recordDateParts[2]));
+        const recordDateTime = recordDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        // Only include if paid and within date range
+        return (record.paymentStatus === 'paid' || record.paymentStatus === 'Paid') && 
+               recordDateTime >= startTime && recordDateTime <= endTime;
+    });
+
+    // Add paid booked-in supplier invoices to outflows
+    paidBookInRecords.forEach(record => {
+        const amount = parseFloat(record.totalValue) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: 'Booked-In: ' + (record.supplierName || 'Unknown Supplier'),
+            category: 'Supplier Invoice',
+            date: record.date,
+            amount: amount
+        });
+    });
+    
+    // Sort outflows by date
+    outflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Update UI
+    document.getElementById('cashflow-inflows').textContent = formatCurrency(totalInflows);
+    document.getElementById('cashflow-outflows').textContent = formatCurrency(totalOutflows);
+    document.getElementById('cashflow-net').textContent = formatCurrency(totalInflows - totalOutflows);
+    
+    // Populate inflows table
+    const inflowsTableBody = document.getElementById('cashflow-inflows-list');
+    if (inflowsList.length === 0) {
+        inflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No paid invoices in this period</td></tr>';
+    } else {
+        inflowsTableBody.innerHTML = inflowsList.map(item => `
+            <tr>
+                <td>${item.invoiceNumber}</td>
+                <td>${item.customerName}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Populate outflows table
+    const outflowsTableBody = document.getElementById('cashflow-outflows-list');
+    if (outflowsList.length === 0) {
+        outflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No expenses in this period</td></tr>';
+    } else {
+        outflowsTableBody.innerHTML = outflowsList.map(item => `
+            <tr>
+                <td>${item.description}</td>
+                <td>${item.category}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+function generateProfitLossReport(invoices, startDate, endDate) {
+    let totalRevenue = 0;
+    let laborRevenue = 0;
+    let partsRevenue = 0;
+    let serviceRevenue = 0;
+
+    // Only count paid invoices as revenue
+    const paidInvoices = invoices.filter(inv =>
+        inv.status === 'paid' || inv.status === 'Paid' ||
+        (inv.amountPaid && inv.amountPaid > 0)
+    );
+    
+    paidInvoices.forEach(inv => {
+        // Add the paid amount to revenue (use amountPaid if partially paid, else total)
+        totalRevenue += parseFloat(inv.status === 'paid' || inv.status === 'Paid' ? inv.total : inv.amountPaid) || 0;
+        
+        // Add labor total if it exists (separate field on invoice)
+        if (inv.laborTotal) {
+            laborRevenue += parseFloat(inv.laborTotal) || 0;
+        }
+        
+        // Calculate revenue from services (services use 'price' field, not 'total')
+        if (inv.services && Array.isArray(inv.services)) {
+            inv.services.forEach(item => {
+                const amount = parseFloat(item.price) || 0;
+                serviceRevenue += amount;
+            });
+        }
+        
+        // Calculate revenue from parts (parts have 'total' field)
+        if (inv.parts && Array.isArray(inv.parts)) {
+            inv.parts.forEach(item => {
+                const amount = parseFloat(item.total) || 0;
+                partsRevenue += amount;
+            });
+        }
+        
+        // Calculate revenue from custom items
+        if (inv.customItems && Array.isArray(inv.customItems)) {
+            inv.customItems.forEach(item => {
+                const amount = parseFloat(item.total) || 0;
+                if ((item.name || '').toLowerCase().includes('labor') || (item.description || '').toLowerCase().includes('labor')) {
+                    laborRevenue += amount;
+                } else if ((item.type || '') === 'part') {
+                    partsRevenue += amount;
+                } else {
+                    serviceRevenue += amount;
+                }
+            });
+        }
+    });
+    
+    console.log('P&L - Total Revenue:', totalRevenue, 'Labor:', laborRevenue, 'Parts:', partsRevenue, 'Services:', serviceRevenue);
+    
+    // Calculate expenses
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    console.log('P&L - Total expenses in storage:', expenses.length);
+    
+    const filteredExpenses = expenses.filter(exp => {
+        if (!exp.date) return false;
+        // Parse date string (YYYY-MM-DD format) and create date at start of day
+        const expDateParts = exp.date.split('T')[0].split('-');
+        const expDate = new Date(parseInt(expDateParts[0]), parseInt(expDateParts[1]) - 1, parseInt(expDateParts[2]));
+        // Set time to start/end of day for proper comparison
+        const expDateTime = expDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return expDateTime >= startTime && expDateTime <= endTime;
+    });
+    
+    console.log('P&L - Filtered expenses:', filteredExpenses.length);
+    
+    let totalExpenses = 0;
+    const expenseCategories = {};
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalExpenses += amount;
+        
+        const category = exp.category || 'Other';
+        if (!expenseCategories[category]) {
+            expenseCategories[category] = 0;
+        }
+        expenseCategories[category] += amount;
+    });
+
+    // Add PAID booked-in supplier invoices to expenses
+    const bookInRecords = JSON.parse(localStorage.getItem('bookInRecords') || '[]');
+    const paidBookInRecords = bookInRecords.filter(record => {
+        if (!record.date) return false;
+        // Parse date string (YYYY-MM-DD format)
+        const recordDateParts = record.date.split('T')[0].split('-');
+        const recordDate = new Date(parseInt(recordDateParts[0]), parseInt(recordDateParts[1]) - 1, parseInt(recordDateParts[2]));
+        const recordDateTime = recordDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        // Only include if paid and within date range
+        return (record.paymentStatus === 'paid' || record.paymentStatus === 'Paid') && 
+               recordDateTime >= startTime && recordDateTime <= endTime;
+    });
+
+    // Add paid booked-in supplier invoices to expense categories
+    paidBookInRecords.forEach(record => {
+        const amount = parseFloat(record.totalValue) || 0;
+        totalExpenses += amount;
+
+        const category = 'Supplier Invoice';
+        if (!expenseCategories[category]) {
+            expenseCategories[category] = 0;
+        }
+        expenseCategories[category] += amount;
+    });
+    
+    // Update UI
+    document.getElementById('pnl-revenue').textContent = formatCurrency(totalRevenue);
+    document.getElementById('pnl-expenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('pnl-profit').textContent = formatCurrency(totalRevenue - totalExpenses);
+    
+    // Update revenue breakdown
+    document.getElementById('revenue-labor').textContent = formatCurrency(laborRevenue);
+    document.getElementById('revenue-parts').textContent = formatCurrency(partsRevenue);
+    document.getElementById('revenue-services').textContent = formatCurrency(serviceRevenue);
+    
+    // Update expense breakdown
+    const expenseBreakdown = document.getElementById('expense-breakdown');
+    if (Object.keys(expenseCategories).length === 0) {
+        expenseBreakdown.innerHTML = '<div class="breakdown-item"><span>No expenses in this period</span><span>R0.00</span></div>';
+    } else {
+        expenseBreakdown.innerHTML = Object.entries(expenseCategories)
+            .sort((a, b) => b[1] - a[1])
+            .map(([category, amount]) => `
+                <div class="breakdown-item">
+                    <span>${category}</span>
+                    <span>${formatCurrency(amount)}</span>
+                </div>
+            `).join('');
+    }
+}
+
+function switchReportTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // Show/hide report content
+    document.querySelectorAll('.report-content').forEach(c => c.style.display = 'none');
+    document.getElementById(`${tab}-report`).style.display = 'block';
+}
+
+// ==========================================
+// REPORT DOWNLOAD FUNCTIONS
+// ==========================================
+
+function downloadReportPDF() {
+    const dateRange = getReportDateRange();
+    if (!dateRange) return;
+
+    const { startDate, endDate } = dateRange;
+    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+
+    const filteredInvoices = invoices.filter(inv => {
+        const invDate = new Date(inv.date || inv.createdAt);
+        return invDate >= startDate && invDate <= endDate;
+    });
+
+    const filteredExpenses = expenses.filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate >= startDate && expDate <= endDate;
+    });
+
+    // Calculate totals
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let laborRevenue = 0;
+    let partsRevenue = 0;
+    let serviceRevenue = 0;
+
+    filteredInvoices.forEach(inv => {
+        totalRevenue += parseFloat(inv.total) || 0;
+        laborRevenue += parseFloat(inv.laborTotal) || 0;
+        if (inv.services) inv.services.forEach(s => serviceRevenue += parseFloat(s.price) || 0);
+        if (inv.parts) inv.parts.forEach(p => partsRevenue += parseFloat(p.total) || 0);
+    });
+
+    filteredExpenses.forEach(exp => {
+        totalExpenses += parseFloat(exp.amount) || 0;
+    });
+
+    const netProfit = totalRevenue - totalExpenses;
+    const periodText = document.getElementById('report-period').value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    // Create PDF content
+    const pdfContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Report - ${periodText}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+        h2 { color: #1e40af; margin-top: 30px; }
+        .report-period { background: #f3f4f6; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; }
+        .summary-card { padding: 20px; border-radius: 8px; text-align: center; }
+        .summary-card.income { background: #dcfce7; }
+        .summary-card.expense { background: #fee2e2; }
+        .summary-card.net { background: #dbeafe; }
+        .summary-card h4 { margin: 0 0 10px 0; font-size: 14px; }
+        .summary-card p { margin: 0; font-size: 24px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; }
+        .breakdown { margin: 20px 0; }
+        .breakdown-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+        .footer { margin-top: 40px; text-align: center; color: #6b7280; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>NxtLevel Auto - Financial Report</h1>
+    <div class="report-period">
+        <strong>Report Period:</strong> ${periodText}<br>
+        <strong>Generated:</strong> ${new Date().toLocaleString()}
+    </div>
+
+    <h2>Summary</h2>
+    <div class="summary-grid">
+        <div class="summary-card income">
+            <h4>Total Revenue</h4>
+            <p>${formatCurrency(totalRevenue)}</p>
+        </div>
+        <div class="summary-card expense">
+            <h4>Total Expenses</h4>
+            <p>${formatCurrency(totalExpenses)}</p>
+        </div>
+        <div class="summary-card net">
+            <h4>Net Profit/Loss</h4>
+            <p>${formatCurrency(netProfit)}</p>
+        </div>
+    </div>
+
+    <h2>Revenue Breakdown</h2>
+    <div class="breakdown">
+        <div class="breakdown-item"><span>Labor Income</span><span>${formatCurrency(laborRevenue)}</span></div>
+        <div class="breakdown-item"><span>Parts Sales</span><span>${formatCurrency(partsRevenue)}</span></div>
+        <div class="breakdown-item"><span>Service Charges</span><span>${formatCurrency(serviceRevenue)}</span></div>
+    </div>
+
+    <h2>Revenue Transactions</h2>
+    <table>
+        <thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Amount</th></tr></thead>
+        <tbody>
+            ${filteredInvoices.map(inv => `
+                <tr>
+                    <td>${inv.invoiceNumber || inv.id.substring(0, 8).toUpperCase()}</td>
+                    <td>${inv.customerName || 'Unknown'}</td>
+                    <td>${new Date(inv.date || inv.createdAt).toLocaleDateString()}</td>
+                    <td>${formatCurrency(inv.total)}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+
+    <h2>Expenses</h2>
+    <table>
+        <thead><tr><th>Description</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead>
+        <tbody>
+            ${filteredExpenses.map(exp => `
+                <tr>
+                    <td>${exp.description}</td>
+                    <td>${exp.category}</td>
+                    <td>${new Date(exp.date).toLocaleDateString()}</td>
+                    <td>${formatCurrency(exp.amount)}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated by NxtLevel Auto Management System
+    </div>
+</body>
+</html>`;
+
+    // Open in new window for printing/saving as PDF
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+    printWindow.focus();
+
+    // Trigger print dialog after a short delay
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
+
+    showNotification('PDF generated! Use the print dialog to save.', 'success');
+}
+
+function downloadReportExcel() {
+    const dateRange = getReportDateRange();
+    if (!dateRange) return;
+
+    const { startDate, endDate } = dateRange;
+    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+
+    const filteredInvoices = invoices.filter(inv => {
+        const invDate = new Date(inv.date || inv.createdAt);
+        return invDate >= startDate && invDate <= endDate;
+    });
+
+    const filteredExpenses = expenses.filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate >= startDate && expDate <= endDate;
+    });
+
+    // Calculate totals
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+
+    filteredInvoices.forEach(inv => totalRevenue += parseFloat(inv.total) || 0);
+    filteredExpenses.forEach(exp => totalExpenses += parseFloat(exp.amount) || 0);
+
+    // Create CSV content
+    let csvContent = "NxtLevel Auto - Financial Report\n";
+    csvContent += `Report Period:,${document.getElementById('report-period').value}\n`;
+    csvContent += `Generated:,${new Date().toLocaleString()}\n\n`;
+
+    // Summary
+    csvContent += "SUMMARY\n";
+    csvContent += "Metric,Amount\n";
+    csvContent += `Total Revenue,${totalRevenue.toFixed(2)}\n`;
+    csvContent += `Total Expenses,${totalExpenses.toFixed(2)}\n`;
+    csvContent += `Net Profit/Loss,${(totalRevenue - totalExpenses).toFixed(2)}\n\n`;
+
+    // Revenue Transactions
+    csvContent += "REVENUE TRANSACTIONS\n";
+    csvContent += "Invoice Number,Customer,Date,Amount\n";
+    filteredInvoices.forEach(inv => {
+        csvContent += `"${inv.invoiceNumber || inv.id.substring(0, 8).toUpperCase()}","${inv.customerName || 'Unknown'}","${new Date(inv.date || inv.createdAt).toLocaleDateString()}",${inv.total}\n`;
+    });
+    csvContent += "\n";
+
+    // Expenses
+    csvContent += "EXPENSES\n";
+    csvContent += "Description,Category,Date,Amount\n";
+    filteredExpenses.forEach(exp => {
+        csvContent += `"${exp.description}","${exp.category}","${new Date(exp.date).toLocaleDateString()}",${exp.amount}\n`;
+    });
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `financial-report-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    showNotification('Excel/CSV file downloaded!', 'success');
+}
+
+// ==========================================
+// TECHNICIAN MANAGEMENT
+// ==========================================
+
+function openTechnicianModal() {
+    document.getElementById('technician-form').reset();
+    document.getElementById('technician-id').value = '';
+    document.querySelector('#technician-modal .modal-header h2').textContent = 'Add Technician';
+    openModal('technician-modal');
+}
+
+function saveTechnician(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('technician-id').value || generateId();
+    const existingTechnician = technicians.find(t => t.id === id);
+
+    const technician = {
+        id: id,
+        firstName: document.getElementById('technician-first-name').value,
+        lastName: document.getElementById('technician-last-name').value,
+        email: document.getElementById('technician-email').value,
+        phone: document.getElementById('technician-phone').value,
+        specialization: document.getElementById('technician-specialization').value,
+        hourlyRate: parseFloat(document.getElementById('technician-hourly-rate').value) || 0,
+        status: document.getElementById('technician-status').value,
+        notes: document.getElementById('technician-notes').value,
+        createdAt: existingTechnician ? existingTechnician.createdAt : new Date().toISOString()
+    };
+
+    const existingIndex = technicians.findIndex(t => t.id === id);
+    if (existingIndex >= 0) {
+        technicians[existingIndex] = technician;
+    } else {
+        technicians.push(technician);
+    }
+
+    localStorage.setItem('technicians', JSON.stringify(technicians));
+    closeModal('technician-modal');
+    renderTechniciansList();
+    populateTechnicianDropdowns();
+    showNotification('Technician saved successfully!', 'success');
+}
+
+// Technician sorting state
+let technicianSortColumn = 'name';
+let technicianSortDirection = 'asc';
+
+function sortTechnicians(column) {
+    if (technicianSortColumn === column) {
+        technicianSortDirection = technicianSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        technicianSortColumn = column;
+        technicianSortDirection = 'asc';
+    }
+    const searchInput = document.getElementById('technician-search');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    if (searchTerm) {
+        const filtered = technicians.filter(t =>
+            (t.firstName + ' ' + t.lastName).toLowerCase().includes(searchTerm) ||
+            (t.email || '').toLowerCase().includes(searchTerm) ||
+            (t.phone || '').includes(searchTerm) ||
+            (t.specialization || '').toLowerCase().includes(searchTerm)
+        );
+        renderFilteredTechnicians(filtered);
+    } else {
+        renderTechniciansList();
+    }
+}
+
+function applyTechnicianSort(list) {
+    return [...list].sort((a, b) => {
+        let valA, valB;
+        switch (technicianSortColumn) {
+            case 'name':
+                valA = (a.firstName + ' ' + a.lastName).toLowerCase();
+                valB = (b.firstName + ' ' + b.lastName).toLowerCase();
+                break;
+            case 'email':
+                valA = (a.email || '').toLowerCase();
+                valB = (b.email || '').toLowerCase();
+                break;
+            case 'phone':
+                valA = (a.phone || '').toLowerCase();
+                valB = (b.phone || '').toLowerCase();
+                break;
+            case 'specialization':
+                valA = (a.specialization || '').toLowerCase();
+                valB = (b.specialization || '').toLowerCase();
+                break;
+            case 'rate':
+                valA = parseFloat(a.hourlyRate) || 0;
+                valB = parseFloat(b.hourlyRate) || 0;
+                break;
+            case 'status':
+                valA = (a.status || '').toLowerCase();
+                valB = (b.status || '').toLowerCase();
+                break;
+            default:
+                valA = (a.firstName + ' ' + a.lastName).toLowerCase();
+                valB = (b.firstName + ' ' + b.lastName).toLowerCase();
+        }
+        if (valA < valB) return technicianSortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return technicianSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function buildTechnicianTable(list) {
+    const si = (col) => technicianSortColumn === col
+        ? (technicianSortDirection === 'asc' ? '<span class="sort-arrow">\u25b2</span>' : '<span class="sort-arrow">\u25bc</span>')
+        : '';
+    const sorted = applyTechnicianSort(list);
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('name', technicianSortColumn)}" onclick="sortTechnicians('name')">Name${si('name')}</th>
+                <th class="sortable${asc('email', technicianSortColumn)}" onclick="sortTechnicians('email')">Email${si('email')}</th>
+                <th class="sortable${asc('phone', technicianSortColumn)}" onclick="sortTechnicians('phone')">Phone${si('phone')}</th>
+                <th class="sortable${asc('specialization', technicianSortColumn)}" onclick="sortTechnicians('specialization')">Specialization${si('specialization')}</th>
+                <th class="sortable${asc('rate', technicianSortColumn)}" onclick="sortTechnicians('rate')">Hourly Rate${si('rate')}</th>
+                <th class="sortable${asc('status', technicianSortColumn)}" onclick="sortTechnicians('status')">Status${si('status')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sorted.map(t => `
+                <tr onclick="viewTechnicianDetails('${t.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${t.firstName} ${t.lastName}</td>
+                    <td>${t.email || 'N/A'}</td>
+                    <td>${t.phone || 'N/A'}</td>
+                    <td>${t.specialization || 'N/A'}</td>
+                    <td>${t.hourlyRate ? formatCurrency(t.hourlyRate) + '/hr' : 'N/A'}</td>
+                    <td><span class="status-badge ${t.status}">${t.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="event.stopPropagation(); editTechnician('${t.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteTechnician('${t.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    return table;
+}
+
+function renderTechniciansList() {
+    const container = document.getElementById('technicians-list');
+    if (technicians.length === 0) {
+        container.innerHTML = '<p class="empty-state">No technicians found. Add your first technician!</p>';
+        return;
+    }
+    container.innerHTML = '';
+    container.appendChild(buildTechnicianTable(technicians));
+}
+
+function renderFilteredTechnicians(filteredTechnicians) {
+    const container = document.getElementById('technicians-list');
+    if (filteredTechnicians.length === 0) {
+        container.innerHTML = '<p class="empty-state">No technicians found matching your search.</p>';
+        return;
+    }
+    container.innerHTML = '';
+    container.appendChild(buildTechnicianTable(filteredTechnicians));
+}
+
+// View Technician Details
+function viewTechnicianDetails(id) {
+    const technician = technicians.find(t => t.id === id);
+    if (!technician) return;
+    
+    const modal = document.getElementById('technician-view-modal');
+    const content = document.getElementById('technician-view-content');
+    
+    content.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 80px; height: 80px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 32px; color: white;">
+                ${technician.firstName ? technician.firstName.charAt(0).toUpperCase() : 'T'}${technician.lastName ? technician.lastName.charAt(0).toUpperCase() : ''}
+            </div>
+            <h2 style="margin: 10px 0 5px;">${technician.firstName} ${technician.lastName}</h2>
+            <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${technician.status === 'active' ? 'var(--success-green)' : 'var(--gray-400)'}; color: white;">
+                ${technician.status ? technician.status.toUpperCase() : 'ACTIVE'}
+            </span>
+        </div>
+        <div style="background: var(--gray-50); padding: 20px; border-radius: 12px;">
+            <h3 style="margin: 0 0 15px; font-size: 16px; color: var(--gray-600);">Contact Information</h3>
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">📧</span>
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500);">Email</div>
+                        <div style="font-weight: 500;">${technician.email || 'Not provided'}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">📞</span>
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500);">Phone</div>
+                        <div style="font-weight: 500;">${technician.phone || 'Not provided'}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <div style="background: var(--gray-50); padding: 15px; border-radius: 12px;">
+                <h4 style="margin: 0 0 5px; font-size: 14px; color: var(--gray-600);">Specialization</h4>
+                <p style="margin: 0; font-weight: 500;">${technician.specialization || 'Not specified'}</p>
+            </div>
+            <div style="background: var(--gray-50); padding: 15px; border-radius: 12px;">
+                <h4 style="margin: 0 0 5px; font-size: 14px; color: var(--gray-600);">Hourly Rate</h4>
+                <p style="margin: 0; font-weight: 500;">${technician.hourlyRate ? formatCurrency(technician.hourlyRate) + '/hr' : 'Not set'}</p>
+            </div>
+        </div>
+        ${technician.notes ? `
+            <div style="background: var(--gray-50); padding: 20px; border-radius: 12px; margin-top: 15px;">
+                <h4 style="margin: 0 0 10px; font-size: 16px; color: var(--gray-600);">Notes</h4>
+                <p style="margin: 0; white-space: pre-line;">${technician.notes}</p>
+            </div>
+        ` : ''}
+    `;
+    
+    modal.classList.add('active');
+}
+
+function editTechnician(id) {
+    const technician = technicians.find(t => t.id === id);
+    if (!technician) return;
+
+    document.getElementById('technician-id').value = technician.id;
+    document.getElementById('technician-first-name').value = technician.firstName;
+    document.getElementById('technician-last-name').value = technician.lastName;
+    document.getElementById('technician-email').value = technician.email || '';
+    document.getElementById('technician-phone').value = technician.phone || '';
+    document.getElementById('technician-specialization').value = technician.specialization || '';
+    document.getElementById('technician-hourly-rate').value = technician.hourlyRate || '';
+    document.getElementById('technician-status').value = technician.status || 'active';
+    document.getElementById('technician-notes').value = technician.notes || '';
+
+    document.querySelector('#technician-modal .modal-header h2').textContent = 'Edit Technician';
+    openModal('technician-modal');
+}
+
+function deleteTechnician(id) {
+    if (!confirm('Are you sure you want to delete this technician?')) return;
+
+    technicians = technicians.filter(t => t.id !== id);
+    localStorage.setItem('technicians', JSON.stringify(technicians));
+    renderTechniciansList();
+    populateTechnicianDropdowns();
+    showNotification('Technician deleted successfully!', 'success');
+}
+
+function populateTechnicianDropdowns() {
+    const selects = [
+        document.getElementById('work-order-technician')
+    ];
+
+    selects.forEach(select => {
+        if (!select) return;
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Select Technician</option>';
+        technicians.filter(t => t.status === 'active').forEach(t => {
+            const option = document.createElement('option');
+            option.value = t.id;
+            option.textContent = `${t.firstName} ${t.lastName}${t.specialization ? ` (${t.specialization})` : ''}`;
+            select.appendChild(option);
+        });
+        select.value = currentValue;
+    });
+}
+
+// ==========================================
+// EXPENSE MANAGEMENT
+// ==========================================
+
+function openExpenseModal() {
+    document.getElementById('expense-form').reset();
+    document.getElementById('expense-id').value = '';
+    // Set today's date as default
+    document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+    document.querySelector('#expense-modal .modal-header h2').textContent = 'Add Expense';
+    openModal('expense-modal');
+}
+
+function saveExpense(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('expense-id').value || generateId();
+    const existingExpense = expenses.find(e => e.id === id);
+
+    const expense = {
+        id: id,
+        description: document.getElementById('expense-description').value,
+        category: document.getElementById('expense-category').value,
+        amount: parseFloat(document.getElementById('expense-amount').value),
+        date: document.getElementById('expense-date').value,
+        paymentMethod: document.getElementById('expense-payment-method').value,
+        vendor: document.getElementById('expense-vendor').value,
+        reference: document.getElementById('expense-reference').value,
+        notes: document.getElementById('expense-notes').value,
+        createdAt: existingExpense ? existingExpense.createdAt : new Date().toISOString()
+    };
+
+    const existingIndex = expenses.findIndex(e => e.id === id);
+    if (existingIndex >= 0) {
+        expenses[existingIndex] = expense;
+    } else {
+        expenses.push(expense);
+    }
+
+    localStorage.setItem('expenses', JSON.stringify(expenses));
+    closeModal('expense-modal');
+    renderExpensesList();
+    showNotification('Expense saved successfully!', 'success');
+}
+
+// Expense sorting state
+let expenseSortColumn = 'date';
+let expenseSortDirection = 'desc';
+
+function sortExpenses(column) {
+    if (expenseSortColumn === column) {
+        expenseSortDirection = expenseSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        expenseSortColumn = column;
+        expenseSortDirection = 'asc';
+    }
+    renderExpensesList();
+}
+
+function updateExpenseSummary() {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+
+    const monthTotal = expenses.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+    const yearTotal = expenses.filter(e => {
+        const d = new Date(e.date);
+        return d.getFullYear() === thisYear;
+    }).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+    // Average monthly (based on months with data)
+    const monthsWithData = new Set(expenses.map(e => {
+        const d = new Date(e.date);
+        return `${d.getFullYear()}-${d.getMonth()}`;
+    })).size || 1;
+    const allTimeTotal = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    const avgMonthly = allTimeTotal / monthsWithData;
+
+    const el = id => document.getElementById(id);
+    if (el('expense-month-total')) el('expense-month-total').textContent = formatCurrency(monthTotal);
+    if (el('expense-year-total')) el('expense-year-total').textContent = formatCurrency(yearTotal);
+    if (el('expense-count')) el('expense-count').textContent = expenses.length;
+    if (el('expense-avg-monthly')) el('expense-avg-monthly').textContent = formatCurrency(avgMonthly);
+}
+
+function renderExpenseCategoryBreakdown(filteredExpenses) {
+    const container = document.getElementById('expense-category-breakdown');
+    if (!container) return;
+
+    const categoryTotals = {};
+    filteredExpenses.forEach(e => {
+        const cat = e.category || 'Other';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + (parseFloat(e.amount) || 0);
+    });
+
+    const total = Object.values(categoryTotals).reduce((s, v) => s + v, 0);
+    if (total === 0) { container.innerHTML = ''; return; }
+
+    const colors = {
+        'Parts & Supplies': '#3498db',
+        'Tools & Equipment': '#2ecc71',
+        'Rent & Utilities': '#e74c3c',
+        'Salaries & Wages': '#9b59b6',
+        'Vehicle Expenses': '#f39c12',
+        'Insurance': '#1abc9c',
+        'Marketing & Advertising': '#e67e22',
+        'Office Supplies': '#34495e',
+        'Professional Services': '#16a085',
+        'Maintenance & Repairs': '#c0392b',
+        'Other': '#95a5a6'
+    };
+
+    container.innerHTML = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, amt]) => {
+            const pct = ((amt / total) * 100).toFixed(1);
+            const color = colors[cat] || '#95a5a6';
+            return `<div style="background:${color}15;border:1px solid ${color}40;border-radius:6px;padding:0.4rem 0.75rem;font-size:0.8rem;display:flex;flex-direction:column;gap:2px;">
+                <span style="font-weight:600;color:${color};">${cat}</span>
+                <span style="color:var(--text-color);">${formatCurrency(amt)} <span style="color:var(--text-light);">(${pct}%)</span></span>
+            </div>`;
+        }).join('');
+}
+
+function renderExpensesList() {
+    const container = document.getElementById('expenses-list');
+    const searchTerm = (document.getElementById('expense-search')?.value || '').toLowerCase();
+    const filterCategory = document.getElementById('expense-filter-category')?.value || '';
+    const filterMonth = document.getElementById('expense-filter-month')?.value || '';
+
+    const now = new Date();
+
+    let filteredExpenses = expenses.filter(e => {
+        // Search filter
+        if (searchTerm && !(
+            e.description.toLowerCase().includes(searchTerm) ||
+            e.category.toLowerCase().includes(searchTerm) ||
+            (e.vendor && e.vendor.toLowerCase().includes(searchTerm)) ||
+            (e.reference && e.reference.toLowerCase().includes(searchTerm))
+        )) return false;
+
+        // Category filter
+        if (filterCategory && e.category !== filterCategory) return false;
+
+        // Month filter
+        if (filterMonth) {
+            const d = new Date(e.date);
+            if (filterMonth === 'this-month') {
+                if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+            } else if (filterMonth === 'last-month') {
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                if (d.getMonth() !== lastMonth.getMonth() || d.getFullYear() !== lastMonth.getFullYear()) return false;
+            } else if (filterMonth === 'this-year') {
+                if (d.getFullYear() !== now.getFullYear()) return false;
+            }
+        }
+
+        return true;
+    });
+
+    // Update summary & breakdown
+    updateExpenseSummary();
+    renderExpenseCategoryBreakdown(filteredExpenses);
+
+    if (filteredExpenses.length === 0) {
+        container.innerHTML = '<p class="empty-state">No expenses found. Add your first expense!</p>';
+        return;
+    }
+
+    // Sort
+    const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+        let aVal, bVal;
+        switch (expenseSortColumn) {
+            case 'date':
+                aVal = new Date(a.date).getTime();
+                bVal = new Date(b.date).getTime();
+                break;
+            case 'description':
+                aVal = (a.description || '').toLowerCase();
+                bVal = (b.description || '').toLowerCase();
+                break;
+            case 'category':
+                aVal = (a.category || '').toLowerCase();
+                bVal = (b.category || '').toLowerCase();
+                break;
+            case 'vendor':
+                aVal = (a.vendor || '').toLowerCase();
+                bVal = (b.vendor || '').toLowerCase();
+                break;
+            case 'payment':
+                aVal = (a.paymentMethod || '').toLowerCase();
+                bVal = (b.paymentMethod || '').toLowerCase();
+                break;
+            case 'amount':
+                aVal = parseFloat(a.amount) || 0;
+                bVal = parseFloat(b.amount) || 0;
+                break;
+            default:
+                aVal = new Date(a.date).getTime();
+                bVal = new Date(b.date).getTime();
+        }
+        if (expenseSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+
+    // Calculate total
+    const total = sortedExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    const sortIndicator = (col) => expenseSortColumn === col ? (expenseSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+
+    const table = document.createElement('table');
+    table.className = 'data-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('date',expenseSortColumn)}" onclick="sortExpenses('date')">Date${sortIndicator('date')}</th>
+                <th class="sortable${asc('description',expenseSortColumn)}" onclick="sortExpenses('description')">Description${sortIndicator('description')}</th>
+                <th class="sortable${asc('category',expenseSortColumn)}" onclick="sortExpenses('category')">Category${sortIndicator('category')}</th>
+                <th class="sortable${asc('vendor',expenseSortColumn)}" onclick="sortExpenses('vendor')">Vendor${sortIndicator('vendor')}</th>
+                <th class="sortable${asc('payment',expenseSortColumn)}" onclick="sortExpenses('payment')">Payment${sortIndicator('payment')}</th>
+                <th class="sortable${asc('amount',expenseSortColumn)}" onclick="sortExpenses('amount')">Amount${sortIndicator('amount')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedExpenses.map(e => `
+                <tr onclick="viewExpenseDetails('${e.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${formatDate(e.date)}</td>
+                    <td>
+                        <strong>${e.description}</strong>
+                        ${e.reference ? `<br><span style="font-size:0.75rem;color:var(--text-light);">Ref: ${e.reference}</span>` : ''}
+                        ${e.notes ? `<br><span style="font-size:0.75rem;color:var(--text-light);">${e.notes}</span>` : ''}
+                    </td>
+                    <td><span style="background:var(--bg-secondary);padding:2px 8px;border-radius:12px;font-size:0.8rem;">${e.category}</span></td>
+                    <td>${e.vendor || '<span style="color:var(--text-light)">N/A</span>'}</td>
+                    <td>${e.paymentMethod || '<span style="color:var(--text-light)">N/A</span>'}</td>
+                    <td style="font-weight:600;color:var(--danger-color);">${formatCurrency(e.amount)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="event.stopPropagation(); editExpense('${e.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteExpense('${e.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+        <tfoot>
+            <tr style="background:var(--bg-secondary);font-weight:700;">
+                <td colspan="5" style="padding:0.75rem;text-align:right;">Total (${sortedExpenses.length} record${sortedExpenses.length !== 1 ? 's' : ''})</td>
+                <td style="padding:0.75rem;color:var(--danger-color);font-size:1.05rem;">${formatCurrency(total)}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    `;
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+// View Expense Details
+function viewExpenseDetails(id) {
+    const expense = expenses.find(e => e.id === id);
+    if (!expense) return;
+    
+    const modal = document.getElementById('expense-view-modal');
+    const content = document.getElementById('expense-view-content');
+    
+    const categoryColors = {
+        'Parts': '#3498db',
+        'Labor': '#2ecc71',
+        'Utilities': '#f1c40f',
+        'Rent': '#9b59b6',
+        'Equipment': '#e74c3c',
+        'Supplies': '#1abc9c',
+        'Insurance': '#34495e',
+        'Marketing': '#e91e63',
+        'Other': '#7f8c8d'
+    };
+    
+    content.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; background: var(--danger-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px; color: white;">
+                💰
+            </div>
+            <h2 style="margin: 10px 0 5px;">${expense.description}</h2>
+            <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${categoryColors[expense.category] || '#7f8c8d'}; color: white;">
+                ${expense.category}
+            </span>
+        </div>
+        <div style="background: var(--gray-50); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 14px; color: var(--gray-500); margin-bottom: 5px;">Amount</div>
+            <div style="font-size: 32px; font-weight: bold; color: var(--danger-color);">${formatCurrency(expense.amount)}</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+            <div style="background: var(--gray-50); padding: 15px; border-radius: 12px;">
+                <h4 style="margin: 0 0 5px; font-size: 14px; color: var(--gray-600);">Date</h4>
+                <p style="margin: 0; font-weight: 500;">${formatDate(expense.date)}</p>
+            </div>
+            <div style="background: var(--gray-50); padding: 15px; border-radius: 12px;">
+                <h4 style="margin: 0 0 5px; font-size: 14px; color: var(--gray-600);">Payment Method</h4>
+                <p style="margin: 0; font-weight: 500;">${expense.paymentMethod || 'N/A'}</p>
+            </div>
+        </div>
+        <div style="background: var(--gray-50); padding: 20px; border-radius: 12px;">
+            <h3 style="margin: 0 0 15px; font-size: 16px; color: var(--gray-600);">Details</h3>
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">🏪</span>
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500);">Vendor</div>
+                        <div style="font-weight: 500;">${expense.vendor || 'Not provided'}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">🔗</span>
+                    <div>
+                        <div style="font-size: 12px; color: var(--gray-500);">Reference</div>
+                        <div style="font-weight: 500;">${expense.reference || 'Not provided'}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ${expense.notes ? `
+            <div style="background: var(--gray-50); padding: 20px; border-radius: 12px; margin-top: 15px;">
+                <h4 style="margin: 0 0 10px; font-size: 16px; color: var(--gray-600);">Notes</h4>
+                <p style="margin: 0; white-space: pre-line;">${expense.notes}</p>
+            </div>
+        ` : ''}
+    `;
+    
+    modal.classList.add('active');
+}
+
+function editExpense(id) {
+    const expense = expenses.find(e => e.id === id);
+    if (!expense) return;
+
+    document.getElementById('expense-id').value = expense.id;
+    document.getElementById('expense-description').value = expense.description;
+    document.getElementById('expense-category').value = expense.category;
+    document.getElementById('expense-amount').value = expense.amount;
+    document.getElementById('expense-date').value = expense.date;
+    document.getElementById('expense-payment-method').value = expense.paymentMethod || 'Cash';
+    document.getElementById('expense-vendor').value = expense.vendor || '';
+    document.getElementById('expense-reference').value = expense.reference || '';
+    document.getElementById('expense-notes').value = expense.notes || '';
+
+    document.querySelector('#expense-modal .modal-header h2').textContent = 'Edit Expense';
+    openModal('expense-modal');
+}
+
+function deleteExpense(id) {
+    if (!confirm('Are you sure you want to delete this expense?')) return;
+
+    expenses = expenses.filter(e => e.id !== id);
+    localStorage.setItem('expenses', JSON.stringify(expenses));
+    renderExpensesList();
+    showNotification('Expense deleted successfully!', 'success');
 }
