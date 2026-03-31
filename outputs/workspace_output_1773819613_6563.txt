@@ -1,0 +1,3 @@
+1763:<div id="create-quote-modal" class="modal">
+1767:            <button class="close-btn" onclick="closeQuoteModal()">&times;</button>
+1867:                    <button type="button" onclick="closeQuoteModal()" style="margin-right: 10px;">Cancel</button>

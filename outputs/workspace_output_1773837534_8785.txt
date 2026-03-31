@@ -1,0 +1,4 @@
+mechanic-shop/billing.js:2761:    renderSuppliersList();
+mechanic-shop/billing.js:2884:    renderSuppliersList();
+mechanic-shop/billing.js:2896:    renderSuppliersList();
+mechanic-shop/billing.js:2903:function renderSuppliersList() {

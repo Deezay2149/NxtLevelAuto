@@ -1,0 +1,4 @@
+  File "/workspace/fix_billing.py", line 11
+    new_pattern = '<div class=\\"supplier-item\\" onclick=\\"viewSupplierDetails(\\'${supplier.id}\\')\\" style=\\"cursor: pointer;\\" title=\\"Click to view details\\">'
+                                                                                    ^
+SyntaxError: invalid syntax

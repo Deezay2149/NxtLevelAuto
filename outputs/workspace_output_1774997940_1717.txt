@@ -1,0 +1,41 @@
+        </section>
+
+        <!-- Quotes Section -->
+        <section id="quotes">
+            <div class="card">
+                <h2>📋 Quote Management</h2>
+                <div class="search-box" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+                    <button class="btn btn-primary" onclick="openCreateQuoteModal()">+ Create Quote</button>
+                </div>
+                <div id="quotes-list"></div>
+            </div>
+        </section>
+
+    <!-- Quote View Modal -->
+    <div id="quote-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📋 Quote Details</h2>
+                <button class="close-btn" onclick="closeModal('quote-view-modal')">&times;</button>
+            </div>
+            <div id="quote-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+        <!-- Technical Knowledge Base Section -->
+        <section id="technical">
+            <div class="card">
+                <h2>🔧 Technical Knowledge Base</h2>
+                <p style="color:#666;margin-top:-0.5rem;margin-bottom:1rem;font-size:0.95rem;">Store knowledge articles, service bulletins, and workshop tips for your team.</p>
+
+                <!-- Technical Sub-tabs -->
+                <div class="sub-tabs">
+                    <button class="sub-tab active" data-tab="tech-articles-tab" onclick="switchTechTab('tech-articles-tab')">📄 Articles</button>
+                    <button class="sub-tab" data-tab="tech-bulletins-tab" onclick="switchTechTab('tech-bulletins-tab')">📋 Bulletins</button>
+                    <button class="sub-tab" data-tab="tech-tips-tab" onclick="switchTechTab('tech-tips-tab')">💡 Tips</button>
+                </div>
+
+                <!-- Articles Tab -->

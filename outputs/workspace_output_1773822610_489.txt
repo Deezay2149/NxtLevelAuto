@@ -1,0 +1,57 @@
+function convertQuoteToInvoice(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    if (!confirm('Convert this quote to an invoice? The quote will be marked as converted.')) {
+        return;
+    }
+    
+    // Create invoice from quote
+    const invoice = {
+        id: generateId(),
+        invoiceNumber: `INV-${Date.now()}`,
+        quoteId: quote.id,
+        quoteNumber: quote.quoteNumber,
+        workOrderId: quote.workOrderId,
+        customerId: quote.customerId,
+        vehicleId: quote.vehicleId,
+        services: quote.services,
+        parts: quote.parts,
+        customItems: quote.customItems,
+        laborHours: quote.laborHours,
+        laborRate: quote.laborRate,
+        laborTotal: quote.laborTotal,
+        servicesTotal: quote.servicesTotal,
+        partsTotal: quote.partsTotal,
+        customTotal: quote.customTotal,
+        subtotal: quote.subtotal,
+        discount: quote.discount,
+        taxRate: quote.taxRate,
+        taxAmount: quote.taxAmount,
+        total: quote.total,
+        notes: quote.notes,
+        status: 'pending',
+        amountPaid: 0,
+        balanceDue: quote.total,
+        payments: [],
+        modificationHistory: [],
+        createdAt: new Date().toISOString()
+    };
+    
+    invoices.push(invoice);
+    
+    // Update quote status
+    quote.status = 'converted';
+    quote.convertedAt = new Date().toISOString();
+    quote.convertedToInvoiceId = invoice.id;
+    
+    saveBillingData();
+    renderQuotesList();
+    renderInvoicesList();
+    
+    showNotification('Quote converted to invoice successfully!', 'success');
+}
+
+// Delete quote
+function deleteQuote(quoteId) {
+    if (!confirm('Are you sure you want to delete this quote?')) {

@@ -1,0 +1,78 @@
+function renderQuotesList() {
+    const container = document.getElementById('quotes-list');
+    
+    if (!container) return;
+    
+    if (quotes.length === 0) {
+        container.innerHTML = '<p class="empty-state">No quotes found. Create your first quote!</p>';
+        return;
+    }
+    
+    let html = '<table>';
+    html += '<thead><tr>';
+    html += '<th>Quote #</th>';
+    html += '<th>Customer</th>';
+    html += '<th>Vehicle</th>';
+    html += '<th>Total</th>';
+    html += '<th>Status</th>';
+    html += '<th>Valid Until</th>';
+    html += '<th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    quotes.forEach(quote => {
+        const customer = typeof customers !== 'undefined' ? customers.find(c => c.id === quote.customerId) : null;
+        const vehicle = typeof vehicles !== 'undefined' ? vehicles.find(v => v.id === quote.vehicleId) : null;
+        const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'N/A';
+        const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A';
+        
+        let statusBadge = '';
+        if (quote.status === 'pending') {
+            statusBadge = '<span class="status-badge status-pending">Pending</span>';
+        } else if (quote.status === 'accepted') {
+            statusBadge = '<span class="status-badge status-accepted">Accepted</span>';
+        } else if (quote.status === 'rejected') {
+            statusBadge = '<span class="status-badge status-rejected">Rejected</span>';
+        } else if (quote.status === 'converted') {
+            statusBadge = '<span class="status-badge status-converted">Converted</span>';
+        }
+        
+        let validUntil = quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : '-';
+        
+        html += '<tr>';
+        html += `<td>${quote.quoteNumber}</td>`;
+        html += `<td>${customerName}</td>`;
+        html += `<td>${vehicleName}</td>`;
+        html += `<td style="text-align:right;font-weight:bold;">${formatCurrency(quote.total)}</td>`;
+        html += `<td style="text-align:center;">${statusBadge}</td>`;
+        html += `<td style="text-align:center;">${validUntil}</td>`;
+        html += '<td>';
+        html += '<div class="action-buttons" onclick="event.stopPropagation()">';
+        html += `<button class="btn btn-secondary" onclick="viewQuote('${quote.id}')">View</button>`;
+        
+        if (quote.status === 'pending') {
+            html += `<button class="btn btn-success" onclick="convertQuoteToInvoice('${quote.id}')">Convert</button>`;
+        }
+        
+        html += `<button class="btn btn-danger" onclick="deleteQuote('${quote.id}')">Delete</button>`;
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// View quote details
+function viewQuote(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    const customer = typeof customers !== 'undefined' ? customers.find(c => c.id === quote.customerId) : null;
+    const vehicle = typeof vehicles !== 'undefined' ? vehicles.find(v => v.id === quote.vehicleId) : null;
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'N/A';
+    const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A';
+    
+    let html = `
+        <div class="quote-view-container">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;padding:1rem;background:#f8f9fa;border-radius:8px;">

@@ -1,0 +1,118 @@
+    <!-- Vehicle Modal -->
+    <div id="vehicle-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Vehicle</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-modal')">&times;</button>
+            </div>
+            <form id="vehicle-form">
+                <input type="hidden" id="vehicle-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="vehicle-customer" required>
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Brand *</label>
+                        <select id="vehicle-make" required onchange="updateModelDropdown()">
+                            <option value="">Select Brand</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Model *</label>
+                        <select id="vehicle-model" required>
+                            <option value="">Select Model</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Year *</label>
+                        <input type="number" id="vehicle-year" min="1900" max="2099" required>
+                    </div>
+                    <div class="form-group">
+                        <label>License Plate *</label>
+                        <input type="text" id="vehicle-plate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VIN</label>
+                    <input type="text" id="vehicle-vin">
+                </div>
+                <div class="form-group">
+                    <label>Engine Code</label>
+                    <input type="text" id="vehicle-engine-code" placeholder="e.g., 2.0 TSI, B48, etc.">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <select id="vehicle-color">
+                        <option value="">Select Color</option>
+                        <option value="White">White</option>
+                        <option value="Black">Black</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Grey">Grey</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Red">Red</option>
+                        <option value="Green">Green</option>
+                        <option value="Yellow">Yellow</option>
+                        <option value="Orange">Orange</option>
+                        <option value="Brown">Brown</option>
+                        <option value="Beige">Beige</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Maroon">Maroon</option>
+                        <option value="Purple">Purple</option>
+                        <option value="Navy">Navy</option>
+                        <option value="Teal">Teal</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Current Mileage (km)</label>
+                        <input type="number" id="vehicle-mileage" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Service Mileage (km)</label>
+                        <input type="number" id="vehicle-last-service-mileage" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Licence Disc Photo</label>
+                    <input type="file" id="vehicle-licence-disc" accept="image/*" style="display:none" onchange="handleLicenceDiscUpload(this)">
+                    <div id="licence-disc-preview" class="licence-disc-preview" onclick="document.getElementById('vehicle-licence-disc').click()">
+                        <div class="licence-disc-placeholder">
+                            <span>📋</span><span>Click to add licence disc photo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Photos <span style="font-size:0.8rem;color:#888;font-weight:400;">(up to 8 images)</span></label>
+                    <input type="file" id="vehicle-image" accept="image/*" multiple style="display:none" onchange="addVehicleImages(this)">
+                    <div id="vehicle-image-gallery" class="image-gallery">
+                        <div class="image-gallery-add" onclick="document.getElementById('vehicle-image').click()" title="Add photos">
+                            <span>📷</span><span>Add Photo</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Vehicle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle View Modal -->
+    <div id="vehicle-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="vehicle-view-title">🚗 Vehicle Details</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-view-modal')">&times;</button>
+            </div>
+            <div id="vehicle-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicle Image Lightbox (injected by JS) -->
+

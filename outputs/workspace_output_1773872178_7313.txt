@@ -1,0 +1,2 @@
+817:    <div id="service-modal" class="modal">
+821:                <button class="close-btn" onclick="closeModal('service-modal')">&times;</button>

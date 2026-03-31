@@ -1,0 +1,50 @@
+    if (countEl) countEl.textContent = techItems.filter(i => i.type === type).length;
+}
+
+function filterTechItems(type) {
+    const cfg = TECH_TYPE_CONFIG[type];
+    const searchEl = document.getElementById(cfg.searchId);
+    renderTechList(type, searchEl ? searchEl.value : '');
+}
+
+function switchTechTab(tabId) {
+    // Update sub-tab buttons
+    const subTabs = document.querySelectorAll('#technical .sub-tab');
+    subTabs.forEach(tab => tab.classList.remove('active'));
+    subTabs.forEach(tab => {
+        if (tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(tabId)) {
+            tab.classList.add('active');
+        }
+    });
+
+    // Update tab content
+    document.querySelectorAll('#technical .tab-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+
+    // Refresh content
+    const typeMap = {
+        'tech-articles-tab':  'article',
+        'tech-bulletins-tab': 'bulletin',
+        'tech-tips-tab':      'tip'
+    };
+    const type = typeMap[tabId];
+    if (type) {
+        renderTechList(type);
+        updateTechSummary(type);
+    }
+}
+
+function initTechKnowledgeBase() {
+    // Wire up the form submission
+    const techForm = document.getElementById('tech-form');
+    if (techForm) techForm.addEventListener('submit', saveTechItem);
+
+    // Initial render for all types
+    renderTechList('article');
+    renderTechList('bulletin');
+    renderTechList('tip');
+    updateTechSummary('article');
+    updateTechSummary('bulletin');
+    updateTechSummary('tip');
+}

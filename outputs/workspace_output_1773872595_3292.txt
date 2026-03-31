@@ -1,0 +1,11 @@
+$
+        return `$
+        <div class="supplier-item">$
+            ${logoHtml}$
+            <div class="supplier-info">$
+                <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>$
+                <p>M-pM-^_M-^SM-^^ ${supplier.phone} ${supplier.email ? `| M-bM-^\M-^IM-oM-8M-^O ${supplier.email}` : ''}</p>$
+                <p>M-pM-^_M-^QM-$ ${supplier.contact || 'No contact person'}</p>$
+                ${supplier.accountNumber ? `<p>M-pM-^_M-^TM-^V Account: ${supplier.accountNumber}</p>` : ''}$
+                ${websiteHtml}$
+            </div>$

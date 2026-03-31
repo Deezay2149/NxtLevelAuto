@@ -1,0 +1,2 @@
+1095:function editService(id) {
+1109:function deleteService(id) {

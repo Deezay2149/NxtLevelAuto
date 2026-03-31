@@ -1,0 +1,3 @@
+55:            <li><button data-section="invoices">Invoices</button></li>
+259:        <!-- Invoices Section -->
+406:                        <h4>Cash Inflows (Paid Invoices)</h4>

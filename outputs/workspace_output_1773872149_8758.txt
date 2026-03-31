@@ -1,0 +1,31 @@
+                    <td>${service.engineBrand || '<span style="color:var(--text-light);font-style:italic;">Any</span>'}</td>
+                    <td>${formatCurrency(service.price)}</td>
+                    <td>${service.estimatedTime ? service.estimatedTime + ' hrs' : 'N/A'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="editService('${service.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteService('${service.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function filterServicesList() {
+    const searchTerm = document.getElementById('service-search').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        renderServicesList();
+        return;
+    }
+    
+    const filtered = services.filter(service => 
+        service.name.toLowerCase().includes(searchTerm) ||
+        (service.description && service.description.toLowerCase().includes(searchTerm)) ||
+        formatCurrency(service.price).toLowerCase().includes(searchTerm)
+    );

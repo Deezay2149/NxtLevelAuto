@@ -1,0 +1,3 @@
+716:                        <select id="vehicle-make" required onchange="updateModelDropdown()">
+722:                        <select id="vehicle-model" required>
+730:                        <input type="number" id="vehicle-year" min="1900" max="2099" required>

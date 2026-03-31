@@ -1,0 +1,3 @@
+4753:function viewQuote(quoteId) {
+4821:function convertQuoteToInvoice(quoteId) {
+4876:function deleteQuote(quoteId) {

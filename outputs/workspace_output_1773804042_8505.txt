@@ -1,0 +1,31 @@
+        if (inv.parts && Array.isArray(inv.parts)) {
+            inv.parts.forEach(item => {
+                const amount = parseFloat(item.total) || 0;
+                partsRevenue += amount;
+            });
+        }
+        
+        // Calculate revenue from custom items
+        if (inv.customItems && Array.isArray(inv.customItems)) {
+            inv.customItems.forEach(item => {
+                const amount = parseFloat(item.total) || 0;
+                if ((item.name || '').toLowerCase().includes('labor') || (item.description || '').toLowerCase().includes('labor')) {
+                    laborRevenue += amount;
+                } else if ((item.type || '') === 'part') {
+                    partsRevenue += amount;
+                } else {
+                    serviceRevenue += amount;
+                }
+            });
+        }
+    });
+    
+    console.log('P&L - Total Revenue:', totalRevenue, 'Labor:', laborRevenue, 'Parts:', partsRevenue, 'Services:', serviceRevenue);
+    
+    // Calculate expenses
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    console.log('P&L - Total expenses in storage:', expenses.length);
+    
+    const filteredExpenses = expenses.filter(exp => {
+        if (!exp.date) return false;
+        // Parse date string (YYYY-MM-DD format) and create date at start of day

@@ -1,0 +1,1 @@
+✅ Patched both generateCashflowReport() and generateProfitLossReport() in app.js

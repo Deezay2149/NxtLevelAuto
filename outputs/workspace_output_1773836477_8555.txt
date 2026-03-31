@@ -1,0 +1,72 @@
+    function getAppointmentUrgency(apptDate) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const d = new Date(apptDate); d.setHours(0,0,0,0);
+        const diff = Math.round((d - today) / 86400000);
+        if (diff === 1) return 'apt-due-tomorrow';
+        if (diff === 2) return 'apt-due-2days';
+        return '';
+    }
+    
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('date',appointmentSortColumn)}" onclick="sortAppointments('date')">Date & Time${sortIndicator('date')}</th>
+                <th class="sortable${asc('customer',appointmentSortColumn)}" onclick="sortAppointments('customer')">Customer${sortIndicator('customer')}</th>
+                <th class="sortable${asc('vehicle',appointmentSortColumn)}" onclick="sortAppointments('vehicle')">Vehicle${sortIndicator('vehicle')}</th>
+                <th class="sortable${asc('service',appointmentSortColumn)}" onclick="sortAppointments('service')">Service${sortIndicator('service')}</th>
+                <th class="sortable${asc('status',appointmentSortColumn)}" onclick="sortAppointments('status')">Status${sortIndicator('status')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedAppointments.map(appointment => {
+                const customer = customers.find(c => c.id === appointment.customerId);
+                const vehicle = vehicles.find(v => v.id === appointment.vehicleId);
+                const service = services.find(s => s.id === appointment.serviceId);
+                const urgencyClass = getAppointmentUrgency(appointment.date);
+                const urgencyBadge = urgencyClass === 'apt-due-tomorrow'
+                    ? '<span class="urgency-badge urgency-tomorrow">📅 Due Tomorrow</span>'
+                    : urgencyClass === 'apt-due-2days'
+                    ? '<span class="urgency-badge urgency-2days">🕐 Due in 2 Days</span>'
+                    : '';
+                return `
+                <tr class="${urgencyClass}">
+                    <td>${formatDate(appointment.date)} ${appointment.time}${urgencyBadge ? ' ' + urgencyBadge : ''}</td>
+                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}<br><small style="color:#888;">${customer && customer.phone ? customer.phone : ''}</small></td>
+                    <td>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</td>
+                    <td>${service ? service.name : 'N/A'}</td>
+                    <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
+                            <button class="btn btn-success" onclick="completeAppointment('${appointment.id}')">Complete</button>
+                            <button class="btn btn-warning" onclick="cancelAppointment('${appointment.id}')">Cancel</button>
+                            <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}')">Delete</button>
+                            ${urgencyClass ? `<button class="btn btn-sms" onclick="sendSmsReminder('${appointment.id}')">📱 SMS</button><button class="btn btn-whatsapp" onclick="sendWhatsappReminder('${appointment.id}')">💬 WhatsApp</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('')}
+        </tbody>
+    `;
+        container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function completeAppointment(id) {
+    const index = appointments.findIndex(a => a.id === id);
+    if (index >= 0) {
+        appointments[index].status = 'completed';
+        saveData();
+        renderAppointmentsList();
+        updateDashboard();
+        showNotification('Appointment marked as completed!', 'success');
+    }
+}
+
+function editAppointment(id) {
+    const appointment = appointments.find(a => a.id === id);
+    if (!appointment) {
+        showNotification('Appointment not found', 'error');

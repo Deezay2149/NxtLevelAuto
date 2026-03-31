@@ -1,0 +1,76 @@
+function openTechModal(type, id = null) {
+    const cfg = TECH_TYPE_CONFIG[type];
+    const titleEl = document.getElementById('tech-modal-title');
+    const saveBtn = document.getElementById('tech-save-btn');
+
+    document.getElementById('tech-form').reset();
+    document.getElementById('tech-item-id').value = '';
+    document.getElementById('tech-item-type').value = type;
+    
+    // Reset images
+    techImages = [];
+    renderTechImagePreviews();
+
+    if (id) {
+        const item = techItems.find(i => i.id === id);
+        if (!item) return;
+        titleEl.textContent = `✏️ Edit ${cfg.label}`;
+        saveBtn.textContent = `Update ${cfg.label}`;
+        document.getElementById('tech-item-id').value = item.id;
+        document.getElementById('tech-title').value = item.title;
+        document.getElementById('tech-category').value = item.category || '';
+        document.getElementById('tech-applies-to').value = item.appliesTo || '';
+        document.getElementById('tech-content').value = item.content;
+        document.getElementById('tech-author').value = item.author || '';
+        document.getElementById('tech-priority').value = item.priority || 'normal';
+        document.getElementById('tech-tags').value = (item.tags || []).join(', ');
+        
+        // Load existing images
+        if (item.images && item.images.length > 0) {
+            techImages = [...item.images];
+            renderTechImagePreviews();
+        }
+    } else {
+        titleEl.textContent = `${cfg.icon} Add ${cfg.label}`;
+        saveBtn.textContent = `Save ${cfg.label}`;
+    }
+
+    openModal('tech-modal');
+}
+
+function saveTechItem(e) {
+    e.preventDefault();
+
+    const type = document.getElementById('tech-item-type').value;
+    const existingId = document.getElementById('tech-item-id').value;
+    const isEdit = existingId && techItems.find(i => i.id === existingId);
+
+    const tagsRaw = document.getElementById('tech-tags').value;
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    const item = {
+        id: existingId || generateId(),
+        type: type,
+        title: document.getElementById('tech-title').value.trim(),
+        category: document.getElementById('tech-category').value.trim(),
+        appliesTo: document.getElementById('tech-applies-to').value.trim(),
+        content: document.getElementById('tech-content').value.trim(),
+        author: document.getElementById('tech-author').value.trim(),
+        priority: document.getElementById('tech-priority').value,
+        tags: tags,
+        images: techImages,
+        createdAt: isEdit ? techItems.find(i => i.id === existingId).createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    if (isEdit) {
+        const idx = techItems.findIndex(i => i.id === existingId);
+        techItems[idx] = item;
+    } else {
+        techItems.push(item);
+    }
+
+    localStorage.setItem('techItems', JSON.stringify(techItems));
+    closeModal('tech-modal');
+    renderTechList(type);
+    updateTechSummary(type);

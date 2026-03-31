@@ -1,0 +1,58 @@
+function renderSuppliersList() {
+    const container = document.getElementById('suppliers-list');
+    
+    if (suppliers.length === 0) {
+        container.innerHTML = '<p class="empty-state">No suppliers found. Add your first supplier!</p>';
+        return;
+    }
+    
+    container.innerHTML = suppliers.map(supplier => {
+        const logoHtml = supplier.logo
+            ? `<img src="${supplier.logo}" class="supplier-logo-thumb" alt="${supplier.name} logo">`
+            : `<div class="supplier-logo-placeholder">🏭</div>`;
+        
+        const websiteHtml = supplier.website
+            ? `<p>🌐 <a href="${supplier.website}" target="_blank" style="color:var(--primary-color);text-decoration:none;font-weight:500;" onclick="event.stopPropagation()">${supplier.website.replace(/^https?:\/\//, '')}</a></p>`
+            : '';
+
+        return `
+        <div class="supplier-item">
+            ${logoHtml}
+            <div class="supplier-info">
+                <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
+                <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
+                <p>👤 ${supplier.contact || 'No contact person'}</p>
+                ${supplier.accountNumber ? `<p>🔖 Account: ${supplier.accountNumber}</p>` : ''}
+                ${websiteHtml}
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Update Suppliers Summary
+function updateSuppliersSummary() {
+    const totalEl = document.getElementById('total-suppliers-count');
+    const activeEl = document.getElementById('active-suppliers-count');
+    
+    if (totalEl) totalEl.textContent = suppliers.length;
+    if (activeEl) activeEl.textContent = suppliers.filter(s => s.status === 'active').length;
+}
+
+// Populate Supplier Dropdowns
+function populateSupplierDropdowns() {
+    const dropdowns = [
+        document.getElementById('part-supplier'),
+        document.getElementById('book-in-supplier')
+    ];
+    
+    dropdowns.forEach(dropdown => {
+        if (!dropdown) return;
+        
+        const currentValue = dropdown.value;
+        dropdown.innerHTML = '<option value="">Select Supplier</option>';
+        
+        suppliers.filter(s => s.status === 'active').forEach(supplier => {

@@ -1,0 +1,6 @@
+            <li><button data-section="invoices">Invoices</button></li>
+            <li><button data-section="technical">Technical</button></li>
+            <li><button data-section="reminders">Reminders</button></li>
+            <li><button data-section="reports">Reports</button></li>
+            <li><button data-section="technicians">Technicians</button></li>
+            <li><button data-section="expenses">Expenses</button></li>

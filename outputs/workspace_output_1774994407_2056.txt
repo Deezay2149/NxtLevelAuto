@@ -1,0 +1,34 @@
+function openServiceModal() {
+    document.getElementById('service-form').reset();
+    document.getElementById('service-id').value = '';
+    openModal('service-modal');
+}
+
+function saveService(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('service-id').value || generateId();
+    const service = {
+        id: id,
+        name: document.getElementById('service-name').value,
+        description: document.getElementById('service-description').value,
+        engineBrand: document.getElementById('service-engine-brand').value.trim() || '',
+        price: parseFloat(document.getElementById('service-price').value),
+        estimatedTime: parseFloat(document.getElementById('service-time').value) || 0
+    };
+    
+    const existingIndex = services.findIndex(s => s.id === id);
+    if (existingIndex >= 0) {
+        services[existingIndex] = service;
+    } else {
+        services.push(service);
+    }
+    
+    saveData();
+    closeModal('service-modal');
+    renderServicesList();
+    showNotification('Service saved successfully!', 'success');
+}
+
+function renderServicesList(filteredServices = null) {
+    const container = document.getElementById('services-list');

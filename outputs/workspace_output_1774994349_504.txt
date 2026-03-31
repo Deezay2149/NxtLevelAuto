@@ -1,0 +1,3 @@
+525:function openVehicleModal(vehicleId = null) {
+655:function saveVehicle(e) {
+705:function renderVehiclesList() {

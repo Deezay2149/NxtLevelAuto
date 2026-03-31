@@ -1,0 +1,6 @@
+450:.modal {
+463:.modal.active {
+467:.modal-content {
+477:.modal-header {
+484:.modal-header h2 {
+661:.modal-large {

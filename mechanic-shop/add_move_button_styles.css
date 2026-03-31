@@ -1,0 +1,30 @@
+/* Line item move buttons */
+.btn-move-up,
+.btn-move-down {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    margin: 0 2px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    min-width: 30px;
+}
+
+.btn-move-up:hover,
+.btn-move-down:hover {
+    background: #5a6268;
+}
+
+.btn-move-up:disabled,
+.btn-move-down:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-move-up:not(:disabled):active,
+.btn-move-down:not(:disabled):active {
+    transform: translateY(1px);
+}

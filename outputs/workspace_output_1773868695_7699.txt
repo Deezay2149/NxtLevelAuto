@@ -1,0 +1,14 @@
+1410:    currentWorkOrderEvidence = [];
+1411:    renderWorkOrderEvidencePreview();
+1581:        evidence: currentWorkOrderEvidence.length > 0 ? currentWorkOrderEvidence : existingEvidence,
+1963:    currentWorkOrderEvidence = workOrder.evidence ? [...workOrder.evidence] : [];
+1964:    renderWorkOrderEvidencePreview();
+2791:let currentWorkOrderEvidence = [];
+2794:function handleWorkOrderEvidenceUpload(event) {
+2809:            currentWorkOrderEvidence.push(evidence);
+2810:            renderWorkOrderEvidencePreview();
+2817:function renderWorkOrderEvidencePreview() {
+2821:    if (currentWorkOrderEvidence.length === 0) {
+2826:    container.innerHTML = currentWorkOrderEvidence.map((evidence, index) => {
+2851:    currentWorkOrderEvidence.splice(index, 1);
+2852:    renderWorkOrderEvidencePreview();

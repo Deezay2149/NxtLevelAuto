@@ -1,0 +1,23 @@
+    <div id="work-order-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="work-order-view-title">📋 Work Order Details</h2>
+                <button class="close-btn" onclick="closeModal('work-order-view-modal')">&times;</button>
+            </div>
+            <div id="work-order-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Part Modal -->
+    <div id="part-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Part</h2>
+                <button class="close-btn" onclick="closeModal('part-modal')">&times;</button>
+            </div>
+            <form id="part-form">
+                <input type="hidden" id="part-id">
+                <div class="form-group">
+                    <label>Part Name *</label>

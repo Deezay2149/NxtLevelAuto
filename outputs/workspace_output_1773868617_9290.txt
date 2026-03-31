@@ -1,0 +1,53 @@
+function buildWorkOrderTable(list) {
+    const si = (col) => workOrderSortColumn === col ? (workOrderSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    const sorted = applyWorkOrderSort(list);
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('number',workOrderSortColumn)}" onclick="sortWorkOrders('number')">Work Order #${si('number')}</th>
+                <th class="sortable${asc('date',workOrderSortColumn)}" onclick="sortWorkOrders('date')">Date${si('date')}</th>
+                <th class="sortable${asc('customer',workOrderSortColumn)}" onclick="sortWorkOrders('customer')">Customer${si('customer')}</th>
+                <th class="sortable${asc('vehicle',workOrderSortColumn)}" onclick="sortWorkOrders('vehicle')">Vehicle${si('vehicle')}</th>
+                <th class="sortable${asc('technician',workOrderSortColumn)}" onclick="sortWorkOrders('technician')">Technician${si('technician')}</th>
+                <th class="sortable${asc('total',workOrderSortColumn)}" onclick="sortWorkOrders('total')">Total Cost${si('total')}</th>
+                <th class="sortable${asc('status',workOrderSortColumn)}" onclick="sortWorkOrders('status')">Status${si('status')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sorted.map(workOrder => {
+                const customer = customers.find(c => c.id === workOrder.customerId);
+                const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+                const technician = technicians.find(t => t.id === workOrder.technicianId);
+                return `
+                <tr>
+                    <td>#${workOrder.id.substring(0, 8).toUpperCase()}</td>
+                    <td>${formatDate(workOrder.createdAt)}</td>
+                    <td>${customer ? customer.firstName + ' ' + customer.lastName : 'N/A'}</td>
+                    <td>${vehicle ? vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model : 'N/A'}</td>
+                    <td>${technician ? technician.firstName + ' ' + technician.lastName : 'Unassigned'}</td>
+                    <td>${formatCurrency(workOrder.totalCost)}</td>
+                    <td><span class="status-badge status-${workOrder.status}">${workOrder.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+                            <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            }).join('')}
+        </tbody>
+    `;
+    return table;
+}
+
+function renderWorkOrdersList() {
+    const container = document.getElementById('work-orders-list');
+    if (workOrders.length === 0) {
+        container.innerHTML = '<p class="empty-state">No work orders found. Create your first work order!</p>';
+        return;
+    }
+    container.innerHTML = '';

@@ -1,0 +1,21 @@
+            <div class="modal-header">
+                <h2>Create/Edit Work Order</h2>
+                <button class="close-btn" onclick="closeModal('work-order-modal')">&times;</button>
+            </div>
+            <form id="work-order-form">
+                <input type="hidden" id="work-order-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="work-order-customer" required onchange="loadCustomerVehicles()">
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle *</label>
+                    <select id="work-order-vehicle" required>
+                        <option value="">Select Vehicle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Technician</label>
+                    <select id="work-order-technician">

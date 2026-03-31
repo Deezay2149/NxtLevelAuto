@@ -1,0 +1,9 @@
+/workspace/mechanic-shop/billing.js:2494:function openCreateQuoteModal() {
+/workspace/mechanic-shop/billing.js:2495:    document.getElementById('create-quote-modal').style.display = 'block';
+/workspace/mechanic-shop/billing.js:2503:    closeModal('create-quote-modal');
+/workspace/mechanic-shop/billing.js:2732:    closeModal('create-quote-modal');
+/workspace/mechanic-shop/billing.js:2933:function filterQuotes() {
+/workspace/mechanic-shop/index.html:277:                    <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+/workspace/mechanic-shop/index.html:278:                    <button class="btn btn-primary" onclick="openCreateQuoteModal()">+ Create Quote</button>
+/workspace/mechanic-shop/index.html:1944:<div id="create-quote-modal" class="modal">
+/workspace/mechanic-shop/index.html:2071:<div id="create-quote-modal" class="modal">

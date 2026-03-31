@@ -1,0 +1,10 @@
+function closeQuoteModal() {
+    closeModal('create-quote-modal');
+    resetQuoteLineItems();
+}
+
+// Populate work order dropdown for quotes
+function populateQuoteWorkOrders() {
+    const select = document.getElementById('quote-work-order');
+    select.innerHTML = '<option value="">Select Work Order</option>';
+    

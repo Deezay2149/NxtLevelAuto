@@ -1,0 +1,63 @@
+const TECH_TYPE_CONFIG = {
+    article:  { icon: '📄', label: 'Article',  listId: 'tech-articles-list',  countId: 'total-articles-count',  searchId: 'tech-articles-search'  },
+    bulletin: { icon: '📋', label: 'Bulletin', listId: 'tech-bulletins-list', countId: 'total-bulletins-count', searchId: 'tech-bulletins-search' },
+    tip:      { icon: '💡', label: 'Tip',      listId: 'tech-tips-list',      countId: 'total-tips-count',      searchId: 'tech-tips-search'      }
+};
+
+// Handle tech image upload
+function handleTechImageUpload(event) {
+    const files = Array.from(event.target.files);
+    const maxImages = 5;
+    
+    if (techImages.length + files.length > maxImages) {
+        showNotification(`Maximum ${maxImages} images allowed`, 'error');
+        return;
+    }
+    
+    files.forEach(file => {
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please select image files only', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            techImages.push({
+                data: e.target.result,
+                name: file.name
+            });
+            renderTechImagePreviews();
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Clear the input so the same file can be selected again
+    event.target.value = '';
+}
+
+function renderTechImagePreviews() {
+    const container = document.getElementById('tech-images-preview');
+    if (!container) return;
+    
+    container.innerHTML = techImages.map((img, index) => `
+        <div class="tech-image-preview-item">
+            <img src="${img.data}" alt="${img.name}">
+            <button type="button" class="remove-image" onclick="removeTechImage(${index})">&times;</button>
+        </div>
+    `).join('');
+}
+
+function removeTechImage(index) {
+    if (!confirm('Are you sure you want to remove this image?')) return;
+    techImages.splice(index, 1);
+    renderTechImagePreviews();
+}
+
+function openImageLightbox(src) {
+    const lightbox = document.createElement('div');
+    lightbox.className = 'image-lightbox';
+    lightbox.onclick = () => lightbox.remove();
+    lightbox.innerHTML = `<img src="${src}" alt="Image">`;
+    document.body.appendChild(lightbox);
+}
+

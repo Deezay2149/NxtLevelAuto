@@ -1,0 +1,2 @@
+2891:function deleteSupplier(id) {
+2948:                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>

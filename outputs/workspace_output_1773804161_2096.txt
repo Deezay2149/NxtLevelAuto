@@ -1,0 +1,20 @@
+602:function openCreateInvoiceModal() {
+623:function resetInvoiceSubmitButton() {
+767:function createInvoice(e) {
+909:function sortInvoices(column) {
+919:function renderInvoicesList() {
+1025:function viewInvoice(id) {
+1231:function markInvoicePaid(id) {
+1245:function renderInvoiceItemsFromInvoice(invoice) {
+1329:function editInvoiceLineItem(type, index) {
+1369:function removeInvoiceLineItem(type, index) {
+1401:function editInvoice(id) {
+1496:function saveEditedInvoice() {
+1629:function deleteInvoice(id) {
+1639:function downloadInvoicePDF() {
+1717:function sendInvoiceWhatsApp() {
+1747:function sendInvoiceSMS() {
+1843:function attachCreateInvoiceHandler() {
+1851:function detachCreateInvoiceHandler() {
+1859:function initializeInvoices() {
+1939:function renderFilteredInvoices(filteredInvoices) {

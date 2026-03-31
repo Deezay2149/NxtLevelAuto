@@ -1,0 +1,4 @@
+4066:function openTechModal(type, id = null) {
+4068:    const titleEl = document.getElementById('tech-modal-title');
+4111:    openModal('tech-modal');
+4148:    closeModal('tech-modal');

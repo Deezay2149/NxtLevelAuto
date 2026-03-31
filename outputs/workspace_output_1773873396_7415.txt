@@ -1,0 +1,2 @@
+1175:    <div id="expense-modal" class="modal">
+1179:                <button class="close-btn" onclick="closeModal('expense-modal')">&times;</button>

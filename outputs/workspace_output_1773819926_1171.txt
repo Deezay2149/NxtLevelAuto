@@ -1,0 +1,3 @@
+1025:function viewInvoice(id) {
+1329:function editInvoiceLineItem(type, index) {
+1401:function editInvoice(id) {

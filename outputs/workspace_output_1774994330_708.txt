@@ -1,0 +1,49 @@
+50:            <li><button data-section="services">Services</button></li>
+126:        <!-- Services Section -->
+127:        <section id="services">
+129:                <h2>🔧 Service Catalog</h2>
+131:                    <input type="text" id="service-search" placeholder="Search services..." oninput="filterServicesList()">
+132:                    <button class="btn btn-primary" onclick="openServiceModal()">+ Add Service</button>
+134:                <div id="services-list" style="margin-top: 1.5rem;"></div>
+288:                <p style="color:#666;margin-top:-0.5rem;margin-bottom:1rem;font-size:0.95rem;">Store knowledge articles, service bulletins, and workshop tips for your team.</p>
+347:                <h2>🔔 Service Reminders</h2>
+349:                    <button class="btn btn-primary" onclick="checkServiceReminders()">Check for Due Services</button>
+479:                                <span>Service Charges</span>
+480:                                <span id="revenue-services">R0.00</span>
+554:                        <option value="Professional Services">Professional Services</option>
+595:                            <label>Service Reminder Interval (km)</label>
+596:                            <input type="number" id="settings-service-reminder-km" min="0" required>
+774:                        <label>Last Service Mileage (km)</label>
+775:                        <input type="number" id="vehicle-last-service-mileage" min="0">
+816:    <!-- Service Modal -->
+817:    <div id="service-modal" class="modal">
+820:                <h2>Add/Edit Service</h2>
+821:                <button class="close-btn" onclick="closeModal('service-modal')">&times;</button>
+823:            <form id="service-form">
+824:                <input type="hidden" id="service-id">
+826:                    <label>Service Name *</label>
+827:                    <input type="text" id="service-name" required>
+831:                    <textarea id="service-description" rows="3"></textarea>
+835:                    <input type="text" id="service-engine-brand" placeholder="e.g. Toyota, Ford, BMW">
+839:                    <input type="number" id="service-price" min="0" step="0.01" required>
+843:                    <input type="number" id="service-time" min="0" step="0.5">
+845:                <button type="submit" class="btn btn-primary">Save Service</button>
+850:    <!-- Service View Modal -->
+851:    <div id="service-view-modal" class="modal">
+854:                <h2 id="service-view-title">🔧 Service Details</h2>
+855:                <button class="close-btn" onclick="closeModal('service-view-modal')">&times;</button>
+857:            <div id="service-view-content" class="modal-body">
+893:                    <label>Service Type *</label>
+894:                    <select id="appointment-service" required>
+895:                        <option value="">Select Service</option>
+948:                    <label>Services *</label>
+949:                    <div id="work-order-services"></div>
+1199:                        <option value="Professional Services">Professional Services</option>
+1623:                    <div id="invoice-services-list"></div>
+1688:                    <button type="button" class="line-item-type-btn active" data-type="service" onclick="selectLineItemType('service')">
+1690:                        <span>Service</span>
+1701:                <input type="hidden" id="custom-item-type" value="service">
+1981:                        <span>Services:</span>
+1982:                        <span id="quote-services-total">R0.00</span>
+2108:                        <span>Services:</span>
+2109:                        <span id="quote-services-total">R0.00</span>

@@ -1,0 +1,6 @@
+1944:<div id="create-quote-modal" class="modal">
+2057:<div id="quote-details-modal" class="modal">
+2061:            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>
+2071:<div id="create-quote-modal" class="modal">
+2184:<div id="quote-details-modal" class="modal">
+2188:            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>

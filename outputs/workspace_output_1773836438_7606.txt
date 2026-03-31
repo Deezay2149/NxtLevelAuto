@@ -1,0 +1,10 @@
+53:            <li><button data-section="appointments">Appointments</button></li>
+80:                    <h3>Appointments Today</h3>
+81:                    <div class="number" id="appointments-today">0</div>
+97:                <h2>⏰ Upcoming Appointments</h2>
+98:                <div id="upcoming-appointments"></div>
+138:        <!-- Appointments Section -->
+139:        <section id="appointments">
+141:                <h2>📅 Appointments</h2>
+143:                    <input type="text" id="appointment-search" placeholder="Search appointments...">
+146:                <div id="appointments-list"></div>

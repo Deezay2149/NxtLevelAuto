@@ -1,0 +1,31 @@
+    invoiceParts.forEach(invoicePart => {
+        const part = parts.find(p => p.id === invoicePart.partId);
+        if (part) {
+            part.stockQuantity = Math.max(0, part.stockQuantity - invoicePart.quantity);
+        }
+    });
+
+    saveBillingData();
+    closeModal('create-invoice-modal');
+    renderInvoicesList();
+    renderPartsList(); // Refresh parts list to show updated stock
+    updateDashboard();
+    showNotification('Invoice created successfully! Stock adjusted for invoiced parts.', 'success');
+}
+
+// Invoice sorting state
+let invoiceSortColumn = 'date';
+let invoiceSortDirection = 'desc';
+
+function sortInvoices(column) {
+    if (invoiceSortColumn === column) {
+        invoiceSortDirection = invoiceSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        invoiceSortColumn = column;
+        invoiceSortDirection = 'asc';
+    }
+    renderInvoicesList();
+}
+
+function renderInvoicesList() {
+    const container = document.getElementById('invoices-list');

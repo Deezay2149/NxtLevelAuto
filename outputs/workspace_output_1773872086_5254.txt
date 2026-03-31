@@ -1,0 +1,26 @@
+                </div>
+                <button type="submit" class="btn btn-primary">Save Vehicle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Image Lightbox (injected by JS) -->
+
+    <!-- Service Modal -->
+    <div id="service-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Service</h2>
+                <button class="close-btn" onclick="closeModal('service-modal')">&times;</button>
+            </div>
+            <form id="service-form">
+                <input type="hidden" id="service-id">
+                <div class="form-group">
+                    <label>Service Name *</label>
+                    <input type="text" id="service-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="service-description" rows="3"></textarea>
+                </div>
+                <div class="form-group">

@@ -1,0 +1,36 @@
+
+    const tagsRaw = document.getElementById('tech-tags').value;
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    const item = {
+        id: existingId || generateId(),
+        type: type,
+        title: document.getElementById('tech-title').value.trim(),
+        category: document.getElementById('tech-category').value.trim(),
+        appliesTo: document.getElementById('tech-applies-to').value.trim(),
+        content: document.getElementById('tech-content').value.trim(),
+        author: document.getElementById('tech-author').value.trim(),
+        priority: document.getElementById('tech-priority').value,
+        tags: tags,
+        images: techImages,
+        documents: techDocuments,
+        createdAt: isEdit ? techItems.find(i => i.id === existingId).createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    if (isEdit) {
+        const idx = techItems.findIndex(i => i.id === existingId);
+        techItems[idx] = item;
+    } else {
+        techItems.push(item);
+    }
+
+    localStorage.setItem('techItems', JSON.stringify(techItems));
+    closeModal('tech-modal');
+    renderTechList(type);
+    updateTechSummary(type);
+    showNotification(isEdit ? `${TECH_TYPE_CONFIG[type].label} updated!` : `${TECH_TYPE_CONFIG[type].label} saved!`, 'success');
+}
+
+// View tech item details
+function viewTechItem(id) {

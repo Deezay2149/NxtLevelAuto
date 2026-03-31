@@ -1,0 +1,9 @@
+mechanic-shop/app.js:1701:                <tr onclick="viewWorkOrderDetails('${workOrder.id}')" style="cursor: pointer;" title="Click to view details">
+mechanic-shop/app.js:1711:                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+mechanic-shop/app.js:1734:function viewWorkOrderDetails(id) {
+mechanic-shop/app.js:1871:                <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">✏️ Edit</button>
+mechanic-shop/app.js:1872:                <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">🗑️ Delete</button>
+mechanic-shop/app.js:1873:                <button class="btn btn-secondary" onclick="closeModal('work-order-view-modal');">Close</button>
+mechanic-shop/app.js:1880:    openModal('work-order-view-modal');
+mechanic-shop/index.html:938:    <div id="work-order-view-modal" class="modal">
+mechanic-shop/index.html:942:                <button class="close-btn" onclick="closeModal('work-order-view-modal')">&times;</button>

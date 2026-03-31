@@ -1,0 +1,59 @@
+function viewWorkOrderDetails(id) {
+    const workOrder = workOrders.find(w => w.id === id);
+    if (!workOrder) return;
+    
+    const customer = customers.find(c => c.id === workOrder.customerId);
+    const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+    
+    let servicesList = '';
+    workOrder.services.forEach(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        if (service) {
+            servicesList += `- ${service.name}: ${formatCurrency(service.price)}\n`;
+        }
+    });
+    
+    const details = `
+Work Order #${workOrder.id.substring(0, 8).toUpperCase()}
+====================================
+Date: ${new Date(workOrder.createdAt).toLocaleString()}
+Status: ${workOrder.status.toUpperCase()}
+
+Customer: ${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}
+Email: ${customer ? customer.email : 'N/A'}
+Phone: ${customer ? customer.phone : 'N/A'}
+
+Vehicle: ${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}
+License Plate: ${vehicle ? vehicle.plate : 'N/A'}
+
+Services:
+${servicesList}
+
+Total Cost: ${formatCurrency(workOrder.totalCost)}
+Labor Hours: ${workOrder.laborHours}
+Parts Used: ${workOrder.partsUsed || 'None'}
+
+Notes:
+${workOrder.notes || 'No notes'}
+    `;
+    
+    alert(details);
+}
+
+function deleteWorkOrder(id) {
+    if (!confirm('Are you sure you want to delete this work order?')) return;
+    
+    workOrders = workOrders.filter(w => w.id !== id);
+    saveData();
+    renderWorkOrdersList();
+    updateDashboard();
+    showNotification('Work order deleted!', 'success');
+}
+
+function editWorkOrder(id) {
+    const workOrder = workOrders.find(w => w.id === id);
+    if (!workOrder) {
+        alert('Work order not found');
+        return;
+    }
+    

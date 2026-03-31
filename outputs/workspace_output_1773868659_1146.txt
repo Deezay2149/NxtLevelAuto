@@ -1,0 +1,2 @@
+938:    <div id="work-order-view-modal" class="modal">
+942:                <button class="close-btn" onclick="closeModal('work-order-view-modal')">&times;</button>

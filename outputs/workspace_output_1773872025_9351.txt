@@ -1,0 +1,33 @@
+function editCustomer(id) {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    
+    document.getElementById('customer-id').value = customer.id;
+    document.getElementById('customer-firstname').value = customer.firstName;
+    document.getElementById('customer-lastname').value = customer.lastName;
+    document.getElementById('customer-email').value = customer.email;
+    document.getElementById('customer-phone').value = customer.phone;
+    document.getElementById('customer-address').value = customer.address;
+    
+    openModal('customer-modal');
+}
+
+function deleteCustomer(id) {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+    
+    // Check if customer has vehicles
+    const hasVehicles = vehicles.some(v => v.customerId === id);
+    if (hasVehicles) {
+        alert('Cannot delete customer with associated vehicles. Please delete vehicles first.');
+        return;
+    }
+    
+    customers = customers.filter(c => c.id !== id);
+    saveData();
+    renderCustomersList();
+    updateDashboard();
+    showNotification('Customer deleted successfully!', 'success');
+}
+
+function viewCustomerVehicles(customerId) {
+    const customerVehicles = vehicles.filter(v => v.customerId === customerId);

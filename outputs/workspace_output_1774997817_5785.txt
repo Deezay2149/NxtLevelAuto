@@ -1,0 +1,8 @@
+2733:    renderQuotesList();
+2743:function renderQuotesList() {
+2744:    const container = document.getElementById('quotes-list');
+2917:    renderQuotesList();
+2928:    renderQuotesList();
+2937:        renderQuotesList();
+2953:    const container = document.getElementById('quotes-list');
+3018:    renderQuotesList();

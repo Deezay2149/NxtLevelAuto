@@ -1,0 +1,56 @@
+function saveWorkOrder(e) {
+    e.preventDefault();
+    
+    const selectedServices = [];
+    let totalCost = 0;
+    
+    document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
+        const serviceId = checkbox.value;
+        const service = services.find(s => s.id === serviceId);
+        if (service) {
+            selectedServices.push(serviceId);
+            totalCost += service.price;
+        }
+    });
+    
+    if (selectedServices.length === 0) {
+        alert('Please select at least one service');
+        return;
+    }
+    
+    // Add parts cost to total
+    workOrderParts.forEach(part => {
+        totalCost += part.total;
+    });
+    
+    const id = document.getElementById('work-order-id').value || generateId();
+    const workOrder = {
+        id: id,
+        customerId: document.getElementById('work-order-customer').value,
+        vehicleId: document.getElementById('work-order-vehicle').value,
+        technicianId: document.getElementById('work-order-technician').value || null,
+        services: selectedServices,
+        parts: workOrderParts.map(p => ({ partId: p.partId, quantity: p.quantity, price: p.price })),
+        laborHours: parseFloat(document.getElementById('work-order-labor').value) || 0,
+        partsUsed: document.getElementById('work-order-parts').value,
+        notes: document.getElementById('work-order-notes').value,
+        status: document.getElementById('work-order-status').value,
+        completedDate: document.getElementById('work-order-completed-date').value || null,
+        totalCost: totalCost,
+        createdAt: new Date().toISOString()
+    };
+    
+    const existingIndex = workOrders.findIndex(w => w.id === id);
+    if (existingIndex >= 0) {
+        workOrders[existingIndex] = workOrder;
+    } else {
+        workOrders.push(workOrder);
+    }
+    
+    // Clear work order parts
+    workOrderParts = [];
+    
+    saveData();
+    closeModal('work-order-modal');
+    renderWorkOrdersList();
+    updateDashboard();

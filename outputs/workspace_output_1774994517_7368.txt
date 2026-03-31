@@ -1,0 +1,56 @@
+    saveData();
+    closeModal('service-modal');
+    renderServicesList();
+    showNotification('Service saved successfully!', 'success');
+}
+
+function renderServicesList(filteredServices = null) {
+    const container = document.getElementById('services-list');
+    let displayServices = filteredServices || [...services];
+    
+    if (displayServices.length === 0) {
+        container.innerHTML = '<p class="empty-state">No services found. Add your first service!</p>';
+        return;
+    }
+    
+    // Sort services (only if not filtered)
+    if (!filteredServices) {
+        displayServices.sort((a, b) => {
+            let aVal, bVal;
+            switch (serviceSortColumn) {
+                case 'name':
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+                    break;
+                case 'description':
+                    aVal = (a.description || '').toLowerCase();
+                    bVal = (b.description || '').toLowerCase();
+                    break;
+                case 'price':
+                    aVal = parseFloat(a.price) || 0;
+                    bVal = parseFloat(b.price) || 0;
+                    break;
+                case 'time':
+                    aVal = parseFloat(a.estimatedTime) || 0;
+                    bVal = parseFloat(b.estimatedTime) || 0;
+                    break;
+                default:
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+            }
+            if (serviceSortDirection === 'asc') {
+                return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+            } else {
+                return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+            }
+        });
+    }
+    
+    const sortIndicator = (col) => serviceSortColumn === col ? (serviceSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('name',serviceSortColumn)}" onclick="sortServices('name')">Service Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('description',serviceSortColumn)}" onclick="sortServices('description')">Description${sortIndicator('description')}</th>

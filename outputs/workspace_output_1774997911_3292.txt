@@ -1,0 +1,15 @@
+114:                        <div class="action-buttons">
+558:                        <div class="action-buttons">
+948:                        <div class="action-buttons">
+996:                        <div class="action-buttons">
+1082:                        <div class="action-buttons">
+1234:                        <div class="action-buttons">
+1774:            <div class="action-buttons">
+2733:    renderQuotesList();
+2743:function renderQuotesList() {
+2791:        html += '<div class="action-buttons" onclick="event.stopPropagation()">';
+2917:    renderQuotesList();
+2928:    renderQuotesList();
+2937:        renderQuotesList();
+2999:        html += '<div class="action-buttons" onclick="event.stopPropagation()">';
+3018:    renderQuotesList();

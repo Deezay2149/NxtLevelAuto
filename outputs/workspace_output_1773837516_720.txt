@@ -1,0 +1,20 @@
+total 220
+drwxr-xr-x  8 user user  4096 Mar 18 12:33 .
+drwxr-xr-x 20 root root  4096 Mar 16 18:36 ..
+drwxr-xr-x  4 user user  4096 Mar 16 20:36 .agent_hooks
+drwxr-xr-x  8 root root  4096 Mar 18 07:53 .git
+-rw-r--r--  1 root root  2518 Mar 16 17:59 .gitattributes
+-rw-r--r--  1 root root  6223 Mar 16 17:59 .gitignore
+-rw-r--r--  1 root root  6127 Mar 16 17:59 MumsBatch.csproj
+-rw-r--r--  1 root root 12533 Mar 16 17:59 MumsBatchBusiness.cs
+-rw-r--r--  1 root root   217 Mar 16 17:59 MumsBatchConstants.cs
+-rw-r--r--  1 root root 16547 Mar 16 17:59 MumsBatchProcess.cs
+-rw-r--r--  1 root root   975 Mar 16 17:59 Program.cs
+drwxr-xr-x  2 root root  4096 Mar 16 17:59 Properties
+-rw-r--r--  1 root root  2695 Mar 16 17:59 StandingDataStoredProcedures.cs
+-rw-r--r--  1 root root  9940 Mar 16 17:59 app.config
+-rw-r--r--  1 root root  4725 Mar 16 17:59 connectionStrings.config
+drwxr-xr-x  2 root root  4096 Mar 18 10:44 mechanic-shop
+drwxr-xr-x  2 root root 98304 Mar 18 12:38 outputs
+drwxr-xr-x  2 root root  4096 Mar 18 12:37 summarized_conversations
+-rw-r--r--  1 root root   353 Mar 18 12:38 todo.md

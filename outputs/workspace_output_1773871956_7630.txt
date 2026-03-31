@@ -1,0 +1,28 @@
+359:function renderCustomersList() {
+414:                            <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')">Edit</button>
+415:                            <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}')">Vehicles</button>
+654:function renderVehiclesList() {
+744:                            <button class="btn btn-secondary" onclick="editVehicle('${vehicle.id}')">Edit</button>
+886:function renderServicesList(filteredServices = null) {
+952:                            <button class="btn btn-secondary" onclick="editService('${service.id}')">Edit</button>
+1087:function renderAppointmentsList() {
+1181:                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
+1679:function buildWorkOrderTable(list) {
+1702:                <tr onclick="viewWorkOrderDetails('${workOrder.id}')" style="cursor: pointer;" title="Click to view details">
+1712:                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+1713:                            <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}')">Edit</button>
+1725:function renderWorkOrdersList() {
+1872:                <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">✏️ Edit</button>
+2120:                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
+2429:                            <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')">Edit</button>
+2430:                            <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}')">Vehicles</button>
+2483:                            <button class="btn btn-secondary" onclick="editVehicle('${vehicle.id}')">Edit</button>
+2531:                            <button class="btn btn-info" onclick="editAppointment('${appointment.id}')">Edit</button>
+2557:function renderAllLists() {
+3210:function renderReturnsList() {
+3250:                            <button class="btn btn-secondary" onclick="viewReturnDetails('${ret.id}')">View</button>
+4045:function buildTechnicianTable(list) {
+4074:                            <button class="btn btn-secondary" onclick="editTechnician('${t.id}')">Edit</button>
+4085:function renderTechniciansList() {
+4280:function renderExpensesList() {
+4397:                            <button class="btn btn-secondary" onclick="editExpense('${e.id}')">Edit</button>

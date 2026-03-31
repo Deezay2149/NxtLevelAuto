@@ -1,0 +1,19 @@
+function saveBillingData() {
+    localStorage.setItem('parts', JSON.stringify(parts));
+    localStorage.setItem('invoices', JSON.stringify(invoices));
+}
+
+function initializePartsManagement() {
+    document.getElementById('part-form').addEventListener('submit', savePart);
+    
+    // Initialize parts search
+    document.getElementById('parts-search').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredParts = parts.filter(p => 
+            p.name.toLowerCase().includes(searchTerm) ||
+            (p.sku && p.sku.toLowerCase().includes(searchTerm)) ||
+            (p.supplier && p.supplier.toLowerCase().includes(searchTerm))
+        );
+        renderFilteredParts(filteredParts);
+    });
+}

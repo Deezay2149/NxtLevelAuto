@@ -1,0 +1,2 @@
+852:function editVehicle(id) {
+894:function deleteVehicle(id) {

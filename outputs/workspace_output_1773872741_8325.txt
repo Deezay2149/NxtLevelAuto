@@ -1,0 +1,4 @@
+  File "<string>", line 6
+    old = 'onclick=\"openSupplierModal(\\'\${supplier.id}\\')\"'
+                                           ^
+SyntaxError: unexpected character after line continuation character

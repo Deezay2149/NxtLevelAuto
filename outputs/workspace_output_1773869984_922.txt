@@ -1,0 +1,17 @@
+function viewWorkOrderDetails(id) {
+    const workOrder = workOrders.find(w => w.id === id);
+    if (!workOrder) return;
+    
+    const customer = customers.find(c => c.id === workOrder.customerId);
+    const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+    const technician = workOrder.technicianId ? users.find(u => u.id === workOrder.technicianId) : null;
+    
+    // Build services list
+    let servicesHtml = '';
+    workOrder.services.forEach(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        if (service) {
+            servicesHtml += `<div style="padding: 8px; background: #f8f9fa; margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                <span>${service.name}</span>
+                <strong>${formatCurrency(service.price)}</strong>
+            </div>`;

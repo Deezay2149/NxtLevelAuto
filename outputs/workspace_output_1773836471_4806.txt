@@ -1,0 +1,23 @@
+        <!-- Appointments Section -->
+        <section id="appointments">
+            <div class="card">
+                <h2>📅 Appointments</h2>
+                <div class="search-box">
+                    <input type="text" id="appointment-search" placeholder="Search appointments...">
+                    <button class="btn btn-primary" onclick="openAppointmentModal()">+ New Appointment</button>
+                </div>
+                <div id="appointments-list"></div>
+            </div>
+        </section>
+
+        <!-- Work Orders Section -->
+        <section id="work-orders">
+            <div class="card">
+                <h2>📋 Work Orders</h2>
+                <div class="search-box">
+                    <input type="text" id="work-order-search" placeholder="Search work orders...">
+                    <button class="btn btn-primary" onclick="openWorkOrderModal()">+ Create Work Order</button>
+                </div>
+                <div id="work-orders-list"></div>
+            </div>
+        </section>

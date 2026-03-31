@@ -1,0 +1,186 @@
+function openVehicleModal(vehicleId = null) {
+    document.getElementById('vehicle-form').reset();
+    document.getElementById('vehicle-id').value = '';
+    currentVehicleImages = [];
+    currentLicenceDisc = null;
+    renderVehicleImageGallery();
+    renderLicenceDiscPreview();
+    populateCustomerDropdowns();
+    populateBrandDropdown();
+    
+    // If editing, load existing vehicle data
+    if (vehicleId) {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (vehicle) {
+            document.getElementById('vehicle-id').value = vehicle.id;
+            document.getElementById('vehicle-customer').value = vehicle.customerId;
+            document.getElementById('vehicle-make').value = vehicle.make;
+            updateModelDropdown();
+            document.getElementById('vehicle-model').value = vehicle.model;
+            document.getElementById('vehicle-year').value = vehicle.year;
+            document.getElementById('vehicle-plate').value = vehicle.plate;
+            document.getElementById('vehicle-vin').value = vehicle.vin || '';
+            document.getElementById('vehicle-engine-code').value = vehicle.engineCode || '';
+            document.getElementById('vehicle-color').value = vehicle.color || '';
+            document.getElementById('vehicle-mileage').value = vehicle.mileage || '';
+            document.getElementById('vehicle-last-service-mileage').value = vehicle.lastServiceMileage || '';
+            
+            // Load existing images
+            if (vehicle.images && vehicle.images.length) {
+                currentVehicleImages = [...vehicle.images];
+                renderVehicleImageGallery();
+            }
+            
+            // Load existing licence disc
+            if (vehicle.licenceDisc) {
+                currentLicenceDisc = vehicle.licenceDisc;
+                renderLicenceDiscPreview();
+            }
+        }
+    }
+    
+    openModal('vehicle-modal');
+}
+
+// Populate Brand Dropdown
+function populateBrandDropdown() {
+    const brandSelect = document.getElementById('vehicle-make');
+    brandSelect.innerHTML = '<option value="">Select Brand</option>';
+    
+    // Get sorted list of brands
+    const brands = Object.keys(carBrandsAndModels).sort();
+    
+    brands.forEach(brand => {
+        brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+    });
+}
+
+// Update Model Dropdown based on selected Brand
+function updateModelDropdown() {
+    const brandSelect = document.getElementById('vehicle-make');
+    const modelSelect = document.getElementById('vehicle-model');
+    const selectedBrand = brandSelect.value;
+    
+    modelSelect.innerHTML = '<option value="">Select Model</option>';
+    
+    if (!selectedBrand) {
+        modelSelect.disabled = true;
+        return;
+    }
+    
+    modelSelect.disabled = false;
+    const models = carBrandsAndModels[selectedBrand] || [];
+    
+    models.forEach(model => {
+        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+    });
+}
+
+let currentVehicleImages = [];  // array of base64 strings
+let currentLicenceDisc = null;  // base64 string for licence disc
+let isEditingVehicle = false;  // track if we're editing an existing vehicle
+
+// Handle licence disc image upload
+function handleLicenceDiscUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please select an image file', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentLicenceDisc = e.target.result;
+        renderLicenceDiscPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderLicenceDiscPreview() {
+    const container = document.getElementById('licence-disc-preview');
+    if (!container) return;
+    
+    if (currentLicenceDisc) {
+        container.classList.add('has-image');
+        container.innerHTML = `
+            <div class="licence-disc-image-container">
+                <img src="${currentLicenceDisc}" alt="Licence Disc" onclick="event.stopPropagation(); openImageLightbox('${currentLicenceDisc}')">
+                <button type="button" class="remove-disc" onclick="event.stopPropagation(); removeLicenceDisc()">&times;</button>
+            </div>
+        `;
+    } else {
+        container.classList.remove('has-image');
+        container.innerHTML = `
+            <div class="licence-disc-placeholder">
+                <span>📋</span>
+                <span>Click to add licence disc photo</span>
+            </div>
+        `;
+    }
+}
+
+function removeLicenceDisc() {
+    if (!confirm('Are you sure you want to remove the licence disc photo?')) return;
+    currentLicenceDisc = null;
+    document.getElementById('vehicle-licence-disc').value = '';
+    renderLicenceDiscPreview();
+}
+
+function saveVehicle(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('vehicle-id').value || generateId();
+    const existingVehicle = vehicles.find(v => v.id === id);
+    
+    // When editing, use currentVehicleImages (even if empty - user may have removed all images)
+    // When creating new, use currentVehicleImages
+    let imagesToSave = currentVehicleImages;
+    
+    // If we're editing and no changes were made to images, keep existing
+    // But if user explicitly removed images, currentVehicleImages reflects that
+    if (isEditingVehicle) {
+        imagesToSave = currentVehicleImages; // Use whatever is in current array (could be empty)
+    }
+    
+    const vehicle = {
+        id: id,
+        customerId: document.getElementById('vehicle-customer').value,
+        make: document.getElementById('vehicle-make').value,
+        model: document.getElementById('vehicle-model').value,
+        year: parseInt(document.getElementById('vehicle-year').value),
+        plate: document.getElementById('vehicle-plate').value,
+        vin: document.getElementById('vehicle-vin').value,
+        engineCode: document.getElementById('vehicle-engine-code').value,
+        color: document.getElementById('vehicle-color').value,
+        mileage: parseInt(document.getElementById('vehicle-mileage').value) || 0,
+        lastServiceMileage: parseInt(document.getElementById('vehicle-last-service-mileage').value) || 0,
+        licenceDisc: currentLicenceDisc, // Can be null if removed
+        images: imagesToSave,
+        createdAt: existingVehicle ? existingVehicle.createdAt : new Date().toISOString()
+    };
+    
+    const existingIndex = vehicles.findIndex(v => v.id === id);
+    if (existingIndex >= 0) {
+        vehicles[existingIndex] = vehicle;
+    } else {
+        vehicles.push(vehicle);
+    }
+    
+    saveData();
+    closeModal('vehicle-modal');
+    renderVehiclesList();
+    updateDashboard();
+    showNotification('Vehicle saved successfully!', 'success');
+    currentVehicleImages = [];
+    currentLicenceDisc = null;
+    isEditingVehicle = false;
+}
+
+function renderVehiclesList() {
+    const container = document.getElementById('vehicles-list');
+
+    if (vehicles.length === 0) {
+        container.innerHTML = '<p class="empty-state">No vehicles found. Add your first vehicle!</p>';
+        return;

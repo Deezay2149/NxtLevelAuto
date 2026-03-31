@@ -1,0 +1,2 @@
+1559:    <div id="create-invoice-modal" class="modal">
+1563:                <button class="close-btn" onclick="closeModal('create-invoice-modal')">&times;</button>

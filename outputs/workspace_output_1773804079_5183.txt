@@ -1,0 +1,31 @@
+            category: exp.category || 'General',
+            date: exp.date,
+            amount: amount
+        });
+    });
+
+    // Calculate outflows from PAID booked-in supplier invoices
+    const bookInRecords = JSON.parse(localStorage.getItem('bookInRecords') || '[]');
+    const paidBookInRecords = bookInRecords.filter(record => {
+        if (!record.date) return false;
+        // Parse date string (YYYY-MM-DD format)
+        const recordDateParts = record.date.split('T')[0].split('-');
+        const recordDate = new Date(parseInt(recordDateParts[0]), parseInt(recordDateParts[1]) - 1, parseInt(recordDateParts[2]));
+        const recordDateTime = recordDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        // Only include if paid and within date range
+        return (record.paymentStatus === 'paid' || record.paymentStatus === 'Paid') && 
+               recordDateTime >= startTime && recordDateTime <= endTime;
+    });
+
+    // Add paid booked-in supplier invoices to outflows
+    paidBookInRecords.forEach(record => {
+        const amount = parseFloat(record.totalValue) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: 'Booked-In: ' + (record.supplierName || 'Unknown Supplier'),
+            category: 'Supplier Invoice',
+            date: record.date,
+            amount: amount
+        });

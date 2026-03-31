@@ -1,0 +1,14 @@
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalExpenses += amount;
+        
+        const category = exp.category || 'Other';
+        if (!expenseCategories[category]) {
+            expenseCategories[category] = 0;
+        }
+        expenseCategories[category] += amount;
+    });
+    
+    // Update UI
+    document.getElementById('pnl-revenue').textContent = formatCurrency(totalRevenue);
+    document.getElementById('pnl-expenses').textContent = formatCurrency(totalExpenses);

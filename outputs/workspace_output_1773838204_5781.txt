@@ -1,0 +1,18 @@
+    renderWorkOrdersList();
+    renderAppointmentsList();
+}
+
+// Work Order Parts Management
+let workOrderParts = [];
+
+
+
+function updateWorkOrderPartsList() {
+    const container = document.getElementById('work-order-parts-list');
+    const hiddenInput = document.getElementById('work-order-parts');
+    
+    if (workOrderParts.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-light); font-size: 0.9rem;">No parts added</p>';
+        hiddenInput.value = '';
+        return;
+    }

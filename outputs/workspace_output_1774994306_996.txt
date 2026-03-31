@@ -1,0 +1,12 @@
+# Add onclick to view functionality
+
+## Completed
+- [x] Customers - row click to view
+- [x] Vehicles - row click to view  
+- [x] Services - row click to view
+- [x] Appointments - row click to view
+- [x] Suppliers - row click to view
+- [x] Invoices - row click to view
+- [x] Quotes - row click to view
+- [x] Technicians - row click to view
+- [x] Expenses - row click to view

@@ -1,0 +1,103 @@
+function renderExpensesList() {
+    const container = document.getElementById('expenses-list');
+    const searchTerm = (document.getElementById('expense-search')?.value || '').toLowerCase();
+    const filterCategory = document.getElementById('expense-filter-category')?.value || '';
+    const filterMonth = document.getElementById('expense-filter-month')?.value || '';
+
+    const now = new Date();
+
+    let filteredExpenses = expenses.filter(e => {
+        // Search filter
+        if (searchTerm && !(
+            e.description.toLowerCase().includes(searchTerm) ||
+            e.category.toLowerCase().includes(searchTerm) ||
+            (e.vendor && e.vendor.toLowerCase().includes(searchTerm)) ||
+            (e.reference && e.reference.toLowerCase().includes(searchTerm))
+        )) return false;
+
+        // Category filter
+        if (filterCategory && e.category !== filterCategory) return false;
+
+        // Month filter
+        if (filterMonth) {
+            const d = new Date(e.date);
+            if (filterMonth === 'this-month') {
+                if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+            } else if (filterMonth === 'last-month') {
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                if (d.getMonth() !== lastMonth.getMonth() || d.getFullYear() !== lastMonth.getFullYear()) return false;
+            } else if (filterMonth === 'this-year') {
+                if (d.getFullYear() !== now.getFullYear()) return false;
+            }
+        }
+
+        return true;
+    });
+
+    // Update summary & breakdown
+    updateExpenseSummary();
+    renderExpenseCategoryBreakdown(filteredExpenses);
+
+    if (filteredExpenses.length === 0) {
+        container.innerHTML = '<p class="empty-state">No expenses found. Add your first expense!</p>';
+        return;
+    }
+
+    // Sort
+    const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+        let aVal, bVal;
+        switch (expenseSortColumn) {
+            case 'date':
+                aVal = new Date(a.date).getTime();
+                bVal = new Date(b.date).getTime();
+                break;
+            case 'description':
+                aVal = (a.description || '').toLowerCase();
+                bVal = (b.description || '').toLowerCase();
+                break;
+            case 'category':
+                aVal = (a.category || '').toLowerCase();
+                bVal = (b.category || '').toLowerCase();
+                break;
+            case 'vendor':
+                aVal = (a.vendor || '').toLowerCase();
+                bVal = (b.vendor || '').toLowerCase();
+                break;
+            case 'payment':
+                aVal = (a.paymentMethod || '').toLowerCase();
+                bVal = (b.paymentMethod || '').toLowerCase();
+                break;
+            case 'amount':
+                aVal = parseFloat(a.amount) || 0;
+                bVal = parseFloat(b.amount) || 0;
+                break;
+            default:
+                aVal = new Date(a.date).getTime();
+                bVal = new Date(b.date).getTime();
+        }
+        if (expenseSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+
+    // Calculate total
+    const total = sortedExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    const sortIndicator = (col) => expenseSortColumn === col ? (expenseSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+
+    const table = document.createElement('table');
+    table.className = 'data-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('date',expenseSortColumn)}" onclick="sortExpenses('date')">Date${sortIndicator('date')}</th>
+                <th class="sortable${asc('description',expenseSortColumn)}" onclick="sortExpenses('description')">Description${sortIndicator('description')}</th>
+                <th class="sortable${asc('category',expenseSortColumn)}" onclick="sortExpenses('category')">Category${sortIndicator('category')}</th>
+                <th class="sortable${asc('vendor',expenseSortColumn)}" onclick="sortExpenses('vendor')">Vendor${sortIndicator('vendor')}</th>
+                <th class="sortable${asc('payment',expenseSortColumn)}" onclick="sortExpenses('payment')">Payment${sortIndicator('payment')}</th>
+                <th class="sortable${asc('amount',expenseSortColumn)}" onclick="sortExpenses('amount')">Amount${sortIndicator('amount')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>

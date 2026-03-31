@@ -1,0 +1,16 @@
+// Open create quote modal
+function openCreateQuoteModal() {
+    document.getElementById('create-quote-modal').style.display = 'block';
+    populateQuoteWorkOrders();
+    resetQuoteLineItems();
+    calculateQuoteTotals();
+}
+
+// Close quote modal
+function closeQuoteModal() {
+    const modal = document.getElementById('create-quote-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    resetQuoteLineItems();
+}

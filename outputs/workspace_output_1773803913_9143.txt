@@ -1,0 +1,51 @@
+            amount: amount
+        });
+    });
+    
+    // Sort outflows by date
+    outflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Update UI
+    document.getElementById('cashflow-inflows').textContent = formatCurrency(totalInflows);
+    document.getElementById('cashflow-outflows').textContent = formatCurrency(totalOutflows);
+    document.getElementById('cashflow-net').textContent = formatCurrency(totalInflows - totalOutflows);
+    
+    // Populate inflows table
+    const inflowsTableBody = document.getElementById('cashflow-inflows-list');
+    if (inflowsList.length === 0) {
+        inflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No paid invoices in this period</td></tr>';
+    } else {
+        inflowsTableBody.innerHTML = inflowsList.map(item => `
+            <tr>
+                <td>${item.invoiceNumber}</td>
+                <td>${item.customerName}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Populate outflows table
+    const outflowsTableBody = document.getElementById('cashflow-outflows-list');
+    if (outflowsList.length === 0) {
+        outflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No expenses in this period</td></tr>';
+    } else {
+        outflowsTableBody.innerHTML = outflowsList.map(item => `
+            <tr>
+                <td>${item.description}</td>
+                <td>${item.category}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+function generateProfitLossReport(invoices, startDate, endDate) {
+    let totalRevenue = 0;
+    let laborRevenue = 0;
+    let partsRevenue = 0;
+    let serviceRevenue = 0;
+
+    // Only count paid invoices as revenue
+    const paidInvoices = invoices.filter(inv =>

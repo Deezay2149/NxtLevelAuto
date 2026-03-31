@@ -1,0 +1,31 @@
+                            <textarea id="payment-notes" rows="2" placeholder="Optional notes"></textarea>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-success">✓ Record Payment</button>
+                            <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                        </div>
+                    </form>
+                    
+                    ${invoice.payments && invoice.payments.length > 0 ? `
+                        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <h4>Payment History</h4>
+                            <table style="width: 100%; font-size: 0.9rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Ref</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${invoice.payments.map(p => `
+                                        <tr>
+                                            <td>${formatDate(p.date)}</td>
+                                            <td>${formatCurrency(p.amount)}</td>
+                                            <td>${p.method}</td>
+                                            <td>${p.reference || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>

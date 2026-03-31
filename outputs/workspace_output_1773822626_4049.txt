@@ -1,0 +1,20 @@
+// Parts Management
+let parts = JSON.parse(localStorage.getItem('parts')) || [];
+let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
+let currentPartImages = [];  // array of base64 strings
+
+// Sorting state for parts
+let partSortColumn = 'name';
+let partSortDirection = 'asc';
+
+// Initialize Billing Features
+function initializeBilling() {
+    initializePartsManagement();
+    initializeInvoices();
+    renderPartsList();
+    renderStockLevelsList();
+    renderInvoicesList();
+}
+
+// Parts Management Functions

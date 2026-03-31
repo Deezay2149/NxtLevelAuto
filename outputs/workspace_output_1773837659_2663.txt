@@ -1,0 +1,1 @@
+243:                    <input type="text" id="suppliers-search" placeholder="Search suppliers by name, contact, phone, email..." oninput="filterSuppliers()">

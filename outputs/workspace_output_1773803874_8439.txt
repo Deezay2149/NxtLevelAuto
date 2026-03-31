@@ -1,0 +1,29 @@
+    // Calculate outflows from expenses
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    const filteredExpenses = expenses.filter(exp => {
+        if (!exp.date) return false;
+        // Parse date string (YYYY-MM-DD format) and create date at start of day
+        const expDateParts = exp.date.split('T')[0].split('-');
+        const expDate = new Date(parseInt(expDateParts[0]), parseInt(expDateParts[1]) - 1, parseInt(expDateParts[2]));
+        const expDateTime = expDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return expDateTime >= startTime && expDateTime <= endTime;
+    });
+    
+    let totalOutflows = 0;
+    let outflowsList = [];
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: exp.description || 'Expense',
+            category: exp.category || 'General',
+            date: exp.date,
+            amount: amount
+        });
+    });
+    
+    // Sort outflows by date
+    outflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));

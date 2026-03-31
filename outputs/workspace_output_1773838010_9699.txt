@@ -1,0 +1,2 @@
+1433:    <div id="tech-view-modal" class="modal">
+1437:                <button class="close-btn" onclick="closeModal('tech-view-modal')">&times;</button>

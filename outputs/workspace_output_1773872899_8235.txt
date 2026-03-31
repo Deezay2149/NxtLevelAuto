@@ -1,0 +1,53 @@
+
+let currentViewingInvoice = null;
+
+function viewInvoice(id) {
+    const invoice = invoices.find(i => i.id === id);
+    if (!invoice) return;
+    
+    currentViewingInvoice = invoice;
+    
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const vehicle = vehicles.find(v => v.id === invoice.vehicleId);
+    const workOrder = workOrders.find(w => w.id === invoice.workOrderId);
+    const shopName = getShopName();
+    const shopSettings = JSON.parse(localStorage.getItem('globalSettings')) || {};
+
+    // Recalculate totals from stored invoice data
+    const laborHours = invoice.laborHours || 0;
+    const laborRate = invoice.laborRate || 0;
+    const laborTotal = invoice.laborTotal || (laborHours * laborRate);
+
+    let servicesTotal = 0;
+    (invoice.services || []).forEach(s => { servicesTotal += parseFloat(s.price || s.total || 0); });
+
+    let partsTotal = 0;
+    (invoice.parts || []).forEach(p => { partsTotal += parseFloat(p.total || (p.unitPrice * p.quantity) || 0); });
+
+    let customTotal = 0;
+    (invoice.customItems || []).forEach(c => { customTotal += parseFloat(c.total || 0); });
+
+    const subtotal = invoice.subtotal || (servicesTotal + partsTotal + customTotal + laborTotal);
+    const discount = invoice.discount || 0;
+    const taxRate = invoice.taxRate !== undefined ? invoice.taxRate : (shopSettings.taxRate || 0);
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const taxAmount = invoice.taxAmount !== undefined ? invoice.taxAmount : (taxableAmount * taxRate / 100);
+    const total = invoice.total || (taxableAmount + taxAmount);
+    const amountPaid = invoice.amountPaid || 0;
+    const balanceDue = invoice.balanceDue !== undefined ? invoice.balanceDue : (total - amountPaid);
+
+    // Services rows
+    const servicesRows = (invoice.services || []).map(service => `
+        <tr>
+            <td>${service.name || 'Service'}</td>
+            <td>1</td>
+            <td>${formatCurrency(service.price || service.total || 0)}</td>
+            <td>${formatCurrency(service.price || service.total || 0)}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" style="color:var(--text-light);text-align:center;">No services</td></tr>';
+
+    // Parts rows
+    const partsRows = (invoice.parts || []).map(part => {
+        const unitPrice = part.unitPrice || part.price || 0;
+        const qty = part.quantity || 1;
+        const lineTotal = part.total || (unitPrice * qty);

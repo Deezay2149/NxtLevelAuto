@@ -1,0 +1,3 @@
+/workspace/mechanic-shop/app.js:2865:    // Quotes
+/workspace/mechanic-shop/app.js:2866:    if (typeof renderQuotesList === 'function') {
+/workspace/mechanic-shop/app.js:2867:        renderQuotesList();

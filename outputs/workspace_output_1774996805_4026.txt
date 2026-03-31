@@ -1,0 +1,3 @@
+From https://github.com/Deezay2149/NxtLevelAuto
+ * branch            master     -> FETCH_HEAD
+HEAD is now at 2c4b22d feat: Add Technical Knowledge Base, fix Book-In Parts editable total, add invoice editing

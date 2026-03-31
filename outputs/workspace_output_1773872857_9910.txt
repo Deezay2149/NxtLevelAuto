@@ -1,0 +1,96 @@
+function renderInvoicesList() {
+    const container = document.getElementById('invoices-list');
+    
+    if (invoices.length === 0) {
+        container.innerHTML = '<p class="empty-state">No invoices found. Create your first invoice!</p>';
+        return;
+    }
+    
+    // Sort invoices
+    const sortedInvoices = [...invoices].sort((a, b) => {
+        let aVal, bVal;
+        const aCustomer = customers.find(c => c.id === a.customerId);
+        const bCustomer = customers.find(c => c.id === b.customerId);
+        switch (invoiceSortColumn) {
+            case 'number':
+                aVal = (a.invoiceNumber || '').toLowerCase();
+                bVal = (b.invoiceNumber || '').toLowerCase();
+                break;
+            case 'date':
+                aVal = new Date(a.createdAt).getTime();
+                bVal = new Date(b.createdAt).getTime();
+                break;
+            case 'customer':
+                aVal = aCustomer ? `${aCustomer.firstName} ${aCustomer.lastName}`.toLowerCase() : '';
+                bVal = bCustomer ? `${bCustomer.firstName} ${bCustomer.lastName}`.toLowerCase() : '';
+                break;
+            case 'total':
+                aVal = parseFloat(a.total) || 0;
+                bVal = parseFloat(b.total) || 0;
+                break;
+            case 'paid':
+                aVal = parseFloat(a.amountPaid) || 0;
+                bVal = parseFloat(b.amountPaid) || 0;
+                break;
+            case 'balance':
+                aVal = parseFloat(a.balanceDue) || 0;
+                bVal = parseFloat(b.balanceDue) || 0;
+                break;
+            case 'status':
+                aVal = (a.status || '').toLowerCase();
+                bVal = (b.status || '').toLowerCase();
+                break;
+            default:
+                aVal = new Date(a.createdAt).getTime();
+                bVal = new Date(b.createdAt).getTime();
+        }
+        if (invoiceSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+
+    const sortIndicator = (col) => invoiceSortColumn === col ? (invoiceSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('number',invoiceSortColumn)}" onclick="sortInvoices('number')">Invoice #${sortIndicator('number')}</th>
+                <th class="sortable${asc('date',invoiceSortColumn)}" onclick="sortInvoices('date')">Date${sortIndicator('date')}</th>
+                <th class="sortable${asc('customer',invoiceSortColumn)}" onclick="sortInvoices('customer')">Customer${sortIndicator('customer')}</th>
+                <th class="sortable${asc('total',invoiceSortColumn)}" onclick="sortInvoices('total')">Total${sortIndicator('total')}</th>
+                <th class="sortable${asc('paid',invoiceSortColumn)}" onclick="sortInvoices('paid')">Paid${sortIndicator('paid')}</th>
+                <th class="sortable${asc('balance',invoiceSortColumn)}" onclick="sortInvoices('balance')">Balance${sortIndicator('balance')}</th>
+                <th class="sortable${asc('status',invoiceSortColumn)}" onclick="sortInvoices('status')">Status${sortIndicator('status')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedInvoices.map(invoice => {
+                const customer = customers.find(c => c.id === invoice.customerId);
+                const statusClass = `invoice-status-${invoice.status}`;
+                const amountPaid = invoice.amountPaid || 0;
+                const balanceDue = invoice.balanceDue || invoice.total;
+                return `
+                <tr>
+                    <td>${invoice.invoiceNumber}</td>
+                    <td>${formatDate(invoice.createdAt)}</td>
+                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
+                    <td>${formatCurrency(invoice.total)}</td>
+                    <td style="color: #28a745; font-weight: bold;">${formatCurrency(amountPaid)}</td>
+                    <td style="color: ${balanceDue > 0 ? '#dc3545' : '#28a745'}; font-weight: bold;">${formatCurrency(balanceDue)}</td>
+                    <td><span class="status-badge ${statusClass}">${invoice.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="viewInvoice('${invoice.id}')">View</button>
+                            <button class="btn btn-info" onclick="editInvoice('${invoice.id}')">Edit</button>
+                            <button class="btn btn-success" onclick="openPaymentModal('${invoice.id}')">Payment</button>
+                            <button class="btn btn-secondary" onclick="openStatusModal('${invoice.id}')">Status</button>
+                            <button class="btn btn-warning" onclick="openInvoiceNotesModal('${invoice.id}')">Notes</button>
+                            <button class="btn btn-danger" onclick="deleteInvoice('${invoice.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;

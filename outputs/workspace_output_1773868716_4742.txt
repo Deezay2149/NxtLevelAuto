@@ -1,0 +1,67 @@
+function viewWorkOrderDetails(id) {
+    const workOrder = workOrders.find(w => w.id === id);
+    if (!workOrder) return;
+    
+    const customer = customers.find(c => c.id === workOrder.customerId);
+    const vehicle = vehicles.find(v => v.id === workOrder.vehicleId);
+    const technician = workOrder.technicianId ? users.find(u => u.id === workOrder.technicianId) : null;
+    
+    // Build services list
+    let servicesHtml = '';
+    workOrder.services.forEach(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        if (service) {
+            servicesHtml += `<div style="padding: 8px; background: #f8f9fa; margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                <span>${service.name}</span>
+                <strong>${formatCurrency(service.price)}</strong>
+            </div>`;
+        }
+    });
+    
+    // Build parts list
+    let partsHtml = '';
+    if (workOrder.parts && workOrder.parts.length > 0) {
+        workOrder.parts.forEach(p => {
+            const part = parts.find(pt => pt.id === p.partId);
+            if (part) {
+                partsHtml += `<div style="padding: 8px; background: #f8f9fa; margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                    <span>${part.name} x ${p.quantity}</span>
+                    <strong>${formatCurrency(p.price * p.quantity)}</strong>
+                </div>`;
+            }
+        });
+    } else {
+        partsHtml = '<p style="color: #6c757d;">No parts used</p>';
+    }
+    
+    // Build evidence section
+    let evidenceHtml = '';
+    if (workOrder.evidence && workOrder.evidence.length > 0) {
+        evidenceHtml = '<div style="margin-top: 1.5rem;"><h4>📸 Evidence</h4><div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">';
+        workOrder.evidence.forEach(evidence => {
+            const isVideo = evidence.type.startsWith('video/');
+            const isImage = evidence.type.startsWith('image/');
+            
+            if (isImage) {
+                evidenceHtml += `<div style="position: relative;">
+                    <img src="${evidence.data}" alt="${evidence.name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #dee2e6;" onclick="openImageLightbox('${evidence.data}')">
+                </div>`;
+            } else if (isVideo) {
+                evidenceHtml += `<div style="position: relative;">
+                    <video src="${evidence.data}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #dee2e6;" onclick="openVideoViewer('${evidence.data}')"></video>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; pointer-events: none;">▶️</div>
+                </div>`;
+            }
+        });
+        evidenceHtml += '</div></div>';
+    }
+    
+    // Status badge color
+    const statusColors = {
+        'pending': '#ffc107',
+        'in-progress': '#17a2b8',
+        'completed': '#28a745',
+        'cancelled': '#dc3545'
+    };
+    const statusColor = statusColors[workOrder.status] || '#6c757d';
+    

@@ -1,0 +1,11 @@
+51:            <li><button data-section="suppliers">Suppliers</button></li>
+238:        <!-- Suppliers Section -->
+239:        <section id="suppliers">
+241:                <h2>🏭 Suppliers Management</h2>
+243:                    <input type="text" id="suppliers-search" placeholder="Search suppliers...">
+246:                <div class="suppliers-summary" id="suppliers-summary">
+248:                        <h4>Total Suppliers</h4>
+249:                        <span id="total-suppliers-count">0</span>
+252:                        <h4>Active Suppliers</h4>
+253:                        <span id="active-suppliers-count">0</span>
+256:                <div id="suppliers-list"></div>

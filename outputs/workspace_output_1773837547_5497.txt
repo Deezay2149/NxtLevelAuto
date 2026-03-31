@@ -1,0 +1,21 @@
+            <div class="card">
+                <h2>🏭 Suppliers Management</h2>
+                <div class="search-box">
+                    <input type="text" id="suppliers-search" placeholder="Search suppliers...">
+                    <button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button>
+                </div>
+                <div class="suppliers-summary" id="suppliers-summary">
+                    <div class="summary-card">
+                        <h4>Total Suppliers</h4>
+                        <span id="total-suppliers-count">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Active Suppliers</h4>
+                        <span id="active-suppliers-count">0</span>
+                    </div>
+                </div>
+                <div id="suppliers-list"></div>
+            </div>
+        </section>
+
+        <!-- Invoices Section -->

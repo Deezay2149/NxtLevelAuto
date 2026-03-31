@@ -1,0 +1,4 @@
+  File "<stdin>", line 9
+    print(f"Has entity: {'"' in lines[4740]}")
+                           ^
+SyntaxError: unterminated string literal (detected at line 9)

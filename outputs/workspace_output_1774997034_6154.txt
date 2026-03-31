@@ -1,0 +1,16 @@
+47:            <li><button class="active" data-section="dashboard">Dashboard</button></li>
+48:            <li><button data-section="customers">Customers</button></li>
+49:            <li><button data-section="vehicles">Vehicles</button></li>
+50:            <li><button data-section="services">Services</button></li>
+51:            <li><button data-section="suppliers">Suppliers</button></li>
+52:            <li><button data-section="parts">Parts</button></li>
+53:            <li><button data-section="appointments">Appointments</button></li>
+54:            <li><button data-section="work-orders">Work Orders</button></li>
+55:            <li><button data-section="invoices">Invoices</button></li>
+56:            <li><button data-section="quotes">Quotes</button></li>
+57:            <li><button data-section="technical">Technical</button></li>
+58:            <li><button data-section="reminders">Reminders</button></li>
+59:            <li><button data-section="reports">Reports</button></li>
+60:            <li><button data-section="technicians">Technicians</button></li>
+61:            <li><button data-section="expenses">Expenses</button></li>
+62:            <li><button data-section="settings">Settings</button></li>

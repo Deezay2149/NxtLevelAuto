@@ -1,0 +1,5 @@
+3857:let techItems = JSON.parse(localStorage.getItem('techItems')) || [];
+3858:let techImages = []; // Temporary storage for images during upload
+4081:        const item = techItems.find(i => i.id === id);
+4118:    const isEdit = existingId && techItems.find(i => i.id === existingId);
+4135:        createdAt: isEdit ? techItems.find(i => i.id === existingId).createdAt : new Date().toISOString(),

@@ -1,0 +1,31 @@
+        // Parse date string (YYYY-MM-DD format) and create date at start of day
+        const expDateParts = exp.date.split('T')[0].split('-');
+        const expDate = new Date(parseInt(expDateParts[0]), parseInt(expDateParts[1]) - 1, parseInt(expDateParts[2]));
+        // Set time to start/end of day for proper comparison
+        const expDateTime = expDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return expDateTime >= startTime && expDateTime <= endTime;
+    });
+    
+    console.log('P&L - Filtered expenses:', filteredExpenses.length);
+    
+    let totalExpenses = 0;
+    const expenseCategories = {};
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalExpenses += amount;
+        
+        const category = exp.category || 'Other';
+        if (!expenseCategories[category]) {
+            expenseCategories[category] = 0;
+        }
+        expenseCategories[category] += amount;
+    });
+    
+    // Update UI
+    document.getElementById('pnl-revenue').textContent = formatCurrency(totalRevenue);
+    document.getElementById('pnl-expenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('pnl-profit').textContent = formatCurrency(totalRevenue - totalExpenses);
+    

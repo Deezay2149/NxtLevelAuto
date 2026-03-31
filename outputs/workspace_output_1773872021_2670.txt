@@ -1,0 +1,2 @@
+428:function editCustomer(id) {
+442:function deleteCustomer(id) {

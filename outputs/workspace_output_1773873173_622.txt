@@ -1,0 +1,27 @@
+<div id="quote-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>Quote Details</h2>
+            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="quote-details-content"></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Create Quote Modal -->
+<div id="create-quote-modal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2>Create Quote</h2>
+            <button class="close-btn" onclick="closeQuoteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="create-quote-form" onsubmit="createQuote(); return false;">
+                <div class="form-group">
+                    <label>Work Order *</label>
+                    <select id="quote-work-order" onchange="loadWorkOrderItemsToQuote()" required>
+                        <option value="">Select Work Order</option>
+                    </select>

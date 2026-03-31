@@ -1,0 +1,6 @@
+2590:        expenseSearch.addEventListener('input', renderExpensesList);
+2775:    renderExpensesList();
+4461:    renderExpensesList();
+4476:    renderExpensesList();
+4548:function renderExpensesList() {
+4708:    renderExpensesList();

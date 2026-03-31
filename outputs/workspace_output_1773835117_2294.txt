@@ -1,0 +1,5 @@
+105:            const section = this.dataset.section;
+111:            // Show corresponding section
+112:            document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+113:            document.getElementById(section).classList.add('active');
+2657:        alert('No parts available. Please add parts in the Parts section first.');

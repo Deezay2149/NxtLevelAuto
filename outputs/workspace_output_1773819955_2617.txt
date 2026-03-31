@@ -1,0 +1,4 @@
+  File "/workspace/mechanic-shop/add_line_item_move.py", line 52
+    services_pattern = r"                    <div class=\\"line-item-actions\\">\n                        <button type=\\"button\\" class=\\"btn btn-sm btn-secondary\\" onclick=\\"editInvoiceLineItem\('service', \${index}\)\\">\\\\u270f\\\\ufe0f</button>\n                        <button type=\\"button\\" class=\\"btn btn-sm btn-danger\\" onclick=\\"removeInvoiceLineItem\('service', \${index}\)\\">\\\\u2715</button>\n                    </div>"
+                                                                             ^
+SyntaxError: unexpected character after line continuation character

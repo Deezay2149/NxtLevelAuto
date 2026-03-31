@@ -1,0 +1,2 @@
+650:    <div id="customer-modal" class="modal">
+654:                <button class="close-btn" onclick="closeModal('customer-modal')">&times;</button>

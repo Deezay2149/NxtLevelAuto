@@ -1,0 +1,5 @@
+4155:function viewTechItem(id) {
+4195:    let documentsHtml = '';
+4197:        documentsHtml = '<div class="tech-view-documents" style="margin-top: 1.5rem;"><strong>📎 Attachments:</strong><div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">' +
+4225:            ${documentsHtml}
+4364:        <div class="tech-knowledge-card priority-${item.priority}" onclick="viewTechItem('${item.id}')" style="cursor: pointer;">

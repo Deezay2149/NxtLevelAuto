@@ -1,0 +1,51 @@
+    // Add event listener to update vehicles when customer changes
+    customerSelect.onchange = function() {
+        const customerId = this.value;
+        vehicleSelect.innerHTML = '<option value="">Select Vehicle</option>';
+        vehicleSelect.disabled = !customerId;
+        
+        if (customerId) {
+            const customerVehicles = vehicles.filter(v => v.customerId === customerId);
+            customerVehicles.forEach(vehicle => {
+                vehicleSelect.innerHTML += `<option value="${vehicle.id}">${vehicle.year} ${vehicle.make} ${vehicle.model} - ${vehicle.plate}</option>`;
+            });
+        }
+    };
+}
+
+function saveAppointment(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('appointment-id').value || generateId();
+    const existingAppointment = appointments.find(a => a.id === id);
+    const isEdit = !!existingAppointment;
+    
+    const appointment = {
+        id: id,
+        customerId: document.getElementById('appointment-customer').value,
+        vehicleId: document.getElementById('appointment-vehicle').value,
+        serviceId: document.getElementById('appointment-service').value,
+        date: document.getElementById('appointment-date').value,
+        time: document.getElementById('appointment-time').value,
+        notes: document.getElementById('appointment-notes').value,
+        status: existingAppointment ? existingAppointment.status : 'scheduled',
+        createdAt: existingAppointment ? existingAppointment.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    const existingIndex = appointments.findIndex(a => a.id === id);
+    if (existingIndex >= 0) {
+        appointments[existingIndex] = appointment;
+    } else {
+        appointments.push(appointment);
+    }
+    
+    saveData();
+    closeModal('appointment-modal');
+    
+    // Reset modal title
+    document.querySelector('#appointment-modal .modal-header h2').textContent = 'Schedule Appointment';
+    
+    renderAppointmentsList();
+    updateDashboard();
+    showNotification(isEdit ? 'Appointment updated successfully!' : 'Appointment scheduled successfully!', 'success');

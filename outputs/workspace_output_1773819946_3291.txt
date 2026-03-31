@@ -1,0 +1,84 @@
+function renderInvoiceItemsFromInvoice(invoice) {
+    // Render Services
+    let servicesHTML = '<div class="invoice-items-section"><h4>\ud83d\udd27 Services</h4>';
+    if (invoice.services && invoice.services.length > 0) {
+        invoice.services.forEach((item, index) => {
+            const price = item.price || item.total || 0;
+            servicesHTML += `
+                <div class="invoice-line-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Service'}</div>
+                    <div class="line-item-quantity">1</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(price)}</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(price)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('service', ${index})">\u270f\ufe0f</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeInvoiceLineItem('service', ${index})">\u2715</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        servicesHTML += '<p style="color: var(--text-light); padding: 0.5rem;">No services</p>';
+    }
+    servicesHTML += '</div>';
+    document.getElementById('invoice-services-list').innerHTML = servicesHTML;
+    
+    // Render Parts
+    let partsHTML = '<div class="invoice-items-section"><h4>\ud83d\udd29 Parts</h4>';
+    if (invoice.parts && invoice.parts.length > 0) {
+        invoice.parts.forEach((item, index) => {
+            const total = item.total || (item.unitPrice * item.quantity) || 0;
+            const unitPrice = item.unitPrice || item.price || 0;
+            partsHTML += `
+                <div class="invoice-line-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Part'} (x${item.quantity || 1})</div>
+                    <div class="line-item-quantity">${item.quantity || 1}</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(unitPrice)}/ea</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(total)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('part', ${index})">\u270f\ufe0f</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeInvoiceLineItem('part', ${index})">\u2715</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        partsHTML += '<p style="color: var(--text-light); padding: 0.5rem;">No parts</p>';
+    }
+    partsHTML += '</div>';
+    document.getElementById('invoice-parts-list').innerHTML = partsHTML;
+    
+    // Render Custom Items
+    let customHTML = '';
+    if (invoice.customItems && invoice.customItems.length > 0) {
+        customHTML = '<div class="invoice-items-section"><h4>\u2795 Custom Items</h4>';
+        invoice.customItems.forEach((item, index) => {
+            const total = item.total || (item.unitPrice * item.quantity) || 0;
+            customHTML += `
+                <div class="invoice-line-item custom-item">
+                    <div class="line-item-number">${index + 1}</div>
+                    <div class="line-item-description">${item.name || 'Custom Item'}</div>
+                    <div class="line-item-quantity">${item.quantity || 1}</div>
+                    <div class="line-item-price">
+                        <span class="modified-price">${formatCurrency(item.unitPrice || 0)}</span>
+                    </div>
+                    <div class="line-item-total">${formatCurrency(total)}</div>
+                    <div class="line-item-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('custom', ${index})">\u270f\ufe0f</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeInvoiceLineItem('custom', ${index})">\u2715</button>
+                    </div>
+                </div>
+            `;
+        });
+        customHTML += '</div>';
+    }
+    document.getElementById('invoice-custom-items-list').innerHTML = customHTML;
+}
+
+// Edit a line item in the invoice

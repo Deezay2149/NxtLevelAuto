@@ -1,0 +1,2 @@
+4178:function viewTechItem(id) {
+4387:        <div class="tech-knowledge-card priority-${item.priority}" onclick="viewTechItem('${item.id}')" style="cursor: pointer;">

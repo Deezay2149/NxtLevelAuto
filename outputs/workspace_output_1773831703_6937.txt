@@ -1,0 +1,17 @@
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+}
+
+function openCreateQuoteModal() {
+    document.getElementById('create-quote-modal').style.display = 'block';
+    populateQuoteWorkOrders();
+    resetQuoteLineItems();
+    calculateQuoteTotals();
+}
+
+// Close quote modal
+function closeQuoteModal() {

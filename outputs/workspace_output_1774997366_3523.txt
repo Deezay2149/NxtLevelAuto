@@ -1,0 +1,19 @@
+416:                            <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')">Delete</button>
+468:                <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}'); closeModal('customer-view-modal');">🗑️ Delete</button>
+798:                            <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
+905:                <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">🗑️ Delete</button>
+1126:                            <button class="btn btn-danger" onclick="deleteService('${service.id}')">Delete</button>
+1189:                <button class="btn btn-danger" onclick="deleteService('${service.id}'); closeModal('service-view-modal');">🗑️ Delete</button>
+1418:                            <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}')">Delete</button>
+1495:                <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}'); closeModal('appointment-view-modal');">🗑️ Delete</button>
+2010:                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+2012:                            <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}')">Delete</button>
+2171:                <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">🗑️ Delete</button>
+2729:                            <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')">Delete</button>
+2782:                            <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
+2832:                            <button class="btn btn-danger" onclick="deleteAppointment('${appointment.id}')">Delete</button>
+3164:                <button class="close-btn" onclick="closeVideoViewer()">&times;</button>
+3548:                            <button class="btn btn-secondary" onclick="viewReturnDetails('${ret.id}')">View</button>
+3549:                            <button class="btn btn-danger" onclick="deleteReturn('${ret.id}')">Delete</button>
+4373:                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteTechnician('${t.id}')">Delete</button>
+4754:                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteExpense('${e.id}')">Delete</button>

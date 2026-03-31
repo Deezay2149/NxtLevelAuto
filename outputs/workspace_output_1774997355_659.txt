@@ -1,0 +1,3 @@
+2865:    // Quotes
+2866:    if (typeof renderQuotesList === 'function') {
+2867:        renderQuotesList();

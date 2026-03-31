@@ -1,0 +1,3 @@
+2:const carBrandsAndModels = {
+575:    const brands = Object.keys(carBrandsAndModels).sort();
+596:    const models = carBrandsAndModels[selectedBrand] || [];

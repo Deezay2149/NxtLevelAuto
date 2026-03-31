@@ -1,0 +1,10 @@
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>${validUntil}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>`;
+        html += `<button onclick=&quot;viewQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer;&quot;>View</button>`;
+        
+        if (quote.status === 'pending') {
+            html += `<button onclick=&quot;convertQuoteToInvoice('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #28a745; color: white;&quot;>Convert</button>`;
+        }
+        
+        html += `<button onclick=&quot;deleteQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #dc3545; color: white;&quot;>Delete</button>`;
+        html += '</td></tr>';

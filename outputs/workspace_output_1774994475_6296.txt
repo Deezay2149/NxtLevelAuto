@@ -1,0 +1,74 @@
+function viewServiceDetails(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+    
+    const html = `
+        <div class="service-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>🔧 Service</strong><br>${service.name}</div>
+                <div><strong>💰 Price</strong><br>${formatCurrency(service.price)}</div>
+                <div><strong>⏱️ Est. Time</strong><br>${service.estimatedTime ? service.estimatedTime + ' hrs' : 'N/A'}</div>
+                <div><strong>🏷️ Engine Brand</strong><br>${service.engineBrand || 'Any'}</div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Description</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">
+                    ${service.description || 'No description provided'}
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editService('${service.id}'); closeModal('service-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteService('${service.id}'); closeModal('service-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('service-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('service-view-content').innerHTML = html;
+    document.getElementById('service-view-title').textContent = `🔧 ${service.name}`;
+    openModal('service-view-modal');
+}
+
+function editService(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+    
+    document.getElementById('service-id').value = service.id;
+    document.getElementById('service-name').value = service.name;
+    document.getElementById('service-description').value = service.description || '';
+    document.getElementById('service-engine-brand').value = service.engineBrand || '';
+    document.getElementById('service-price').value = service.price;
+    document.getElementById('service-time').value = service.estimatedTime || '';
+    
+    openModal('service-modal');
+}
+
+function deleteService(id) {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    
+    services = services.filter(s => s.id !== id);
+    saveData();
+    renderServicesList();
+    showNotification('Service deleted successfully!', 'success');
+}
+
+// Appointment Functions
+function openAppointmentModal() {
+    document.getElementById('appointment-form').reset();
+    document.getElementById('appointment-id').value = '';
+    populateAppointmentDropdowns();
+    openModal('appointment-modal');
+}
+
+function populateAppointmentDropdowns() {
+    const customerSelect = document.getElementById('appointment-customer');
+    const vehicleSelect = document.getElementById('appointment-vehicle');
+    const serviceSelect = document.getElementById('appointment-service');
+    
+    // Populate customers
+    customerSelect.innerHTML = '<option value="">Select Customer</option>';
+    customers.forEach(customer => {
+        customerSelect.innerHTML += `<option value="${customer.id}">${customer.firstName} ${customer.lastName}</option>`;
+    });

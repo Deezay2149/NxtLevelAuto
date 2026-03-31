@@ -1,0 +1,4 @@
+  File "/workspace/mechanic-shop/fix_quote_buttons.py", line 1
+    <parameter name="content">#!/usr/bin/env python3
+    ^
+SyntaxError: invalid syntax

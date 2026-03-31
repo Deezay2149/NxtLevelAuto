@@ -1,0 +1,73 @@
+function viewTechItem(id) {
+    const item = techItems.find(i => i.id === id);
+    if (!item) return;
+    
+    const cfg = TECH_TYPE_CONFIG[item.type];
+    const customer = item.customerId ? customers.find(c => c.id === item.customerId) : null;
+    const vehicle = item.vehicleId ? vehicles.find(v => v.id === item.vehicleId) : null;
+    
+    // Build meta info
+    let metaHtml = '<div class="tech-view-meta" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">';
+    if (item.category) metaHtml += `<div><strong>📂 Category:</strong> ${item.category}</div>`;
+    if (item.appliesTo) metaHtml += `<div><strong>🚗 Applies To:</strong> ${item.appliesTo}</div>`;
+    if (item.author) metaHtml += `<div><strong>👤 Author:</strong> ${item.author}</div>`;
+    metaHtml += `<div><strong>📅 Created:</strong> ${new Date(item.createdAt).toLocaleDateString()}</div>`;
+    metaHtml += `<div><strong>🕐 Updated:</strong> ${new Date(item.updatedAt).toLocaleDateString()}</div>`;
+    metaHtml += '</div>';
+    
+    // Priority badge
+    let priorityBadge = '';
+    if (item.priority && item.priority !== 'normal') {
+        const colors = { critical: '#dc3545', important: '#fd7e14', info: '#17a2b8' };
+        priorityBadge = `<span style="background: ${colors[item.priority] || '#6c757d'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 10px;">${item.priority.toUpperCase()}</span>`;
+    }
+    
+    // Tags
+    let tagsHtml = '';
+    if (item.tags && item.tags.length > 0) {
+        tagsHtml = '<div class="tech-view-tags" style="margin-top: 1rem;"><strong>🏷️ Tags:</strong> ' + 
+            item.tags.map(t => `<span style="background: #e9ecef; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 12px;">#${t}</span>`).join('') + '</div>';
+    }
+    
+    // Images
+    let imagesHtml = '';
+    if (item.images && item.images.length > 0) {
+        imagesHtml = '<div class="tech-view-images" style="margin-top: 1.5rem;"><strong>📷 Images:</strong><div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">' +
+            item.images.map(img => `<div class="tech-card-image" onclick="openImageLightbox('${img.data}')" style="cursor: pointer;"><img src="${img.data}" alt="${img.name || 'Image'}"></div>`).join('') +
+            '</div></div>';
+    }
+    
+    // Documents
+    let documentsHtml = '';
+    if (item.documents && item.documents.length > 0) {
+        documentsHtml = '<div class="tech-view-documents" style="margin-top: 1.5rem;"><strong>📎 Attachments:</strong><div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">' +
+            item.documents.map((doc, idx) => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <span style="font-size: 1.5rem;">${getDocumentIcon(doc.type)}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500;">${doc.name}</div>
+                        <div style="font-size: 12px; color: #6c757d;">${formatFileSize(doc.size)}</div>
+                    </div>
+                    <button onclick="viewTechDocumentFromItem('${item.id}', ${idx})" style="padding: 5px 10px; cursor: pointer;">📄 View</button>
+                    <button onclick="downloadTechDocumentFromItem('${item.id}', ${idx})" style="padding: 5px 10px; cursor: pointer;">⬇️ Download</button>
+                </div>
+            `).join('') +
+            '</div></div>';
+    }
+    
+    // Build full HTML
+    let html = `
+        <div class="tech-view-container">
+            <div class="tech-view-header" style="margin-bottom: 1rem;">
+                <h3 style="margin: 0;">${cfg.icon} ${item.title}${priorityBadge}</h3>
+            </div>
+            ${metaHtml}
+            <div class="tech-view-content" style="padding: 1rem; background: white; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 1rem;">
+                <h4 style="margin-top: 0;">Content</h4>
+                <div style="white-space: pre-wrap;">${item.content}</div>
+            </div>
+            ${tagsHtml}
+            ${imagesHtml}
+            ${documentsHtml}
+            <div class="tech-view-actions" style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="openTechModal('${item.type}', '${item.id}'); closeModal('tech-view-modal');">✏️ Edit</button>

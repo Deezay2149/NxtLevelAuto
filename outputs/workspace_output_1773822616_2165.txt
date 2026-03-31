@@ -1,0 +1,2 @@
+function convertQuoteToInvoice(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);

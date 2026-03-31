@@ -1,0 +1,13 @@
+        let validUntil = quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : '-';
+        
+        html += '<tr style=&quot;border-bottom: 1px solid #e0e0e0;&quot;>';
+        html += `<td style=&quot;padding: 12px;&quot;>${quote.quoteNumber}</td>`;
+        html += `<td style=&quot;padding: 12px;&quot;>${customerName}</td>`;
+        html += `<td style=&quot;padding: 12px;&quot;>${vehicleName}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: right; font-weight: bold;&quot;>${formatCurrency(quote.total)}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>${statusBadge}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>${validUntil}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>`;
+        html += `<button onclick=&quot;viewQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer;&quot;>View</button>`;
+        
+        if (quote.status === 'pending') {

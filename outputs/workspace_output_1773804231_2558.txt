@@ -1,0 +1,41 @@
+    // Calculate tax
+    const taxRate = parseFloat(document.getElementById('invoice-tax-rate').value) || 0;
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const taxAmount = (taxableAmount * taxRate) / 100;
+    
+    // Calculate total
+    const total = taxableAmount + taxAmount;
+    
+    const invoice = {
+        id: generateId(),
+        invoiceNumber: `INV-${Date.now()}`,
+        workOrderId: workOrder.id,
+        customerId: workOrder.customerId,
+        vehicleId: workOrder.vehicleId,
+        services: invoiceServices,
+        parts: invoiceParts,
+        customItems: invoiceCustomItems,
+        laborHours: laborHours,
+        laborRate: laborRate,
+        laborTotal: laborTotal,
+        servicesTotal: servicesTotal,
+        partsTotal: partsTotal,
+        customTotal: customTotal,
+        subtotal: subtotal,
+        discount: discount,
+        taxRate: taxRate,
+        taxAmount: taxAmount,
+        total: total,
+        notes: document.getElementById('invoice-notes').value,
+        status: 'pending',
+        amountPaid: 0,
+        balanceDue: total,
+        payments: [],
+        modificationHistory: [],
+        createdAt: new Date().toISOString()
+    };
+    
+    invoices.push(invoice);
+
+    // Adjust stock for parts that were invoiced
+    invoiceParts.forEach(invoicePart => {

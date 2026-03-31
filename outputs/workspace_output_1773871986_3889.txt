@@ -1,0 +1,1 @@
+mechanic-shop/app.js:408:                <tr onclick="viewCustomerDetails('${customer.id}')" style="cursor: pointer;" title="Click to view details">

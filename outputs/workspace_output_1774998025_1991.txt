@@ -1,0 +1,20 @@
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quote Details Modal -->
+<div id="quote-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>Quote Details</h2>
+            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="quote-details-content"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

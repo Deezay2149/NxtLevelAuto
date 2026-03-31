@@ -1,0 +1,9 @@
+4178:function renderTechList(type, filter = '') {
+4214:            ? `<div class="tech-card-tags">${item.tags.map(t => `<span class="tech-tag">#${t}</span>`).join('')}</div>`
+4221:        const metaHtml = `<div class="tech-card-meta">${metaParts.map(m => `<span>${m}</span>`).join('')}</div>`;
+4225:            ? `<div class="tech-card-images">${item.images.map(img => `
+4226:                <div class="tech-card-image" onclick="openImageLightbox('${img.data}')">
+4234:            <div class="tech-card-header">
+4235:                <h4 class="tech-card-title">${cfg.icon} ${item.title}</h4>
+4238:                    <div class="tech-card-actions">
+4245:            <div class="tech-card-content" id="tech-content-${item.id}">${item.content}</div>

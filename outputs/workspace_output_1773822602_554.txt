@@ -1,0 +1,118 @@
+function renderQuotesList() {
+    const container = document.getElementById('quotes-list');
+    
+    if (!container) return;
+    
+    if (quotes.length === 0) {
+        container.innerHTML = '<p style=&quot;text-align: center; color: #888; padding: 2rem;&quot;>No quotes yet. Create your first quote!</p>';
+        return;
+    }
+    
+    let html = '<table style=&quot;width: 100%; border-collapse: collapse;&quot;>';
+    html += '<thead><tr style=&quot;background: #f5f5f5;&quot;>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Quote #</th>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Customer</th>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Vehicle</th>';
+    html += '<th style=&quot;padding: 12px; text-align: right;&quot;>Total</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Status</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Valid Until</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    quotes.forEach(quote => {
+        const customer = customers.find(c => c.id === quote.customerId);
+        const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+        const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Unknown';
+        const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown';
+        
+        let statusBadge = '';
+        if (quote.status === 'pending') {
+            statusBadge = '<span style=&quot;background: #ffc107; color: #000; padding: 4px 8px; border-radius: 12px; font-size: 12px;&quot;>Pending</span>';
+        } else if (quote.status === 'accepted') {
+            statusBadge = '<span style=&quot;background: #28a745; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;&quot;>Accepted</span>';
+        } else if (quote.status === 'rejected') {
+            statusBadge = '<span style=&quot;background: #dc3545; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;&quot;>Rejected</span>';
+        } else if (quote.status === 'converted') {
+            statusBadge = '<span style=&quot;background: #6c757d; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;&quot;>Converted</span>';
+        }
+        
+        let validUntil = quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : '-';
+        
+        html += '<tr style=&quot;border-bottom: 1px solid #e0e0e0;&quot;>';
+        html += `<td style=&quot;padding: 12px;&quot;>${quote.quoteNumber}</td>`;
+        html += `<td style=&quot;padding: 12px;&quot;>${customerName}</td>`;
+        html += `<td style=&quot;padding: 12px;&quot;>${vehicleName}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: right; font-weight: bold;&quot;>${formatCurrency(quote.total)}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>${statusBadge}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>${validUntil}</td>`;
+        html += `<td style=&quot;padding: 12px; text-align: center;&quot;>`;
+        html += `<button onclick=&quot;viewQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer;&quot;>View</button>`;
+        
+        if (quote.status === 'pending') {
+            html += `<button onclick=&quot;convertQuoteToInvoice('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #28a745; color: white;&quot;>Convert</button>`;
+        }
+        
+        html += `<button onclick=&quot;deleteQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #dc3545; color: white;&quot;>Delete</button>`;
+        html += '</td></tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// View quote details
+function viewQuote(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    const customer = customers.find(c => c.id === quote.customerId);
+    const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Unknown';
+    const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown';
+    
+    let html = `
+        <div style=&quot;max-width: 800px; margin: 0 auto; padding: 20px;&quot;>
+            <h2 style=&quot;margin-bottom: 20px;&quot;>Quote Details</h2>
+            <div style=&quot;background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;&quot;>
+                <p><strong>Quote Number:</strong> ${quote.quoteNumber}</p>
+                <p><strong>Customer:</strong> ${customerName}</p>
+                <p><strong>Vehicle:</strong> ${vehicleName}</p>
+                <p><strong>Status:</strong> ${quote.status}</p>
+                <p><strong>Valid Until:</strong> ${quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>Created:</strong> ${new Date(quote.createdAt).toLocaleString()}</p>
+            </div>
+            
+            <h3>Items</h3>
+    `;
+    
+    if (quote.services && quote.services.length > 0) {
+        html += '<h4>Services</h4><ul>';
+        quote.services.forEach(s => {
+            html += `<li>${s.name} - ${formatCurrency(s.price)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (quote.parts && quote.parts.length > 0) {
+        html += '<h4>Parts</h4><ul>';
+        quote.parts.forEach(p => {
+            html += `<li>${p.name} × ${p.quantity} - ${formatCurrency(p.price * p.quantity)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (quote.customItems && quote.customItems.length > 0) {
+        html += '<h4>Custom Items</h4><ul>';
+        quote.customItems.forEach(c => {
+            html += `<li>${c.name} - ${formatCurrency(c.total)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    html += `
+        <div style=&quot;background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px;&quot;>
+            <p><strong>Subtotal:</strong> ${formatCurrency(quote.subtotal)}</p>
+            <p><strong>Discount:</strong> -${formatCurrency(quote.discount)}</p>
+            <p><strong>Tax:</strong> ${formatCurrency(quote.taxAmount)}</p>
+            <p style=&quot;font-size: 1.2em; font-weight: bold;&quot;><strong>Total:</strong> ${formatCurrency(quote.total)}</p>
+        </div>

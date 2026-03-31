@@ -1,0 +1,24 @@
+2757:let bookInRecords = JSON.parse(localStorage.getItem('bookInRecords')) || [];
+3355:    const isEdit = existingId && bookInRecords.find(r => r.id === existingId);
+3375:    const existingRecord = isEdit ? bookInRecords.find(r => r.id === existingId) : null;
+3399:        paymentStatus: payStatus,
+3409:        createdAt: isEdit ? bookInRecords.find(r => r.id === existingId).createdAt : new Date().toISOString(),
+3415:        const oldRecord = bookInRecords.find(r => r.id === existingId);
+3448:        const idx = bookInRecords.findIndex(r => r.id === existingId);
+3449:        bookInRecords[idx] = record;
+3474:        bookInRecords.push(record);
+3477:    localStorage.setItem('bookInRecords', JSON.stringify(bookInRecords));
+3491:    if (bookInRecords.length === 0) {
+3496:    const sortedRecords = [...bookInRecords].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+3499:        const payStatus = record.paymentStatus || 'unpaid';
+3572:    const record = bookInRecords.find(r => r.id === id);
+3616:    if (payStatusEl) payStatusEl.value = record.paymentStatus || 'unpaid';
+3634:    const record = bookInRecords.find(r => r.id === recordId);
+3726:    const record = bookInRecords.find(r => r.id === currentBookInPaymentId);
+3756:        record.paymentStatus = 'paid';
+3759:        record.paymentStatus = 'partial';
+3762:    localStorage.setItem('bookInRecords', JSON.stringify(bookInRecords));
+3773:    bookInRecords = bookInRecords.filter(r => r.id !== id);
+3774:    localStorage.setItem('bookInRecords', JSON.stringify(bookInRecords));
+3786:    if (countEl) countEl.textContent = bookInRecords.length;
+3788:        const total = bookInRecords.reduce((sum, r) => sum + r.totalValue, 0);

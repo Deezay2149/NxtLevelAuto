@@ -1,0 +1,61 @@
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th class="sortable${asc('vehicle',vehicleSortColumn)}" onclick="sortVehicles('vehicle')">Vehicle${sortIndicator('vehicle')}</th>
+                <th class="sortable${asc('plate',vehicleSortColumn)}" onclick="sortVehicles('plate')">License Plate${sortIndicator('plate')}</th>
+                <th class="sortable${asc('engineCode',vehicleSortColumn)}" onclick="sortVehicles('engineCode')">Engine Code${sortIndicator('engineCode')}</th>
+                <th class="sortable${asc('mileage',vehicleSortColumn)}" onclick="sortVehicles('mileage')">Mileage (km)${sortIndicator('mileage')}</th>
+                <th class="sortable${asc('customer',vehicleSortColumn)}" onclick="sortVehicles('customer')">Customer${sortIndicator('customer')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedVehicles.map(vehicle => {
+                const customer = customers.find(c => c.id === vehicle.customerId);
+                const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+                const imageHTML = vImgs.length
+                    ? `<div style="position:relative;display:inline-block">` +
+                       `<img src="${vImgs[0]}" class="vehicle-thumbnail" onclick="showVehicleImages('${vehicle.id}')" alt="Vehicle Image">` +
+                       (vImgs.length > 1 ? `<span style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:1px 4px;border-radius:3px;">${vImgs.length}📷</span>` : '') +
+                       `</div>`
+                    : '<span style="color: var(--text-light); font-size: 0.8rem;">No image</span>';
+                const mileage = vehicle.mileage ? vehicle.mileage.toLocaleString() : '0';
+                const engineCode = vehicle.engineCode || '-';
+                return `
+                <tr>
+                    <td>${imageHTML}</td>
+                    <td>${vehicle.year} ${vehicle.make} ${vehicle.model}</td>
+                    <td>${vehicle.plate}</td>
+                    <td>${engineCode}</td>
+                    <td>${mileage}</td>
+                    <td>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="editVehicle('${vehicle.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            }).join('')}
+        </tbody>
+    `;
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function sortVehicles(column) {
+    if (vehicleSortColumn === column) {
+        vehicleSortDirection = vehicleSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        vehicleSortColumn = column;
+        vehicleSortDirection = 'asc';
+    }
+    renderVehiclesList();
+}
+
+// Sort Customers
+function sortCustomers(column) {

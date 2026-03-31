@@ -1,0 +1,1 @@
+4738:        html += `<button onclick="viewQuote('${quote.id}')" style="padding: 4px 8px; margin: 0 2px; cursor: pointer;">View</button>`;

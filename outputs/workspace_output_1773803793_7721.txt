@@ -1,0 +1,24 @@
+3092:function getReportDateRange() {
+3145:function generateReports() {
+3147:        console.log('generateReports called');
+3148:        const dateRange = getReportDateRange();
+3165:    generateCashflowReport(filteredInvoices, startDate, endDate);
+3168:    generateProfitLossReport(filteredInvoices, startDate, endDate);
+3170:    showNotification('Reports generated successfully!', 'success');
+3177:function generateCashflowReport(invoices, startDate, endDate) {
+3178:    console.log('generateCashflowReport called with', invoices.length, 'invoices');
+3283:function generateProfitLossReport(invoices, startDate, endDate) {
+3395:function switchReportTab(tab) {
+3409:function downloadReportPDF() {
+3410:    const dateRange = getReportDateRange();
+3445:    const netProfit = totalRevenue - totalExpenses;
+3454:    <title>Financial Report - ${periodText}</title>
+3476:    <h1>NxtLevel Auto - Financial Report</h1>
+3478:        <strong>Report Period:</strong> ${periodText}<br>
+3493:            <h4>Net Profit/Loss</h4>
+3494:            <p>${formatCurrency(netProfit)}</p>
+3555:function downloadReportExcel() {
+3556:    const dateRange = getReportDateRange();
+3581:    let csvContent = "NxtLevel Auto - Financial Report\n";
+3582:    csvContent += `Report Period:,${document.getElementById('report-period').value}\n`;
+3590:    csvContent += `Net Profit/Loss,${(totalRevenue - totalExpenses).toFixed(2)}\n\n`;

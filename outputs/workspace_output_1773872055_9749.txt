@@ -1,0 +1,61 @@
+    currentVehicleImages = [];
+    currentLicenceDisc = null;
+    isEditingVehicle = false;
+}
+
+function renderVehiclesList() {
+    const container = document.getElementById('vehicles-list');
+
+    if (vehicles.length === 0) {
+        container.innerHTML = '<p class="empty-state">No vehicles found. Add your first vehicle!</p>';
+        return;
+    }
+
+    // Sort vehicles
+    const sortedVehicles = [...vehicles].sort((a, b) => {
+        let aVal, bVal;
+
+        switch (vehicleSortColumn) {
+            case 'vehicle':
+                aVal = `${a.year} ${a.make} ${a.model}`.toLowerCase();
+                bVal = `${b.year} ${b.make} ${b.model}`.toLowerCase();
+                break;
+            case 'plate':
+                aVal = (a.plate || '').toLowerCase();
+                bVal = (b.plate || '').toLowerCase();
+                break;
+            case 'engineCode':
+                aVal = (a.engineCode || '').toLowerCase();
+                bVal = (b.engineCode || '').toLowerCase();
+                break;
+            case 'mileage':
+                aVal = a.mileage || 0;
+                bVal = b.mileage || 0;
+                break;
+            case 'customer':
+                const aCust = customers.find(c => c.id === a.customerId);
+                const bCust = customers.find(c => c.id === b.customerId);
+                aVal = aCust ? `${aCust.firstName} ${aCust.lastName}`.toLowerCase() : '';
+                bVal = bCust ? `${bCust.firstName} ${bCust.lastName}`.toLowerCase() : '';
+                break;
+            default:
+                aVal = a[vehicleSortColumn] || '';
+                bVal = b[vehicleSortColumn] || '';
+        }
+
+        if (vehicleSortDirection === 'asc') {
+            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        } else {
+            return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+        }
+    });
+
+    // Generate sort indicator
+    const sortIndicator = (col) => {
+        if (vehicleSortColumn === col) {
+            return vehicleSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>';
+        }
+        return '';
+    };
+
+    const table = document.createElement('table');

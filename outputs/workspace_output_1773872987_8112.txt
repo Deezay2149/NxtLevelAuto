@@ -1,0 +1,2 @@
+1040:    const modal = document.getElementById('invoice-view-modal');
+1314:    openModal('invoice-view-modal');

@@ -1,0 +1,118 @@
+function renderTechList(type, filter = '') {
+    const cfg = TECH_TYPE_CONFIG[type];
+    const container = document.getElementById(cfg.listId);
+    if (!container) return;
+
+    let items = techItems.filter(i => i.type === type);
+
+    if (filter) {
+        const q = filter.toLowerCase();
+        items = items.filter(i =>
+            i.title.toLowerCase().includes(q) ||
+            (i.category && i.category.toLowerCase().includes(q)) ||
+            (i.appliesTo && i.appliesTo.toLowerCase().includes(q)) ||
+            (i.content && i.content.toLowerCase().includes(q)) ||
+            (i.tags && i.tags.some(t => t.toLowerCase().includes(q)))
+        );
+    }
+
+    if (items.length === 0) {
+        container.innerHTML = `<p class="empty-state">No ${cfg.label.toLowerCase()}s found. Click "+ Add ${cfg.label}" to create one.</p>`;
+        return;
+    }
+
+    const sorted = [...items].sort((a, b) => {
+        const priorityOrder = { critical: 0, important: 1, normal: 2, info: 3 };
+        const pa = priorityOrder[a.priority] ?? 2;
+        const pb = priorityOrder[b.priority] ?? 2;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+    });
+
+    container.innerHTML = sorted.map(item => {
+        const priorityBadge = item.priority !== 'normal'
+            ? `<span class="tech-priority-badge ${item.priority}">${item.priority.toUpperCase()}</span>`
+            : '';
+        const tagsHtml = item.tags && item.tags.length
+            ? `<div class="tech-card-tags">${item.tags.map(t => `<span class="tech-tag">#${t}</span>`).join('')}</div>`
+            : '';
+        const metaParts = [];
+        if (item.category) metaParts.push(`🗂️ ${item.category}`);
+        if (item.appliesTo) metaParts.push(`🚗 ${item.appliesTo}`);
+        if (item.author) metaParts.push(`👤 ${item.author}`);
+        metaParts.push(`🕒 ${new Date(item.updatedAt).toLocaleDateString()}`);
+        const metaHtml = `<div class="tech-card-meta">${metaParts.map(m => `<span>${m}</span>`).join('')}</div>`;
+        
+        // Images HTML
+        const imagesHtml = item.images && item.images.length > 0
+            ? `<div class="tech-card-images">${item.images.map(img => `
+                <div class="tech-card-image" onclick="openImageLightbox('${img.data}')">
+                    <img src="${img.data}" alt="${img.name || 'Image'}">
+                </div>
+            `).join('')}</div>`
+            : '';
+
+        return `
+        <div class="tech-knowledge-card priority-${item.priority}">
+            <div class="tech-card-header">
+                <h4 class="tech-card-title">${cfg.icon} ${item.title}</h4>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    ${priorityBadge}
+                    <div class="tech-card-actions">
+                        <button class="btn btn-secondary" style="padding:0.3rem 0.7rem;font-size:0.8rem;" onclick="openTechModal('${item.type}','${item.id}')">✏️ Edit</button>
+                        <button class="btn btn-danger" style="padding:0.3rem 0.7rem;font-size:0.8rem;" onclick="deleteTechItem('${item.id}')">🗑️</button>
+                    </div>
+                </div>
+            </div>
+            ${metaHtml}
+            <div class="tech-card-content" id="tech-content-${item.id}">${item.content}</div>
+            <button class="tech-read-more" id="tech-read-more-${item.id}" onclick="toggleTechContent('${item.id}')">Read more ▼</button>
+            ${imagesHtml}
+            ${tagsHtml}
+        </div>`;
+    }).join('');
+}
+
+function updateTechSummary(type) {
+    const cfg = TECH_TYPE_CONFIG[type];
+    const countEl = document.getElementById(cfg.countId);
+    if (countEl) countEl.textContent = techItems.filter(i => i.type === type).length;
+}
+
+function filterTechItems(type) {
+    const cfg = TECH_TYPE_CONFIG[type];
+    const searchEl = document.getElementById(cfg.searchId);
+    renderTechList(type, searchEl ? searchEl.value : '');
+}
+
+function switchTechTab(tabId) {
+    // Update sub-tab buttons using data-tab attribute
+    document.querySelectorAll('#technical .sub-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabId);
+    });
+
+    // Update tab content panels
+    document.querySelectorAll('#technical .tab-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+
+    // Refresh content
+    const typeMap = {
+        'tech-articles-tab':  'article',
+        'tech-bulletins-tab': 'bulletin',
+        'tech-tips-tab':      'tip'
+    };
+    const type = typeMap[tabId];
+    if (type) {
+        renderTechList(type);
+        updateTechSummary(type);
+    }
+}
+
+function initTechKnowledgeBase() {
+    // Wire up the form submission
+    const techForm = document.getElementById('tech-form');
+    if (techForm) techForm.addEventListener('submit', saveTechItem);
+
+    // Initial render for all types
+    renderTechList('article');

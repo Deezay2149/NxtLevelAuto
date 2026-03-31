@@ -1,0 +1,51 @@
+                        <div style="display:flex;gap:0.4rem;">
+                            <input type="text" id="supplier-website" placeholder="example.com or https://example.com" style="flex:1">
+                            <button type="button" class="btn btn-secondary" onclick="previewSupplierWebsite()" title="Preview Website">🔍</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Company Logo</label>
+                        <input type="file" id="supplier-logo-input" accept="image/*" style="display:none" onchange="previewSupplierLogo(this)">
+                        <div id="supplier-logo-preview" class="supplier-logo-upload-area" onclick="document.getElementById('supplier-logo-input').click()">
+                            <span style="font-size:2.5rem;">🏭</span>
+                            <p style="margin:0.4rem 0 0 0;font-size:0.82rem;color:#888;">Click to upload logo or photo</p>
+                        </div>
+                        <button type="button" class="btn btn-sm" style="margin-top:0.4rem;font-size:0.8rem;" onclick="clearSupplierLogo()">Remove Logo</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="supplier-notes" rows="2" placeholder="Additional notes about this supplier..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Supplier</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Book In Parts Modal -->
+    <div id="book-in-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📦 Book In Parts from Supplier</h2>
+                <button class="close-btn" onclick="closeModal('book-in-modal')">&times;</button>
+            </div>
+            <form id="book-in-form">
+                <input type="hidden" id="book-in-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Supplier *</label>
+                        <select id="book-in-supplier" required onchange="loadSupplierDetails()">
+                            <option value="">Select Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number *</label>
+                        <input type="text" id="book-in-invoice-number" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Invoice Date *</label>
+                        <input type="date" id="book-in-invoice-date" required>
+                    </div>
+                    <div class="form-group">

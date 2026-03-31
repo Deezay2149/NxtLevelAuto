@@ -1,0 +1,2 @@
+Has " entity: True
+Line 4740 snippet:             html += `<button onclick=&quot;convertQuoteToInvoice('${quote.id}')&

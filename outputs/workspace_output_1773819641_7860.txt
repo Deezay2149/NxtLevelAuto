@@ -1,0 +1,8 @@
+function openCreateQuoteModal() {
+    document.getElementById('create-quote-modal').style.display = 'block';
+    populateQuoteWorkOrders();
+    resetQuoteLineItems();
+    calculateQuoteTotals();
+}
+
+// Close quote modal

@@ -1,0 +1,5 @@
+/workspace/mechanic-shop/billing.js:2484:let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
+/workspace/mechanic-shop/billing.js:2744:    const container = document.getElementById('quotes-list');
+/workspace/mechanic-shop/billing.js:2926:    quotes = quotes.filter(q => q.id !== quoteId);
+/workspace/mechanic-shop/billing.js:2953:    const container = document.getElementById('quotes-list');
+/workspace/mechanic-shop/index.html:280:                <div id="quotes-list"></div>

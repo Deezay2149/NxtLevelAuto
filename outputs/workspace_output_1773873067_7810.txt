@@ -1,0 +1,63 @@
+}
+
+// View quote details
+function viewQuote(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    const customer = customers.find(c => c.id === quote.customerId);
+    const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Unknown';
+    const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown';
+    
+    let html = `
+        <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+            <h2 style="margin-bottom: 20px;">Quote Details</h2>
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>Quote Number:</strong> ${quote.quoteNumber}</p>
+                <p><strong>Customer:</strong> ${customerName}</p>
+                <p><strong>Vehicle:</strong> ${vehicleName}</p>
+                <p><strong>Status:</strong> ${quote.status}</p>
+                <p><strong>Valid Until:</strong> ${quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : 'Not set'}</p>
+                <p><strong>Created:</strong> ${new Date(quote.createdAt).toLocaleString()}</p>
+            </div>
+            
+            <h3>Items</h3>
+    `;
+    
+    if (quote.services && quote.services.length > 0) {
+        html += '<h4>Services</h4><ul>';
+        quote.services.forEach(s => {
+            html += `<li>${s.name} - ${formatCurrency(s.price)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (quote.parts && quote.parts.length > 0) {
+        html += '<h4>Parts</h4><ul>';
+        quote.parts.forEach(p => {
+            html += `<li>${p.name} × ${p.quantity} - ${formatCurrency(p.price * p.quantity)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (quote.customItems && quote.customItems.length > 0) {
+        html += '<h4>Custom Items</h4><ul>';
+        quote.customItems.forEach(c => {
+            html += `<li>${c.name} - ${formatCurrency(c.total)}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    html += `
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <p><strong>Subtotal:</strong> ${formatCurrency(quote.subtotal)}</p>
+            <p><strong>Discount:</strong> -${formatCurrency(quote.discount)}</p>
+            <p><strong>Tax:</strong> ${formatCurrency(quote.taxAmount)}</p>
+            <p style="font-size: 1.2em; font-weight: bold;"><strong>Total:</strong> ${formatCurrency(quote.total)}</p>
+        </div>
+        
+        ${quote.notes ? `<p><strong>Notes:</strong> ${quote.notes}</p>` : ''}
+        
+        <div style="margin-top: 20px;">
+            <button onclick="closeModal('quote-details-modal')" style="padding: 10px 20px; cursor: pointer;">Close</button>

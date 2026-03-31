@@ -1,0 +1,4 @@
+4501:        html += `<button onclick=&quot;viewQuote('${quote.id}')&quot; style=&quot;padding: 4px 8px; margin: 0 2px; cursor: pointer;&quot;>View</button>`;
+4516:function viewQuote(quoteId) {
+4575:            <button onclick=&quot;closeModal('quote-details-modal')&quot; style=&quot;padding: 10px 20px; cursor: pointer;&quot;>Close</button>
+4580:    document.getElementById('quote-details-modal').style.display = 'block';

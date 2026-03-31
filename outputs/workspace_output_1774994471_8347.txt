@@ -1,0 +1,67 @@
+function viewVehicleDetails(id) {
+    const vehicle = vehicles.find(v => v.id === id);
+    if (!vehicle) return;
+    
+    const customer = customers.find(c => c.id === vehicle.customerId);
+    const vImgs = vehicle.images && vehicle.images.length ? vehicle.images : (vehicle.image ? [vehicle.image] : []);
+    
+    let imagesHtml = '';
+    if (vImgs.length > 0) {
+        imagesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">' +
+            vImgs.map((img, idx) => `<img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="openImageLightbox('${img}')">`).join('') +
+            '</div>';
+    } else {
+        imagesHtml = '<p style="color: #6c757d;">No images available</p>';
+    }
+    
+    const html = `
+        <div class="vehicle-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>🚗 Vehicle</strong><br>${vehicle.year} ${vehicle.make} ${vehicle.model}</div>
+                <div><strong>🔤 Plate</strong><br>${vehicle.plate || 'N/A'}</div>
+                <div><strong>🔧 Engine Code</strong><br>${vehicle.engineCode || 'N/A'}</div>
+                <div><strong>📏 Mileage</strong><br>${vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : 'N/A'}</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h4 style="margin: 0 0 10px 0;">👤 Owner</h4>
+                    <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+                </div>
+                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h4 style="margin: 0 0 10px 0;">📋 VIN</h4>
+                    <p style="margin: 4px 0; font-size: 14px; word-break: break-all;">${vehicle.vin || 'N/A'}</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📷 Vehicle Images</h4>
+                ${imagesHtml}
+            </div>
+            
+            ${vehicle.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">${vehicle.notes}</div>
+            </div>
+            ` : ''}
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteVehicle('${vehicle.id}'); closeModal('vehicle-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('vehicle-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('vehicle-view-content').innerHTML = html;
+    document.getElementById('vehicle-view-title').textContent = `🚗 ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+    openModal('vehicle-view-modal');
+}
+
+function editVehicle(id) {
+    const vehicle = vehicles.find(v => v.id === id);
+    if (!vehicle) return;
+    
+    // Set editing mode

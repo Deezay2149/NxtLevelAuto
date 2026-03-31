@@ -1,0 +1,107 @@
+function deleteWorkOrder(id) {
+    if (!confirm('Are you sure you want to delete this work order?')) return;
+    
+    workOrders = workOrders.filter(w => w.id !== id);
+    saveData();
+    renderWorkOrdersList();
+    updateDashboard();
+    showNotification('Work order deleted!', 'success');
+}
+
+function editWorkOrder(id) {
+    const workOrder = workOrders.find(w => w.id === id);
+    if (!workOrder) {
+        alert('Work order not found');
+        return;
+    }
+    
+    // Reset and populate the form
+    document.getElementById('work-order-form').reset();
+    document.getElementById('work-order-id').value = workOrder.id;
+    
+    // Populate dropdowns first
+    populateWorkOrderDropdowns();
+    
+    // Set customer and load vehicles
+    document.getElementById('work-order-customer').value = workOrder.customerId;
+    loadCustomerVehicles();
+    
+    // Set vehicle
+    setTimeout(() => {
+        document.getElementById('work-order-vehicle').value = workOrder.vehicleId;
+        // Set technician after vehicle
+        setTimeout(() => {
+            document.getElementById('work-order-technician').value = workOrder.technicianId || '';
+        }, 50);
+    }, 100);
+
+    // Set services (checkboxes)
+    setTimeout(() => {
+        document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+            checkbox.checked = workOrder.services.includes(checkbox.value);
+        });
+    }, 100);
+    
+    // Load parts
+    workOrderParts = [];
+    if (workOrder.parts && workOrder.parts.length > 0) {
+        workOrder.parts.forEach(p => {
+            const part = parts.find(pt => pt.id === p.partId);
+            if (part) {
+                workOrderParts.push({
+                    partId: p.partId,
+                    name: part.name,
+                    quantity: p.quantity,
+                    price: p.price,
+                    total: p.quantity * p.price
+                });
+            }
+        });
+    }
+    updateWorkOrderPartsList();
+    
+    // Set other fields
+    document.getElementById('work-order-labor').value = workOrder.laborHours || 0;
+    document.getElementById('work-order-notes').value = workOrder.notes || '';
+    document.getElementById('work-order-status').value = workOrder.status;
+    
+    // Set completed date and toggle visibility
+    const completedDateGroup = document.getElementById('completed-date-group');
+    if (workOrder.status === 'completed') {
+        completedDateGroup.style.display = 'block';
+    } else {
+        completedDateGroup.style.display = 'none';
+    }
+    document.getElementById('work-order-completed-date').value = workOrder.completedDate || '';
+    
+    // Open modal
+    openModal('work-order-modal');
+}
+
+// Dashboard Functions
+function updateDashboard() {
+    // Update statistics
+    document.getElementById('total-customers').textContent = customers.length;
+    document.getElementById('total-vehicles').textContent = vehicles.length;
+    
+    // Count appointments today
+    const today = new Date().toISOString().split('T')[0];
+    const todayAppointments = appointments.filter(a => a.date === today && a.status === 'scheduled').length;
+    document.getElementById('appointments-today').textContent = todayAppointments;
+    
+    // Count active work orders
+    const activeWorkOrders = workOrders.filter(w => w.status === 'in-progress' || w.status === 'pending').length;
+    document.getElementById('active-work-orders').textContent = activeWorkOrders;
+    
+    // Update recent activity
+    updateRecentActivity();
+    
+    // Update upcoming appointments
+    updateUpcomingAppointments();
+}
+
+function updateRecentActivity() {
+    const container = document.getElementById('recent-activity');
+    const activities = [];
+    
+    // Get recent activities from all data

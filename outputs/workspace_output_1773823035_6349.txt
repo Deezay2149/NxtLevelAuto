@@ -1,0 +1,24 @@
+.tech-card-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--border-color);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.tech-card-image:hover {
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+}
+
+.tech-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Image lightbox */
+.image-lightbox {
+    position: fixed;

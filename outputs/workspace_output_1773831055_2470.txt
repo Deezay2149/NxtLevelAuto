@@ -1,0 +1,41 @@
+            ${documentsHtml}
+            <div class="tech-view-actions" style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="openTechModal('${item.type}', '${item.id}'); closeModal('tech-view-modal');">✏️ Edit</button>
+                <button class="btn btn-secondary" onclick="closeModal('tech-view-modal')">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('tech-view-title').textContent = `${cfg.icon} ${cfg.label} Details`;
+    document.getElementById('tech-view-content').innerHTML = html;
+    openModal('tech-view-modal');
+}
+
+// View document from a saved tech item
+function viewTechDocumentFromItem(itemId, docIndex) {
+    const item = techItems.find(i => i.id === itemId);
+    if (!item || !item.documents || !item.documents[docIndex]) return;
+    
+    const doc = item.documents[docIndex];
+    const byteCharacters = atob(doc.data.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: doc.type });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Download document from a saved tech item
+function downloadTechDocumentFromItem(itemId, docIndex) {
+    const item = techItems.find(i => i.id === itemId);
+    if (!item || !item.documents || !item.documents[docIndex]) return;
+    
+    const doc = item.documents[docIndex];
+    const byteCharacters = atob(doc.data.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);

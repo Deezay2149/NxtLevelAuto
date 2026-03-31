@@ -1,0 +1,9 @@
+mechanic-shop/app.js:1586:    renderWorkOrdersList();
+mechanic-shop/app.js:1611:        renderWorkOrdersList();
+mechanic-shop/app.js:1699:                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+mechanic-shop/app.js:1712:function renderWorkOrdersList() {
+mechanic-shop/app.js:1722:function viewWorkOrderDetails(id) {
+mechanic-shop/app.js:1769:    renderWorkOrdersList();
+mechanic-shop/app.js:1918:                        onclickAction = `viewWorkOrder('${activity.id}')`;
+mechanic-shop/app.js:2435:    renderWorkOrdersList();
+mechanic-shop/app.js:2659:    renderWorkOrdersList();

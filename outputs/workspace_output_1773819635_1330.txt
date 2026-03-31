@@ -1,0 +1,9 @@
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    // Reset form
+    const form = document.querySelector(`#${modalId} form`);
+    if (form) form.reset();
+}
+
+// Customer Functions
+function openCustomerModal() {

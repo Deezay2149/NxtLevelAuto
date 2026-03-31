@@ -1,0 +1,9 @@
+283:        <!-- Technical Knowledge Base Section -->
+286:                <h2>🔧 Technical Knowledge Base</h2>
+287:                <p style="color:#666;margin-top:-0.5rem;margin-bottom:1rem;font-size:0.95rem;">Store knowledge articles, service bulletins, and workshop tips for your team.</p>
+291:                    <button class="sub-tab active" data-tab="tech-articles-tab" onclick="switchTechTab('tech-articles-tab')">📄 Articles</button>
+297:                <div id="tech-articles-tab" class="tab-content active">
+299:                        <input type="text" id="tech-articles-search" placeholder="Search articles..." oninput="filterTechItems('articles')">
+302:                    <div class="tech-summary" id="tech-articles-summary">
+305:                            <span id="total-articles-count">0</span>
+308:                    <div id="tech-articles-list"></div>

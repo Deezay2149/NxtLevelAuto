@@ -1,0 +1,4 @@
+Saved working directory and index state WIP on master: 42f82d8 v1.1.2 - Appointment urgency highlighting + SMS/WhatsApp reminders + Parts detail view
+      --no-upstream                   Do not add an upstream remote when cloning a fork
+  -u, --upstream-remote-name string   Upstream remote name when cloning a fork (default "upstream")
+  

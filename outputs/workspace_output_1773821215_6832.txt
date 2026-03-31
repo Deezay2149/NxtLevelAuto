@@ -1,0 +1,1 @@
+✅ Added quote functions to billing.js

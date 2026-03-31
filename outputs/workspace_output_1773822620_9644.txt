@@ -1,0 +1,20 @@
+    html += `
+        <div style=&quot;background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px;&quot;>
+            <p><strong>Subtotal:</strong> ${formatCurrency(quote.subtotal)}</p>
+            <p><strong>Discount:</strong> -${formatCurrency(quote.discount)}</p>
+            <p><strong>Tax:</strong> ${formatCurrency(quote.taxAmount)}</p>
+            <p style=&quot;font-size: 1.2em; font-weight: bold;&quot;><strong>Total:</strong> ${formatCurrency(quote.total)}</p>
+        </div>
+        
+        ${quote.notes ? `<p><strong>Notes:</strong> ${quote.notes}</p>` : ''}
+        
+        <div style=&quot;margin-top: 20px;&quot;>
+            <button onclick=&quot;closeModal('quote-details-modal')&quot; style=&quot;padding: 10px 20px; cursor: pointer;&quot;>Close</button>
+        </div>
+    `;
+    
+    document.getElementById('quote-details-content').innerHTML = html;
+    document.getElementById('quote-details-modal').style.display = 'block';
+}
+
+// Convert quote to invoice

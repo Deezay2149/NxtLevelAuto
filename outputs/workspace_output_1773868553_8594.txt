@@ -1,0 +1,8 @@
+1598:    renderWorkOrdersList();
+1623:        renderWorkOrdersList();
+1724:function renderWorkOrdersList() {
+1725:    const container = document.getElementById('work-orders-list');
+1888:    renderWorkOrdersList();
+2547:    const container = document.getElementById('work-orders-list');
+2561:    renderWorkOrdersList();
+2785:    renderWorkOrdersList();

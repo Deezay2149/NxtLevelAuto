@@ -1,0 +1,30 @@
+55:            <li><button data-section="quotes">Quotes</button></li>
+273:        <section id="quotes">
+277:                    <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+280:                <div id="quotes-list"></div>
+285:    <div id="quote-view-modal" class="modal">
+289:                <button class="close-btn" onclick="closeModal('quote-view-modal')">&times;</button>
+291:            <div id="quote-view-content" class="modal-body">
+1944:<div id="create-quote-modal" class="modal">
+1951:            <form id="create-quote-form" onsubmit="createQuote(); return false;">
+1954:                    <select id="quote-work-order" onchange="loadWorkOrderItemsToQuote()" required>
+1959:                <div id="quote-line-items" style="min-height: 100px; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+1966:                        <input type="number" id="quote-labor" step="0.5" min="0" value="0" oninput="calculateQuoteTotals()">
+1970:                        <input type="number" id="quote-labor-rate" step="0.01" min="0" value="75" oninput="calculateQuoteTotals()">
+1978:                        <input type="text" id="quote-custom-name" placeholder="Item name">
+1982:                        <input type="text" id="quote-custom-description" placeholder="Optional description">
+1986:                        <input type="number" id="quote-custom-quantity" min="1" value="1">
+1990:                        <input type="number" id="quote-custom-unit-price" step="0.01" min="0">
+1998:                        <input type="number" id="quote-discount" step="0.01" min="0" value="0" oninput="calculateQuoteTotals()">
+2002:                        <input type="number" id="quote-tax-rate" step="0.01" min="0" value="15" oninput="calculateQuoteTotals()">
+2008:                    <input type="date" id="quote-valid-until">
+2013:                    <textarea id="quote-notes" rows="3" placeholder="Additional notes..."></textarea>
+2019:                        <span id="quote-services-total">R0.00</span>
+2023:                        <span id="quote-parts-total">R0.00</span>
+2027:                        <span id="quote-custom-total">R0.00</span>
+2031:                        <span id="quote-labor-total">R0.00</span>
+2035:                        <span id="quote-subtotal">R0.00</span>
+2039:                        <span id="quote-tax-amount">R0.00</span>
+2043:                        <span id="quote-total">R0.00</span>
+2057:<div id="quote-details-modal" class="modal">
+2061:            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>

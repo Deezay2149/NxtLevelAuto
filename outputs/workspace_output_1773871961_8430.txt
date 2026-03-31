@@ -1,0 +1,20 @@
+110:function renderPartsList() {
+212:                            <button class="btn btn-secondary" onclick="editPart('${part.id}')">Edit</button>
+372:function renderStockLevelsList() {
+925:function renderInvoicesList() {
+1011:                            <button class="btn btn-primary" onclick="viewInvoice('${invoice.id}')">View</button>
+1012:                            <button class="btn btn-info" onclick="editInvoice('${invoice.id}')">Edit</button>
+1339:                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('service', ${index})">\u270f\ufe0f</button>
+1367:                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('part', ${index})">\u270f\ufe0f</button>
+1395:                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('custom', ${index})">\u270f\ufe0f</button>
+2003:                            <button class="btn btn-secondary" onclick="editPart('${part.id}')">Edit</button>
+2051:                            <button class="btn btn-primary" onclick="viewInvoice('${invoice.id}')">View</button>
+2903:function renderSuppliersList(filter = '') {
+3511:function renderBookInList() {
+3576:                        <button class="btn btn-secondary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;" onclick="editBookIn('${record.id}')">✏️ Edit</button>
+4004:                <button type="button" class="btn-view-doc" onclick="viewTechDocument(${index})" title="View Document">📄</button>
+4228:                    <button onclick="viewTechDocumentFromItem('${item.id}', ${idx})" style="padding: 5px 10px; cursor: pointer;">📄 View</button>
+4326:function renderTechList(type, filter = '') {
+4387:        <div class="tech-knowledge-card priority-${item.priority}" onclick="viewTechItem('${item.id}')" style="cursor: pointer;">
+4844:function renderQuotesList(filter = '') {
+4910:        html += '<button onclick="viewQuote(\'' + quote.id + '\')" style="padding: 4px 8px; margin: 0 2px; cursor: pointer;">View</button>';

@@ -1,0 +1,24 @@
+function toggleCompletedDate() {
+    const status = document.getElementById('work-order-status').value;
+    const completedDateGroup = document.getElementById('completed-date-group');
+    const evidenceGroup = document.getElementById('evidence-group');
+    
+    if (status === 'completed') {
+        completedDateGroup.style.display = 'block';
+        evidenceGroup.style.display = 'block';
+        // Set today's date as default if not already set
+        if (!document.getElementById('work-order-completed-date').value) {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('work-order-completed-date').value = today;
+        }
+    } else {
+        completedDateGroup.style.display = 'none';
+        evidenceGroup.style.display = 'none';
+    }
+}
+
+function populateWorkOrderDropdowns() {
+    const customerSelect = document.getElementById('work-order-customer');
+    const vehicleSelect = document.getElementById('work-order-vehicle');
+    const servicesContainer = document.getElementById('work-order-services');
+    

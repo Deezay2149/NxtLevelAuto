@@ -1,0 +1,46 @@
+function buildTechnicianTable(list) {
+    const si = (col) => technicianSortColumn === col
+        ? (technicianSortDirection === 'asc' ? '<span class="sort-arrow">\u25b2</span>' : '<span class="sort-arrow">\u25bc</span>')
+        : '';
+    const sorted = applyTechnicianSort(list);
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('name', technicianSortColumn)}" onclick="sortTechnicians('name')">Name${si('name')}</th>
+                <th class="sortable${asc('email', technicianSortColumn)}" onclick="sortTechnicians('email')">Email${si('email')}</th>
+                <th class="sortable${asc('phone', technicianSortColumn)}" onclick="sortTechnicians('phone')">Phone${si('phone')}</th>
+                <th class="sortable${asc('specialization', technicianSortColumn)}" onclick="sortTechnicians('specialization')">Specialization${si('specialization')}</th>
+                <th class="sortable${asc('rate', technicianSortColumn)}" onclick="sortTechnicians('rate')">Hourly Rate${si('rate')}</th>
+                <th class="sortable${asc('status', technicianSortColumn)}" onclick="sortTechnicians('status')">Status${si('status')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sorted.map(t => `
+                <tr>
+                    <td>${t.firstName} ${t.lastName}</td>
+                    <td>${t.email || 'N/A'}</td>
+                    <td>${t.phone || 'N/A'}</td>
+                    <td>${t.specialization || 'N/A'}</td>
+                    <td>${t.hourlyRate ? formatCurrency(t.hourlyRate) + '/hr' : 'N/A'}</td>
+                    <td><span class="status-badge ${t.status}">${t.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="editTechnician('${t.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteTechnician('${t.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    return table;
+}
+
+function renderTechniciansList() {
+    const container = document.getElementById('technicians-list');
+    if (technicians.length === 0) {
+        container.innerHTML = '<p class="empty-state">No technicians found. Add your first technician!</p>';
+        return;
+    }

@@ -1,0 +1,1 @@
+79:let technicians = JSON.parse(localStorage.getItem('technicians')) || [];

@@ -1,0 +1,50 @@
+49:            <li><button data-section="vehicles">Vehicles</button></li>
+75:                <div class="stat-card clickable" onclick="navigateToSection('vehicles')" title="Go to Vehicles">
+76:                    <h3>Total Vehicles</h3>
+77:                    <div class="number" id="total-vehicles">0</div>
+114:        <!-- Vehicles Section -->
+115:        <section id="vehicles">
+117:                <h2>🚗 Vehicle Management</h2>
+119:                    <input type="text" id="vehicle-search" placeholder="Search vehicles...">
+120:                    <button class="btn btn-primary" onclick="openVehicleModal()">+ Add Vehicle</button>
+122:                <div id="vehicles-list"></div>
+277:                    <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+550:                        <option value="Vehicle Expenses">Vehicle Expenses</option>
+698:    <!-- Vehicle Modal -->
+699:    <div id="vehicle-modal" class="modal">
+702:                <h2>Add/Edit Vehicle</h2>
+703:                <button class="close-btn" onclick="closeModal('vehicle-modal')">&times;</button>
+705:            <form id="vehicle-form">
+706:                <input type="hidden" id="vehicle-id">
+709:                    <select id="vehicle-customer" required>
+716:                        <select id="vehicle-make" required onchange="updateModelDropdown()">
+722:                        <select id="vehicle-model" required>
+730:                        <input type="number" id="vehicle-year" min="1900" max="2099" required>
+734:                        <input type="text" id="vehicle-plate" required>
+739:                    <input type="text" id="vehicle-vin">
+743:                    <input type="text" id="vehicle-engine-code" placeholder="e.g., 2.0 TSI, B48, etc.">
+747:                    <select id="vehicle-color">
+771:                        <input type="number" id="vehicle-mileage" min="0">
+775:                        <input type="number" id="vehicle-last-service-mileage" min="0">
+780:                    <input type="file" id="vehicle-licence-disc" accept="image/*" style="display:none" onchange="handleLicenceDiscUpload(this)">
+781:                    <div id="licence-disc-preview" class="licence-disc-preview" onclick="document.getElementById('vehicle-licence-disc').click()">
+788:                    <label>Vehicle Photos <span style="font-size:0.8rem;color:#888;font-weight:400;">(up to 8 images)</span></label>
+789:                    <input type="file" id="vehicle-image" accept="image/*" multiple style="display:none" onchange="addVehicleImages(this)">
+790:                    <div id="vehicle-image-gallery" class="image-gallery">
+791:                        <div class="image-gallery-add" onclick="document.getElementById('vehicle-image').click()" title="Add photos">
+796:                <button type="submit" class="btn btn-primary">Save Vehicle</button>
+801:    <!-- Vehicle View Modal -->
+802:    <div id="vehicle-view-modal" class="modal">
+805:                <h2 id="vehicle-view-title">🚗 Vehicle Details</h2>
+806:                <button class="close-btn" onclick="closeModal('vehicle-view-modal')">&times;</button>
+808:            <div id="vehicle-view-content" class="modal-body">
+814:    <!-- Vehicle Image Lightbox (injected by JS) -->
+879:                    <label>Vehicle *</label>
+880:                    <select id="appointment-vehicle" required>
+881:                        <option value="">Select Vehicle</option>
+931:                    <select id="work-order-customer" required onchange="loadCustomerVehicles()">
+936:                    <label>Vehicle *</label>
+937:                    <select id="work-order-vehicle" required>
+938:                        <option value="">Select Vehicle</option>
+1195:                        <option value="Vehicle Expenses">Vehicle Expenses</option>
+1492:                        <label>Category / Vehicle Type</label>

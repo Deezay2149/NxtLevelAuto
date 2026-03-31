@@ -1,0 +1,51 @@
+                <th class="sortable${asc('description',serviceSortColumn)}" onclick="sortServices('description')">Description${sortIndicator('description')}</th>
+                <th>Engine Brand</th>
+                <th class="sortable${asc('price',serviceSortColumn)}" onclick="sortServices('price')">Price${sortIndicator('price')}</th>
+                <th class="sortable${asc('time',serviceSortColumn)}" onclick="sortServices('time')">Est. Time${sortIndicator('time')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${displayServices.map(service => `
+                <tr onclick="viewServiceDetails('${service.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${service.name}</td>
+                    <td>${service.description || 'N/A'}</td>
+                    <td>${service.engineBrand || '<span style="color:var(--text-light);font-style:italic;">Any</span>'}</td>
+                    <td>${formatCurrency(service.price)}</td>
+                    <td>${service.estimatedTime ? service.estimatedTime + ' hrs' : 'N/A'}</td>
+                    <td>
+                        <div class="action-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-secondary" onclick="editService('${service.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteService('${service.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function filterServicesList() {
+    const searchTerm = document.getElementById('service-search').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        renderServicesList();
+        return;
+    }
+    
+    const filtered = services.filter(service => 
+        service.name.toLowerCase().includes(searchTerm) ||
+        (service.description && service.description.toLowerCase().includes(searchTerm)) ||
+        formatCurrency(service.price).toLowerCase().includes(searchTerm)
+    );
+    
+    renderServicesList(filtered);
+}
+
+function viewServiceDetails(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+    

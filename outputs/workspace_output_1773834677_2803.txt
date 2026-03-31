@@ -1,0 +1,13 @@
+3861:const TECH_TYPE_CONFIG = {
+3863:    bulletin: { icon: '📋', label: 'Bulletin', listId: 'tech-bulletins-list', countId: 'total-bulletins-count', searchId: 'tech-bulletins-search' },
+4067:    const cfg = TECH_TYPE_CONFIG[type];
+4151:    showNotification(isEdit ? `${TECH_TYPE_CONFIG[type].label} updated!` : `${TECH_TYPE_CONFIG[type].label} saved!`, 'success');
+4159:    const cfg = TECH_TYPE_CONFIG[item.type];
+4282:    if (!confirm(`Delete this ${TECH_TYPE_CONFIG[item.type].label}? This cannot be undone.`)) return;
+4287:    showNotification(`${TECH_TYPE_CONFIG[item.type].label} deleted.`, 'success');
+4304:    const cfg = TECH_TYPE_CONFIG[type];
+4385:    const cfg = TECH_TYPE_CONFIG[type];
+4391:    const cfg = TECH_TYPE_CONFIG[type];
+4410:        'tech-bulletins-tab': 'bulletin',
+4427:    renderTechList('bulletin');
+4430:    updateTechSummary('bulletin');

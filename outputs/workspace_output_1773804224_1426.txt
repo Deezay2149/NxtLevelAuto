@@ -1,0 +1,80 @@
+function createInvoice(e) {
+    e.preventDefault();
+    
+    const workOrderId = document.getElementById('invoice-work-order').value;
+    const workOrder = workOrders.find(w => w.id === workOrderId);
+    
+    if (!workOrder) {
+        alert('Please select a work order');
+        return;
+    }
+    
+    // Calculate services total (with price modifications)
+    let servicesTotal = 0;
+    const invoiceServices = workOrder.services.map(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        const modifiedItem = invoiceLineItems.services.find(s => s.id === serviceId);
+        if (service) {
+            const price = modifiedItem ? modifiedItem.price : service.price;
+            servicesTotal += price;
+            return {
+                serviceId: service.id,
+                name: service.name,
+                originalPrice: service.price,
+                price: price,
+                modified: !!modifiedItem,
+                modificationReason: modifiedItem?.modificationHistory?.[0]?.reason || null
+            };
+        }
+        return null;
+    }).filter(Boolean);
+    
+    // Calculate parts total (with price modifications)
+    let partsTotal = 0;
+    const invoiceParts = [];
+    if (workOrder.parts && workOrder.parts.length > 0) {
+        workOrder.parts.forEach(partItem => {
+            const part = parts.find(p => p.id === partItem.partId);
+            const modifiedItem = invoiceLineItems.parts.find(p => p.id === partItem.partId);
+            if (part) {
+                const unitPrice = modifiedItem ? modifiedItem.price : part.sellingPrice;
+                const itemTotal = unitPrice * partItem.quantity;
+                partsTotal += itemTotal;
+                invoiceParts.push({
+                    partId: part.id,
+                    name: part.name,
+                    quantity: partItem.quantity,
+                    originalUnitPrice: part.sellingPrice,
+                    unitPrice: unitPrice,
+                    total: itemTotal,
+                    modified: !!modifiedItem
+                });
+            }
+        });
+    }
+    
+    // Calculate custom items total
+    let customTotal = 0;
+    const invoiceCustomItems = invoiceLineItems.custom.map(item => {
+        customTotal += item.total;
+        return {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.total,
+            notes: item.notes,
+            isCustom: true
+        };
+    });
+    
+    // Calculate labor cost
+    const laborHours = parseFloat(document.getElementById('invoice-labor').value) || 0;
+    const laborRate = parseFloat(document.getElementById('invoice-labor-rate').value) || 75;
+    const laborTotal = laborHours * laborRate;
+    
+    // Calculate subtotal
+    const subtotal = servicesTotal + partsTotal + customTotal + laborTotal;
+    

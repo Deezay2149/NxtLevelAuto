@@ -1,0 +1,77 @@
+    <div id="tech-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="tech-modal-title">📄 Add Article</h2>
+                <button class="close-btn" onclick="closeModal('tech-modal')">&times;</button>
+            </div>
+            <form id="tech-form">
+                <input type="hidden" id="tech-item-id">
+                <input type="hidden" id="tech-item-type">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Title *</label>
+                        <input type="text" id="tech-title" required placeholder="Enter a clear, descriptive title...">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Category / Vehicle Type</label>
+                        <input type="text" id="tech-category" placeholder="e.g. Engine, Brakes, Electrical, General...">
+                    </div>
+                    <div class="form-group">
+                        <label>Applies To (Make / Model)</label>
+                        <input type="text" id="tech-applies-to" placeholder="e.g. Toyota Hilux, All vehicles...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Content *</label>
+                    <textarea id="tech-content" rows="8" required placeholder="Enter detailed content, steps, descriptions or notes..."></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Author / Source</label>
+                        <input type="text" id="tech-author" placeholder="e.g. Technician name, OEM bulletin ref...">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority / Severity</label>
+                        <select id="tech-priority">
+                            <option value="normal">Normal</option>
+                            <option value="important">Important</option>
+                            <option value="critical">Critical</option>
+                            <option value="info">Info Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags <span style="font-size:0.8rem;color:#888;">(comma-separated)</span></label>
+                    <input type="text" id="tech-tags" placeholder="e.g. oil leak, timing belt, recall...">
+                </div>
+                <div class="form-group">
+                    <label>Images <span style="font-size:0.8rem;color:#888;">(optional - up to 5 images)</span></label>
+                    <div class="tech-images-upload">
+                        <input type="file" id="tech-images-input" accept="image/*" multiple onchange="handleTechImageUpload(event)">
+                        <div id="tech-images-preview" class="tech-images-preview"></div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="tech-save-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Part Image Lightbox (injected by JS) -->
+
+    <!-- Select Part for Work Order Modal (Full Page Style) -->
+    <div id="select-part-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🔧 Select Parts to Add</h2>
+                <button class="close-btn" onclick="closeModal('select-part-modal')">&times;</button>
+            </div>
+            <div class="part-selection-container">
+                <div class="part-selection-search">
+                    <input type="text" id="part-selection-search" placeholder="Search parts by name or SKU..." oninput="filterPartsForSelection()">
+                </div>
+                <div class="part-selection-grid" id="part-selection-grid">
+                    <!-- Parts will be populated here -->
+                </div>
+            </div>

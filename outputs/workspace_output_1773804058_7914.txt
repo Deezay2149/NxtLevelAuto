@@ -1,0 +1,5 @@
+3233:    filteredExpenses.forEach(exp => {
+3385:    filteredExpenses.forEach(exp => {
+3468:    filteredExpenses.forEach(exp => {
+3605:    filteredExpenses.forEach(exp => totalExpenses += parseFloat(exp.amount) || 0);
+3630:    filteredExpenses.forEach(exp => {

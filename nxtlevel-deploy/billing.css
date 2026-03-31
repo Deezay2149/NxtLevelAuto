@@ -1,0 +1,252 @@
+/* Additional Billing and Invoice Styles */
+
+.invoice-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.invoice-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.invoice-header p {
+    color: var(--text-light);
+}
+
+.invoice-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.invoice-info-section h3 {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.invoice-info-section p {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.invoice-table {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.invoice-table thead {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.invoice-table th,
+.invoice-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.invoice-totals {
+    margin-left: auto;
+    max-width: 300px;
+}
+
+.invoice-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-totals-row:last-child {
+    border-bottom: none;
+    border-top: 2px solid var(--primary-color);
+    padding-top: 1rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.invoice-totals-label {
+    color: var(--text-light);
+}
+
+.invoice-totals-value {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.invoice-status-paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.invoice-status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.invoice-status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.invoice-status-partial {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.invoice-status-cancelled {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.invoice-status-refunded {
+    background: #e2d9f3;
+    color: #563d7c;
+}
+
+.stock-low {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.stock-medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stock-good {
+    background: #d4edda;
+    color: #155724;
+}
+
+@media print {
+    body {
+        background: white;
+    }
+
+    .modal-content {
+        box-shadow: none;
+        max-width: none;
+    }
+
+    button,
+    .close-btn {
+        display: none;
+    }
+
+    .invoice-table {
+        border: 1px solid #000;
+    }
+
+    .invoice-table th,
+    .invoice-table td {
+        border: 1px solid #000;
+    }
+}
+
+/* WhatsApp and SMS button styles */
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.btn-whatsapp:hover {
+    background: #128C7E;
+}
+
+.btn-sms {
+    background: #007bff;
+    color: white;
+}
+
+.btn-sms:hover {
+    background: #0056b3;
+}
+
+/* Parts table specific styles */
+.parts-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.parts-table thead {
+    background: var(--secondary-color);
+    color: var(--white);
+}
+
+.parts-table th,
+.parts-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.parts-table .stock-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Invoice items styling */
+.invoice-items-section {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--light-bg);
+    border-radius: 6px;
+}
+
+.invoice-items-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.invoice-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-item:last-child {
+    border-bottom: none;
+}
+
+.invoice-item-name {
+    flex: 1;
+}
+
+.invoice-item-qty {
+    width: 60px;
+    text-align: center;
+}
+
+.invoice-item-price {
+    width: 100px;
+    text-align: right;
+}
+
+.invoice-item-total {
+    width: 100px;
+    text-align: right;
+    font-weight: 600;
+}

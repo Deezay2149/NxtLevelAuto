@@ -1,0 +1,92 @@
+function renderCustomersList() {
+    const container = document.getElementById('customers-list');
+    
+    if (customers.length === 0) {
+        container.innerHTML = '<p class="empty-state">No customers found. Add your first customer!</p>';
+        return;
+    }
+    
+    // Sort customers
+    const sortedCustomers = [...customers].sort((a, b) => {
+        let aVal, bVal;
+        switch (customerSortColumn) {
+            case 'name':
+                aVal = `${a.firstName} ${a.lastName}`.toLowerCase();
+                bVal = `${b.firstName} ${b.lastName}`.toLowerCase();
+                break;
+            case 'email':
+                aVal = (a.email || '').toLowerCase();
+                bVal = (b.email || '').toLowerCase();
+                break;
+            case 'phone':
+                aVal = (a.phone || '').toLowerCase();
+                bVal = (b.phone || '').toLowerCase();
+                break;
+            default:
+                aVal = `${a.firstName} ${a.lastName}`.toLowerCase();
+                bVal = `${b.firstName} ${b.lastName}`.toLowerCase();
+        }
+        if (customerSortDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
+    
+    const sortIndicator = (col) => customerSortColumn === col ? (customerSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+    
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th class="sortable${asc('name',customerSortColumn)}" onclick="sortCustomers('name')">Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('email',customerSortColumn)}" onclick="sortCustomers('email')">Email${sortIndicator('email')}</th>
+                <th class="sortable${asc('phone',customerSortColumn)}" onclick="sortCustomers('phone')">Phone${sortIndicator('phone')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedCustomers.map(customer => `
+                <tr onclick="viewCustomerDetails('${customer.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${customer.firstName} ${customer.lastName}</td>
+                    <td>${customer.email}</td>
+                    <td>${customer.phone}</td>
+                    <td>
+                        <div class="action-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')">Edit</button>
+                            <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}')">Vehicles</button>
+                            <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function viewCustomerDetails(id) {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    
+    const customerVehicles = vehicles.filter(v => v.customerId === id);
+    
+    let vehiclesHtml = '';
+    if (customerVehicles.length > 0) {
+        vehiclesHtml = customerVehicles.map(v => `
+            <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span><strong>${v.year} ${v.make} ${v.model}</strong> - ${v.plate}</span>
+            </div>
+        `).join('');
+    } else {
+        vehiclesHtml = '<p style="color: #6c757d;">No vehicles registered</p>';
+    }
+    
+    const html = `
+        <div class="customer-view-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>👤 Name</strong><br>${customer.firstName} ${customer.lastName}</div>
+                <div><strong>📧 Email</strong><br>${customer.email || 'N/A'}</div>
+                <div><strong>📞 Phone</strong><br>${customer.phone || 'N/A'}</div>

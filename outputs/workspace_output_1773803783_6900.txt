@@ -1,0 +1,5 @@
+320:                                <p style="margin:0 0 0.2rem 0; font-size:0.75rem; color:#888;">Profit Per Unit</p>
+2939:    calculatePartProfit();
+2964:    calculatePartProfit();
+2968:// Calculate Part Profit
+2969:function calculatePartProfit() {

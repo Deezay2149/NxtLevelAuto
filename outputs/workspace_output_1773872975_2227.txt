@@ -1,0 +1,61 @@
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice View Modal -->
+    <div id="invoice-view-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Invoice Details</h2>
+                <button class="close-btn" onclick="closeModal('invoice-view-modal')">&times;</button>
+            </div>
+            <div id="invoice-details"></div>
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="downloadInvoicePDF()">📥 Download PDF</button>
+                <button class="btn btn-success" onclick="sendInvoiceWhatsApp()">📱 Send via WhatsApp</button>
+                <button class="btn btn-warning" onclick="sendInvoiceSMS()">💬 Send via SMS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Notes Modal -->
+    <div id="invoice-notes-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Invoice Notes</h2>
+                <button class="close-btn" onclick="closeModal('invoice-notes-modal')">&times;</button>
+            </div>
+            <form id="invoice-notes-form">
+                <input type="hidden" id="invoice-notes-id">
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="invoice-notes-text" rows="5" placeholder="Add notes for this invoice..."></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Notes</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('invoice-notes-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Parts Return Modal -->
+    <div id="return-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔄 Process Parts Return</h2>
+                <button class="close-btn" onclick="closeModal('return-modal')">&times;</button>
+            </div>
+            <form id="return-form">
+                <input type="hidden" id="return-id">
+                <div class="form-group">
+                    <label>Select Part *</label>
+                    <select id="return-part" required onchange="loadPartDetails()">
+                        <option value="">Select Part</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Part Details</label>
+                    <div id="return-part-details" style="background: #f5f5f5; padding: 1rem; border-radius: 8px;">
+                        <p style="color: var(--text-light);">Select a part to see details</p>
+                    </div>

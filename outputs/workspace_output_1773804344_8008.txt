@@ -1,0 +1,12 @@
+
+        <!-- Invoices Section -->
+        <section id="invoices">
+            <div class="card">
+                <h2>🧾 Invoice Management</h2>
+                <div class="search-box">
+                    <input type="text" id="invoice-search" placeholder="Search invoices...">
+                    <button class="btn btn-primary" onclick="openCreateInvoiceModal()">+ Create Invoice</button>
+                </div>
+                <div id="invoices-list"></div>
+            </div>
+        </section>

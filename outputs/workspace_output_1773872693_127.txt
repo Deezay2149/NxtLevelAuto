@@ -1,0 +1,1 @@
+2937:        <div class="supplier-item" onclick="viewSupplierDetails('${supplier.id}')" style="cursor: pointer;" title="Click to view details">

@@ -1,0 +1,3 @@
+1364:    <div id="tech-modal" class="modal">
+1367:                <h2 id="tech-modal-title">📄 Add Article</h2>
+1368:                <button class="close-btn" onclick="closeModal('tech-modal')">&times;</button>

@@ -1,0 +1,1 @@
+1745:    <div id="build-version" style="position: fixed; bottom: 10px; right: 10px; font-size: 11px; color: #888; z-index: 1000;">

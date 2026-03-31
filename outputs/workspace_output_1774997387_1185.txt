@@ -1,0 +1,100 @@
+import re
+
+# Read billing.js
+with open('billing.js', 'r', encoding='utf-8') as f:
+    billing_content = f.read()
+
+# Read index.html
+with open('index.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+# Read styles.css
+with open('styles.css', 'r', encoding='utf-8') as f:
+    css_content = f.read()
+
+print("=" * 80)
+print("STEP 1: Adding quotes array to billing.js")
+print("=" * 80)
+
+# Add quotes array initialization
+pattern1 = r"(let invoices = \[\];)"
+replacement1 = r"""let invoices = [];
+let quotes = [];  // Store all quotes"""
+
+billing_content = re.sub(pattern1, replacement1, billing_content)
+
+# Add quotes to loadBillingData
+pattern2 = r"(        if \(data\.invoices\)\) invoices = data\.invoices;\s+\}\s+\})"
+replacement2 = r"""        if (data.invoices) invoices = data.invoices;
+        if (data.quotes) quotes = data.quotes;
+    }
+}"""
+
+billing_content = re.sub(pattern2, replacement2, billing_content)
+
+# Add quotes to saveBillingData
+pattern3 = r"(        invoices: invoices,\s+\}\s+\);)"
+replacement3 = r"""        invoices: invoices,
+        quotes: quotes,
+    });"""
+
+billing_content = re.sub(pattern3, replacement3, billing_content)
+
+print("✅ Added quotes data structures")
+
+# Now add quote CRUD functions
+quote_functions = """
+// ==================== QUOTING SYSTEM ====================
+
+// Quote line items tracking
+let quoteLineItems = {
+    services: [],
+    parts: [],
+    custom: []
+};
+
+// Open create quote modal
+function openCreateQuoteModal() {
+    document.getElementById('create-quote-modal').style.display = 'block';
+    populateQuoteWorkOrders();
+    resetQuoteLineItems();
+    calculateQuoteTotals();
+}
+
+// Close quote modal
+function closeQuoteModal() {
+    closeModal('create-quote-modal');
+    resetQuoteLineItems();
+}
+
+// Populate work order dropdown for quotes
+function populateQuoteWorkOrders() {
+    const select = document.getElementById('quote-work-order');
+    select.innerHTML = '<option value="">Select Work Order</option>';
+    
+    workOrders.forEach(wo => {
+        if (!wo.isQuoteConverted) {  // Only show work orders not converted from quotes
+            const customer = customers.find(c => c.id === wo.customerId);
+            const vehicle = vehicles.find(v => v.id === wo.vehicleId);
+            const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Unknown';
+            const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown';
+            
+            const option = document.createElement('option');
+            option.value = wo.id;
+            option.textContent = `WO-${wo.workOrderNumber} - ${customerName} - ${vehicleName}`;
+            select.appendChild(option);
+        }
+    });
+}
+
+// Reset quote line items
+function resetQuoteLineItems() {
+    quoteLineItems = {
+        services: [],
+        parts: [],
+        custom: []
+    };
+    renderQuoteLineItems();
+}
+
+// Calculate quote totals

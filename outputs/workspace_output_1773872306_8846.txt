@@ -1,0 +1,2 @@
+864:    <div id="appointment-modal" class="modal">
+868:                <button class="close-btn" onclick="closeModal('appointment-modal')">&times;</button>

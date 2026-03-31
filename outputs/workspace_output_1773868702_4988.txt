@@ -1,0 +1,2 @@
+1711:                            <button class="btn btn-secondary" onclick="viewWorkOrderDetails('${workOrder.id}')">View</button>
+1734:function viewWorkOrderDetails(id) {

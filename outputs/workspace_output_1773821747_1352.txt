@@ -1,0 +1,71 @@
+function createQuote() {
+    const workOrderId = document.getElementById('quote-work-order').value;
+    
+    if (!workOrderId) {
+        alert('Please select a work order');
+        return;
+    }
+    
+    const workOrder = workOrders.find(w => w.id === workOrderId);
+    if (!workOrder) {
+        alert('Work order not found');
+        return;
+    }
+    
+    const totals = calculateQuoteTotals();
+    
+    const quote = {
+        id: generateId(),
+        quoteNumber: `QT-${Date.now()}`,
+        workOrderId: workOrder.id,
+        customerId: workOrder.customerId,
+        vehicleId: workOrder.vehicleId,
+        services: quoteLineItems.services,
+        parts: quoteLineItems.parts,
+        customItems: quoteLineItems.custom,
+        laborHours: parseFloat(document.getElementById('quote-labor').value) || 0,
+        laborRate: parseFloat(document.getElementById('quote-labor-rate').value) || 75,
+        laborTotal: totals.laborTotal,
+        servicesTotal: totals.servicesTotal,
+        partsTotal: totals.partsTotal,
+        customTotal: totals.customTotal,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        taxRate: parseFloat(document.getElementById('quote-tax-rate').value) || 0,
+        taxAmount: totals.taxAmount,
+        total: totals.total,
+        notes: document.getElementById('quote-notes').value,
+        status: 'pending',
+        validUntil: document.getElementById('quote-valid-until').value,
+        createdAt: new Date().toISOString(),
+        expiresAt: document.getElementById('quote-valid-until').value ? new Date(document.getElementById('quote-valid-until').value).toISOString() : null
+    };
+    
+    quotes.push(quote);
+    saveBillingData();
+    closeModal('create-quote-modal');
+    renderQuotesList();
+    showNotification('Quote created successfully!', 'success');
+}
+
+// Render quotes list
+function renderQuotesList() {
+    const container = document.getElementById('quotes-list');
+    
+    if (!container) return;
+    
+    if (quotes.length === 0) {
+        container.innerHTML = '<p style=&quot;text-align: center; color: #888; padding: 2rem;&quot;>No quotes yet. Create your first quote!</p>';
+        return;
+    }
+    
+    let html = '<table style=&quot;width: 100%; border-collapse: collapse;&quot;>';
+    html += '<thead><tr style=&quot;background: #f5f5f5;&quot;>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Quote #</th>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Customer</th>';
+    html += '<th style=&quot;padding: 12px; text-align: left;&quot;>Vehicle</th>';
+    html += '<th style=&quot;padding: 12px; text-align: right;&quot;>Total</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Status</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Valid Until</th>';
+    html += '<th style=&quot;padding: 12px; text-align: center;&quot;>Actions</th>';
+    html += '</tr></thead><tbody>';

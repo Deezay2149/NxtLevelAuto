@@ -1,0 +1,3 @@
+1678:function buildWorkOrderTable(list) {
+1731:    container.appendChild(buildWorkOrderTable(workOrders));
+2553:    container.appendChild(buildWorkOrderTable(filteredWorkOrders));

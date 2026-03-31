@@ -1,0 +1,20 @@
+649:    <!-- Customer Modal -->
+685:    <!-- Customer View Modal -->
+698:    <!-- Vehicle Modal -->
+801:    <!-- Vehicle View Modal -->
+816:    <!-- Service Modal -->
+850:    <!-- Service View Modal -->
+863:    <!-- Appointment Modal -->
+907:    <!-- Appointment View Modal -->
+920:    <!-- Work Order Modal -->
+989:    <!-- Work Order View Modal -->
+1002:    <!-- Part Modal -->
+1112:    <!-- Technician Modal -->
+1161:    <!-- Expense Modal -->
+1225:    <!-- Supplier Modal -->
+1314:    <!-- Supplier View Modal -->
+1327:    <!-- Book In Parts Modal -->
+1448:    <!-- Technical Knowledge Modal -->
+1516:    <!-- Tech Item View Modal -->
+1531:    <!-- Select Part for Work Order Modal (Full Page Style) -->
+1558:    <!-- Create Invoice Modal -->

@@ -1,0 +1,100 @@
+// Parts Management
+let parts = JSON.parse(localStorage.getItem('parts')) || [];
+let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+let currentPartImageData = null;
+
+// Initialize Billing Features
+function initializeBilling() {
+    initializePartsManagement();
+    initializeInvoices();
+    renderPartsList();
+    renderInvoicesList();
+}
+
+// Parts Management Functions
+function openPartModal() {
+    document.getElementById('part-form').reset();
+    document.getElementById('part-id').value = '';
+    document.getElementById('part-image-preview').innerHTML = '';
+    document.getElementById('part-cost-ex-vat').value = '';
+    document.getElementById('part-cost-inc-vat').value = '';
+    document.getElementById('part-price').value = '';
+    document.getElementById('part-price-mode').value = 'manual';
+    document.getElementById('markup-percentage-group').style.display = 'none';
+    
+    // Reset profit display
+    document.getElementById('display-cost-ex-vat').textContent = 'R0.00';
+    document.getElementById('display-selling-price').textContent = 'R0.00';
+    document.getElementById('display-profit').textContent = 'R0.00';
+    document.getElementById('display-profit-margin').textContent = '0%';
+    
+    // Populate supplier dropdown
+    populateSupplierDropdowns();
+    
+    currentPartImageData = null;
+    openModal('part-modal');
+}
+
+function savePart(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('part-id').value || generateId();
+    const existingPart = parts.find(p => p.id === id);
+    const supplierId = document.getElementById('part-supplier').value;
+    const supplier = suppliers.find(s => s.id === supplierId);
+    
+    const part = {
+        id: id,
+        name: document.getElementById('part-name').value,
+        sku: document.getElementById('part-sku').value,
+        description: document.getElementById('part-description').value,
+        costExVat: parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
+        costPrice: parseFloat(document.getElementById('part-cost-inc-vat').value) || parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
+        sellingPrice: parseFloat(document.getElementById('part-price').value) || 0,
+        stockQuantity: parseInt(document.getElementById('part-stock').value) || 0,
+        supplierId: supplierId,
+        supplier: supplier ? supplier.name : '',
+        image: currentPartImageData || (existingPart ? existingPart.image : null),
+        createdAt: existingPart ? existingPart.createdAt : new Date().toISOString()
+    };
+    
+    const existingIndex = parts.findIndex(p => p.id === id);
+    if (existingIndex >= 0) {
+        parts[existingIndex] = part;
+    } else {
+        parts.push(part);
+    }
+    
+    saveBillingData();
+    closeModal('part-modal');
+    renderPartsList();
+    showNotification('Part saved successfully!', 'success');
+    currentPartImageData = null;
+}
+
+function renderPartsList() {
+    const container = document.getElementById('parts-list');
+    
+    if (parts.length === 0) {
+        container.innerHTML = '<p class="empty-state">No parts found. Add your first part!</p>';
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.className = 'parts-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Part Name</th>
+                <th>SKU</th>
+                <th>Cost</th>
+                <th>Selling Price</th>
+                <th>Stock</th>
+                <th>Supplier</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${parts.map(part => {
+                const stockClass = part.stockQuantity <= 5 ? 'stock-low' : part.stockQuantity <= 20 ? 'stock-medium' : 'stock-good';

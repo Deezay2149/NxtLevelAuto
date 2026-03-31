@@ -1,0 +1,32 @@
+function renderAllLists() {
+    renderCustomersList();
+    renderVehiclesList();
+    renderServicesList();
+    renderAppointmentsList();
+    renderWorkOrdersList();
+    renderPartsList();
+    renderInvoicesList();
+    renderExpensesList();
+    renderTechniciansList();
+    // Tech Knowledge Base
+    if (typeof renderTechList === 'function') {
+        renderTechList('article');
+        renderTechList('bulletin');
+        renderTechList('tip');
+        updateTechSummary('article');
+        updateTechSummary('bulletin');
+        updateTechSummary('tip');
+    }
+}
+
+// Load Sample Data
+// Vehicle Image Functions
+function addVehicleImages(input) {
+    const MAX_IMAGES = 8;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+
+    const remaining = MAX_IMAGES - currentVehicleImages.length;
+    if (remaining <= 0) {
+        showNotification(`Maximum ${MAX_IMAGES} photos allowed per vehicle.`, 'error');
+        input.value = '';

@@ -1,0 +1,18 @@
+/workspace/mechanic-shop/app.js:2866:    if (typeof renderQuotesList === 'function') {
+/workspace/mechanic-shop/app.js:2867:        renderQuotesList();
+/workspace/mechanic-shop/fix_quote_buttons.py:8:# Fix the renderQuotesList function - replace HTML entities with actual quotes
+/workspace/mechanic-shop/index.html:280:                <div id="quotes-list"></div>
+/workspace/mechanic-shop/add_quote_functions.py:301:    renderQuotesList();
+/workspace/mechanic-shop/add_quote_functions.py:306:function renderQuotesList() {
+/workspace/mechanic-shop/add_quote_functions.py:307:    const container = document.getElementById('quotes-list');
+/workspace/mechanic-shop/add_quote_functions.py:485:    renderQuotesList();
+/workspace/mechanic-shop/add_quote_functions.py:501:        renderQuotesList();
+/workspace/mechanic-shop/add_quote_functions.py:508:    renderQuotesList();
+/workspace/mechanic-shop/add_quoting_system.py:341:    renderQuotesList();
+/workspace/mechanic-shop/add_quoting_system.py:346:function renderQuotesList() {
+/workspace/mechanic-shop/add_quoting_system.py:347:    const container = document.getElementById('quotes-list');
+/workspace/mechanic-shop/add_quoting_system.py:525:    renderQuotesList();
+/workspace/mechanic-shop/add_quoting_system.py:541:        renderQuotesList();
+/workspace/mechanic-shop/add_quoting_system.py:548:    renderQuotesList();
+/workspace/mechanic-shop/add_quoting_system.py:729:    <div id="quotes-list"></div>
+/workspace/mechanic-shop/fix_quotes.py:7:# Find and replace the renderQuotesList function

@@ -1,0 +1,51 @@
+    <div id="customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Customer</h2>
+                <button class="close-btn" onclick="closeModal('customer-modal')">&times;</button>
+            </div>
+            <form id="customer-form">
+                <input type="hidden" id="customer-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="customer-firstname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="customer-lastname" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="customer-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone * <span style="font-size:0.78rem;color:#888;font-weight:400;">Format: +27 72 768 0826</span></label>
+                    <input type="tel" id="customer-phone" required placeholder="+27 72 768 0826" oninput="liveFormatPhone(this)" onblur="validatePhoneField(this)">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="customer-address" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Modal -->
+    <div id="vehicle-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Vehicle</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-modal')">&times;</button>
+            </div>
+            <form id="vehicle-form">
+                <input type="hidden" id="vehicle-id">
+                <div class="form-group">
+                    <label>Customer *</label>
+                    <select id="vehicle-customer" required>
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-grid">

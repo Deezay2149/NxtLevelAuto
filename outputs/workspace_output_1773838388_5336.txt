@@ -1,0 +1,18 @@
+function openWorkOrderModal() {
+    document.getElementById('work-order-form').reset();
+    document.getElementById('work-order-id').value = '';
+    document.getElementById('completed-date-group').style.display = 'none';
+    document.getElementById('work-order-completed-date').value = '';
+    workOrderParts = [];
+    updateWorkOrderPartsList();
+    populateWorkOrderDropdowns();
+    openModal('work-order-modal');
+}
+
+function toggleCompletedDate() {
+    const status = document.getElementById('work-order-status').value;
+    const completedDateGroup = document.getElementById('completed-date-group');
+    const evidenceGroup = document.getElementById('evidence-group');
+    
+    if (status === 'completed') {
+        completedDateGroup.style.display = 'block';

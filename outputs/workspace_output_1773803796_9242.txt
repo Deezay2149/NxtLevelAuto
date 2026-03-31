@@ -1,0 +1,104 @@
+function generateCashflowReport(invoices, startDate, endDate) {
+    console.log('generateCashflowReport called with', invoices.length, 'invoices');
+    
+    // Calculate inflows from PAID invoices only (actual cash received)
+    const paidInvoices = invoices.filter(inv => 
+        inv.status === 'paid' || inv.status === 'Paid' || 
+        (inv.amountPaid && inv.amountPaid > 0)
+    );
+    console.log('Paid invoices:', paidInvoices.length);
+    
+    let totalInflows = 0;
+    let inflowsList = [];
+    
+    // Only use paid invoices for cashflow inflows
+    paidInvoices.forEach(inv => {
+        const amount = parseFloat(inv.amountPaid || inv.total) || 0;
+        totalInflows += amount;
+        
+        // Get customer name - check both customers array and invoice's customerName
+        let customerName = 'Unknown';
+        if (inv.customerName) {
+            customerName = inv.customerName;
+        } else if (inv.customerId) {
+            const customer = customers.find(c => c.id === inv.customerId);
+            if (customer) {
+                customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.name || 'Unknown';
+            }
+        }
+        
+        inflowsList.push({
+            invoiceNumber: inv.invoiceNumber || inv.id.substring(0, 8).toUpperCase(),
+            customerName: customerName,
+            date: inv.paidDate || inv.date || inv.createdAt,
+            amount: amount
+        });
+    });
+    
+    // Sort inflows by date
+    inflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Calculate outflows from expenses
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    const filteredExpenses = expenses.filter(exp => {
+        if (!exp.date) return false;
+        // Parse date string (YYYY-MM-DD format) and create date at start of day
+        const expDateParts = exp.date.split('T')[0].split('-');
+        const expDate = new Date(parseInt(expDateParts[0]), parseInt(expDateParts[1]) - 1, parseInt(expDateParts[2]));
+        const expDateTime = expDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return expDateTime >= startTime && expDateTime <= endTime;
+    });
+    
+    let totalOutflows = 0;
+    let outflowsList = [];
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: exp.description || 'Expense',
+            category: exp.category || 'General',
+            date: exp.date,
+            amount: amount
+        });
+    });
+    
+    // Sort outflows by date
+    outflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Update UI
+    document.getElementById('cashflow-inflows').textContent = formatCurrency(totalInflows);
+    document.getElementById('cashflow-outflows').textContent = formatCurrency(totalOutflows);
+    document.getElementById('cashflow-net').textContent = formatCurrency(totalInflows - totalOutflows);
+    
+    // Populate inflows table
+    const inflowsTableBody = document.getElementById('cashflow-inflows-list');
+    if (inflowsList.length === 0) {
+        inflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No paid invoices in this period</td></tr>';
+    } else {
+        inflowsTableBody.innerHTML = inflowsList.map(item => `
+            <tr>
+                <td>${item.invoiceNumber}</td>
+                <td>${item.customerName}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Populate outflows table
+    const outflowsTableBody = document.getElementById('cashflow-outflows-list');
+    if (outflowsList.length === 0) {
+        outflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No expenses in this period</td></tr>';
+    } else {
+        outflowsTableBody.innerHTML = outflowsList.map(item => `
+            <tr>
+                <td>${item.description}</td>
+                <td>${item.category}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+                <td>${formatCurrency(item.amount)}</td>
+            </tr>
+        `).join('');
+    }

@@ -1,0 +1,31 @@
+            <div class="dashboard">
+                <div class="stat-card">
+                    <h3>Total Customers</h3>
+                    <div class="number" id="total-customers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Vehicles</h3>
+                    <div class="number" id="total-vehicles">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Appointments Today</h3>
+                    <div class="number" id="appointments-today">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Work Orders</h3>
+                    <div class="number" id="active-work-orders">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Recent Activity</h2>
+                <div id="recent-activity">
+                    <p class="empty-state">No recent activity</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⏰ Upcoming Appointments</h2>
+                <div id="upcoming-appointments"></div>
+            </div>
+        </section>

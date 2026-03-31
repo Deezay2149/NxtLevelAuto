@@ -1,0 +1,2 @@
+2766:function openSupplierModal(id = null) {
+2947:                <button class="btn btn-secondary" onclick="event.stopPropagation(); openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>

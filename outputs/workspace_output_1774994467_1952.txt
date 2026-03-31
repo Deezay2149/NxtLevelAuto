@@ -1,0 +1,2 @@
+854:function viewVehicleDetails(id) {
+1147:function viewServiceDetails(id) {

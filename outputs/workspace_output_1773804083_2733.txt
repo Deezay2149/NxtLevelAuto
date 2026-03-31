@@ -1,0 +1,33 @@
+    // Add PAID booked-in supplier invoices to expenses
+    const bookInRecords = JSON.parse(localStorage.getItem('bookInRecords') || '[]');
+    const paidBookInRecords = bookInRecords.filter(record => {
+        if (!record.date) return false;
+        // Parse date string (YYYY-MM-DD format)
+        const recordDateParts = record.date.split('T')[0].split('-');
+        const recordDate = new Date(parseInt(recordDateParts[0]), parseInt(recordDateParts[1]) - 1, parseInt(recordDateParts[2]));
+        const recordDateTime = recordDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        // Only include if paid and within date range
+        return (record.paymentStatus === 'paid' || record.paymentStatus === 'Paid') && 
+               recordDateTime >= startTime && recordDateTime <= endTime;
+    });
+
+    // Add paid booked-in supplier invoices to expense categories
+    paidBookInRecords.forEach(record => {
+        const amount = parseFloat(record.totalValue) || 0;
+        totalExpenses += amount;
+
+        const category = 'Supplier Invoice';
+        if (!expenseCategories[category]) {
+            expenseCategories[category] = 0;
+        }
+        expenseCategories[category] += amount;
+    });
+    
+    // Update UI
+    document.getElementById('pnl-revenue').textContent = formatCurrency(totalRevenue);
+    document.getElementById('pnl-expenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('pnl-profit').textContent = formatCurrency(totalRevenue - totalExpenses);
+    
+    // Update revenue breakdown

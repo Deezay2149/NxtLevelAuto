@@ -1,0 +1,30 @@
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2em; font-weight: bold; border-top: 1px solid #ccc; padding-top: 10px;">
+                        <span>Total:</span>
+                        <span id="quote-total">R0.00</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" onclick="closeQuoteModal()" style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Quote</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quote Details Modal -->
+<div id="quote-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>Quote Details</h2>
+            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="quote-details-content"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

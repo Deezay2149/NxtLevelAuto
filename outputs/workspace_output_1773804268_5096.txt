@@ -1,0 +1,20 @@
+// Handle invoice notes form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const notesForm = document.getElementById('invoice-notes-form');
+    if (notesForm) {
+        notesForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('invoice-notes-id').value;
+            const notes = document.getElementById('invoice-notes-text').value;
+            
+            const invoiceIndex = invoices.findIndex(i => i.id === id);
+            if (invoiceIndex >= 0) {
+                invoices[invoiceIndex].notes = notes;
+                saveData();
+                closeModal('invoice-notes-modal');
+                showNotification('Invoice notes saved successfully!', 'success');
+            }
+        });
+    }
+});

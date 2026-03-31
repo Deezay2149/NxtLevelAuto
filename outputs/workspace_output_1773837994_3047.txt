@@ -1,0 +1,28 @@
+54:            <li><button data-section="work-orders">Work Orders</button></li>
+83:                <div class="stat-card clickable" onclick="navigateToSection('work-orders')" title="Go to Work Orders">
+85:                    <div class="number" id="active-work-orders">0</div>
+151:        <section id="work-orders">
+155:                    <input type="text" id="work-order-search" placeholder="Search work orders...">
+156:                    <button class="btn btn-primary" onclick="openWorkOrderModal()">+ Create Work Order</button>
+158:                <div id="work-orders-list"></div>
+869:    <div id="work-order-modal" class="modal">
+873:                <button class="close-btn" onclick="closeModal('work-order-modal')">&times;</button>
+875:            <form id="work-order-form">
+876:                <input type="hidden" id="work-order-id">
+879:                    <select id="work-order-customer" required onchange="loadCustomerVehicles()">
+885:                    <select id="work-order-vehicle" required>
+891:                    <select id="work-order-technician">
+897:                    <div id="work-order-services"></div>
+901:                    <div id="work-order-parts-list"></div>
+902:                    <button type="button" class="btn btn-secondary" onclick="openAddPartToWorkOrder()">+ Add Part</button>
+903:                    <input type="hidden" id="work-order-parts" value="">
+907:                    <input type="number" id="work-order-labor" min="0" step="0.5">
+911:                    <textarea id="work-order-notes" rows="3"></textarea>
+915:                    <select id="work-order-status" onchange="toggleCompletedDate()">
+924:                    <input type="date" id="work-order-completed-date">
+1492:                    <select id="invoice-work-order" required onchange="loadWorkOrderData()">
+1756:                    <select id="return-work-order">
+1794:                    <select id="quote-work-order" onchange="loadWorkOrderItemsToQuote()" required>
+1800:                    <p style="color: #888; text-align: center;">Select a work order to populate items</p>
+1921:                    <select id="quote-work-order" onchange="loadWorkOrderItemsToQuote()" required>
+1927:                    <p style="color: #888; text-align: center;">Select a work order to populate items</p>

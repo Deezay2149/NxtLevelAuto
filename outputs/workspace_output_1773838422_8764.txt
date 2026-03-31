@@ -1,0 +1,4 @@
+926:                <div class="form-group" id="evidence-group" style="display: none;">
+929:                    <input type="file" id="work-order-evidence" accept="image/*,video/*" multiple onchange="handleWorkOrderEvidenceUpload(event)">
+938:    <div id="work-order-view-modal" class="modal">
+942:                <button class="close-btn" onclick="closeModal('work-order-view-modal')">&times;</button>

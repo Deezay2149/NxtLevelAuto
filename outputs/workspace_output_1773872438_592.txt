@@ -1,0 +1,21 @@
+                <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
+                <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
+                <p>👤 ${supplier.contact || 'No contact person'}</p>
+                ${supplier.accountNumber ? `<p>🔖 Account: ${supplier.accountNumber}</p>` : ''}
+                ${websiteHtml}
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Filter Suppliers based on search input
+function filterSuppliers() {
+    const searchInput = document.getElementById('suppliers-search');
+    const filter = searchInput ? searchInput.value : '';
+    renderSuppliersList(filter);
+}
+

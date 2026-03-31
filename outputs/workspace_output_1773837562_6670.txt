@@ -1,0 +1,30 @@
+3209:    // Calculate cashflow data
+3210:    generateCashflowReport(filteredInvoices, startDate, endDate);
+3222:function generateCashflowReport(invoices, startDate, endDate) {
+3223:    console.log('generateCashflowReport called with', invoices.length, 'invoices');
+3225:    // Calculate inflows from PAID invoices only (actual cash received)
+3232:    let totalInflows = 0;
+3233:    let inflowsList = [];
+3235:    // Only use paid invoices for cashflow inflows
+3238:        totalInflows += amount;
+3251:        inflowsList.push({
+3259:    // Sort inflows by date
+3260:    inflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+3262:    // Calculate outflows from expenses
+3275:    let totalOutflows = 0;
+3276:    let outflowsList = [];
+3280:        totalOutflows += amount;
+3281:        outflowsList.push({
+3289:    // Calculate outflows from PAID booked-in supplier invoices
+3304:    // Add paid booked-in supplier invoices to outflows
+3307:        totalOutflows += amount;
+3308:        outflowsList.push({
+3316:    // Sort outflows by date
+3317:    outflowsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+3320:    document.getElementById('cashflow-inflows').textContent = formatCurrency(totalInflows);
+3321:    document.getElementById('cashflow-outflows').textContent = formatCurrency(totalOutflows);
+3322:    document.getElementById('cashflow-net').textContent = formatCurrency(totalInflows - totalOutflows);
+3324:    // Populate inflows table
+3325:    const inflowsTableBody = document.getElementById('cashflow-inflows-list');
+3326:    if (inflowsList.length === 0) {
+3327:        inflowsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No paid invoices in this period</td></tr>';

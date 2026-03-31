@@ -1,0 +1,62 @@
+    <div id="create-invoice-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Create Invoice</h2>
+                <button class="close-btn" onclick="closeModal('create-invoice-modal')">&times;</button>
+            </div>
+            <form id="create-invoice-form">
+                <input type="hidden" id="invoice-id">
+                
+                <!-- Edit Mode Banner -->
+                <div id="invoice-edit-banner" class="invoice-edit-banner" style="display: none;">
+                    <span><span class="edit-icon">✏️</span> Edit Mode Active - You can modify line items and prices</span>
+                    <button type="button" class="btn btn-sm btn-warning" onclick="toggleInvoiceEditMode(false)">Exit Edit Mode</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Work Order *</label>
+                    <select id="invoice-work-order" required onchange="loadWorkOrderData()">
+                        <option value="">Select Work Order</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Customer</label>
+                    <input type="text" id="invoice-customer" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle</label>
+                    <input type="text" id="invoice-vehicle" readonly>
+                </div>
+                
+                <!-- Invoice Actions Bar -->
+                <div class="invoice-actions-bar" id="invoice-actions-bar" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="toggleInvoiceEditMode(true)">✏️ Edit Invoice</button>
+                    <button type="button" class="btn btn-primary" onclick="openAddLineItemModal()">➕ Add Line Item</button>
+                </div>
+                
+                <div id="invoice-items">
+                    <h3>Invoice Items</h3>
+                    <div id="invoice-services-list"></div>
+                    <div id="invoice-parts-list"></div>
+                    <div id="invoice-custom-items-list"></div>
+                </div>
+                
+                <!-- Invoice Summary Section -->
+                <div class="invoice-summary-section">
+                    <div class="invoice-summary-row">
+                        <span>Subtotal:</span>
+                        <span id="invoice-subtotal">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Labor (<span id="invoice-labor-display">0</span> hrs):</span>
+                        <span id="invoice-labor-total">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Discount:</span>
+                        <span id="invoice-discount-display">-R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span>Tax (<span id="invoice-tax-display">0</span>%):</span>
+                        <span id="invoice-tax-total">R0.00</span>
+                    </div>
+                    <div class="invoice-summary-row total">

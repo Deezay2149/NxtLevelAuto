@@ -1,0 +1,41 @@
+                <th class="sortable${asc('name',customerSortColumn)}" onclick="sortCustomers('name')">Name${sortIndicator('name')}</th>
+                <th class="sortable${asc('email',customerSortColumn)}" onclick="sortCustomers('email')">Email${sortIndicator('email')}</th>
+                <th class="sortable${asc('phone',customerSortColumn)}" onclick="sortCustomers('phone')">Phone${sortIndicator('phone')}</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sortedCustomers.map(customer => `
+                <tr onclick="viewCustomerDetails('${customer.id}')" style="cursor: pointer;" title="Click to view details">
+                    <td>${customer.firstName} ${customer.lastName}</td>
+                    <td>${customer.email}</td>
+                    <td>${customer.phone}</td>
+                    <td>
+                        <div class="action-buttons" onclick="event.stopPropagation()">
+                            <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')">Edit</button>
+                            <button class="btn btn-success" onclick="viewCustomerVehicles('${customer.id}')">Vehicles</button>
+                            <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function viewCustomerDetails(id) {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    
+    const customerVehicles = vehicles.filter(v => v.customerId === id);
+    
+    let vehiclesHtml = '';
+    if (customerVehicles.length > 0) {
+        vehiclesHtml = customerVehicles.map(v => `
+            <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span><strong>${v.year} ${v.make} ${v.model}</strong> - ${v.plate}</span>
+            </div>
+        `).join('');

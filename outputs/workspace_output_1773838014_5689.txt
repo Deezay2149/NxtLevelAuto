@@ -1,0 +1,58 @@
+    <div id="tech-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="tech-view-title">📄 Article Details</h2>
+                <button class="close-btn" onclick="closeModal('tech-view-modal')">&times;</button>
+            </div>
+            <div id="tech-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Part Image Lightbox (injected by JS) -->
+
+    <!-- Select Part for Work Order Modal (Full Page Style) -->
+    <div id="select-part-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🔧 Select Parts to Add</h2>
+                <button class="close-btn" onclick="closeModal('select-part-modal')">&times;</button>
+            </div>
+            <div class="part-selection-container">
+                <div class="part-selection-search">
+                    <input type="text" id="part-selection-search" placeholder="Search parts by name or SKU..." oninput="filterPartsForSelection()">
+                </div>
+                <div class="part-selection-grid" id="part-selection-grid">
+                    <!-- Parts will be populated here -->
+                </div>
+            </div>
+            <div class="part-selection-footer">
+                <div class="selected-parts-summary" id="selected-parts-summary">
+                    <span>No parts selected</span>
+                </div>
+                <div class="part-selection-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('select-part-modal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPartSelection()">Add Selected Parts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Invoice Modal -->
+    <div id="create-invoice-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Create Invoice</h2>
+                <button class="close-btn" onclick="closeModal('create-invoice-modal')">&times;</button>
+            </div>
+            <form id="create-invoice-form">
+                <input type="hidden" id="invoice-id">
+                
+                <!-- Edit Mode Banner -->
+                <div id="invoice-edit-banner" class="invoice-edit-banner" style="display: none;">
+                    <span><span class="edit-icon">✏️</span> Edit Mode Active - You can modify line items and prices</span>
+                    <button type="button" class="btn btn-sm btn-warning" onclick="toggleInvoiceEditMode(false)">Exit Edit Mode</button>
+                </div>
+                
+                <div class="form-group">

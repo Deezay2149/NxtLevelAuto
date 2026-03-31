@@ -1,0 +1,21 @@
+                <h2>📊 Recent Activity</h2>
+                <div id="recent-activity">
+                    <p class="empty-state">No recent activity</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⏰ Upcoming Appointments</h2>
+                <div id="upcoming-appointments"></div>
+            </div>
+        </section>
+
+        <!-- Customers Section -->
+        <section id="customers">
+            <div class="card">
+                <h2>👥 Customer Management</h2>
+                <div class="search-box">
+                    <input type="text" id="customer-search" placeholder="Search customers...">
+                    <button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button>
+                </div>
+                <div id="customers-list"></div>

@@ -1,0 +1,17 @@
+function toggleCompletedDate() {
+    const status = document.getElementById('work-order-status').value;
+    const completedDateGroup = document.getElementById('completed-date-group');
+    
+    if (status === 'completed') {
+        completedDateGroup.style.display = 'block';
+        // Set today's date as default if not already set
+        if (!document.getElementById('work-order-completed-date').value) {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('work-order-completed-date').value = today;
+        }
+    } else {
+        completedDateGroup.style.display = 'none';
+    }
+}
+
+function populateWorkOrderDropdowns() {

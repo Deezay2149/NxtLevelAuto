@@ -1,0 +1,16 @@
+    
+    const existingIndex = workOrders.findIndex(w => w.id === id);
+    if (existingIndex >= 0) {
+        workOrders[existingIndex] = workOrder;
+    } else {
+        workOrders.push(workOrder);
+    }
+    
+    // Clear work order parts
+    workOrderParts = [];
+    
+    saveData();
+    closeModal('work-order-modal');
+    renderWorkOrdersList();
+    updateDashboard();
+    showNotification('Work order created successfully!', 'success');

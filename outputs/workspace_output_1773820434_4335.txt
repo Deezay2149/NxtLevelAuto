@@ -1,0 +1,1 @@
+1297:                        <button type="button" class="btn btn-sm btn-secondary" onclick="editInvoiceLineItem('service', ${index})">\u270f\ufe0f</button>

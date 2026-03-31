@@ -1,0 +1,36 @@
+    updateSuppliersSummary();
+    populateSupplierDropdowns();
+    showNotification('Supplier saved successfully!', 'success');
+}
+
+// Delete Supplier
+function deleteSupplier(id) {
+    if (!confirm('Are you sure you want to delete this supplier?')) return;
+    
+    suppliers = suppliers.filter(s => s.id !== id);
+    localStorage.setItem('suppliers', JSON.stringify(suppliers));
+    renderSuppliersList();
+    updateSuppliersSummary();
+    populateSupplierDropdowns();
+    showNotification('Supplier deleted successfully!', 'success');
+}
+
+// Render Suppliers List
+function renderSuppliersList(filter = '') {
+    const container = document.getElementById('suppliers-list');
+    
+    // Filter suppliers if search term provided
+    let filteredSuppliers = suppliers;
+    if (filter) {
+        const searchTerms = filter.toLowerCase();
+        filteredSuppliers = suppliers.filter(supplier => {
+            return (
+                (supplier.name && supplier.name.toLowerCase().includes(searchTerms)) ||
+                (supplier.contact && supplier.contact.toLowerCase().includes(searchTerms)) ||
+                (supplier.phone && supplier.phone.toLowerCase().includes(searchTerms)) ||
+                (supplier.email && supplier.email.toLowerCase().includes(searchTerms)) ||
+                (supplier.accountNumber && supplier.accountNumber.toLowerCase().includes(searchTerms)) ||
+                (supplier.status && supplier.status.toLowerCase().includes(searchTerms))
+            );
+        });
+    }

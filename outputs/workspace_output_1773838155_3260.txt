@@ -1,0 +1,11 @@
+}
+
+// Work Order Parts Management
+let workOrderParts = [];
+
+
+
+function updateWorkOrderPartsList() {
+    const container = document.getElementById('work-order-parts-list');
+    const hiddenInput = document.getElementById('work-order-parts');
+    

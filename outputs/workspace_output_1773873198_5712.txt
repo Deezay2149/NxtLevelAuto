@@ -1,0 +1,8 @@
+2599:                renderTechniciansList();
+2776:    renderTechniciansList();
+4186:    renderTechniciansList();
+4213:        renderTechniciansList();
+4295:function renderTechniciansList() {
+4296:    const container = document.getElementById('technicians-list');
+4306:    const container = document.getElementById('technicians-list');
+4338:    renderTechniciansList();

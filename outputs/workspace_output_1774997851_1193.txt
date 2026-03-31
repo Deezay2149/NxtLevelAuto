@@ -1,0 +1,60 @@
+2483:// Quotes array
+2484:let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
+2486:// Quote line items tracking
+2487:let quoteLineItems = {
+2493:// Open create quote modal
+2494:function openCreateQuoteModal() {
+2495:    document.getElementById('create-quote-modal').style.display = 'block';
+2496:    populateQuoteWorkOrders();
+2497:    resetQuoteLineItems();
+2498:    calculateQuoteTotals();
+2501:// Close quote modal
+2502:function closeQuoteModal() {
+2503:    closeModal('create-quote-modal');
+2504:    resetQuoteLineItems();
+2507:// Populate work order dropdown for quotes
+2508:function populateQuoteWorkOrders() {
+2509:    const select = document.getElementById('quote-work-order');
+2515:            if (!wo.isQuoteConverted) {
+2530:// Reset quote line items
+2531:function resetQuoteLineItems() {
+2532:    quoteLineItems = {
+2537:    renderQuoteLineItems();
+2540:// Render quote line items
+2541:function renderQuoteLineItems() {
+2543:    const servicesContainer = document.getElementById('quote-services-list');
+2546:        quoteLineItems.services.forEach((s, idx) => {
+2551:                    <button type="button" onclick="removeQuoteService(${idx})" style="margin-left:8px;background:#dc3545;color:white;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">&times;</button>
+2559:    const partsContainer = document.getElementById('quote-parts-list');
+2562:        quoteLineItems.parts.forEach((p, idx) => {
+2567:                    <button type="button" onclick="removeQuotePart(${idx})" style="margin-left:8px;background:#dc3545;color:white;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">&times;</button>
+2575:    const customContainer = document.getElementById('quote-custom-list');
+2578:        quoteLineItems.custom.forEach((c, idx) => {
+2583:                    <button type="button" onclick="removeQuoteCustom(${idx})" style="margin-left:8px;background:#dc3545;color:white;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">&times;</button>
+2590:    calculateQuoteTotals();
+2594:function removeQuoteService(idx) {
+2595:    quoteLineItems.services.splice(idx, 1);
+2596:    renderQuoteLineItems();
+2599:function removeQuotePart(idx) {
+2600:    quoteLineItems.parts.splice(idx, 1);
+2601:    renderQuoteLineItems();
+2604:function removeQuoteCustom(idx) {
+2605:    quoteLineItems.custom.splice(idx, 1);
+2606:    renderQuoteLineItems();
+2609:// Add service to quote
+2610:function addServiceToQuote() {
+2611:    const select = document.getElementById('quote-service-select');
+2616:        quoteLineItems.services.push({
+2622:        renderQuoteLineItems();
+2626:// Add part to quote
+2627:function addPartToQuote() {
+2628:    const select = document.getElementById('quote-part-select');
+2633:        quoteLineItems.parts.push({
+2640:        renderQuoteLineItems();
+2644:// Add custom item to quote
+2645:function addCustomToQuote() {
+2646:    const nameInput = document.getElementById('quote-custom-name');
+2647:    const totalInput = document.getElementById('quote-custom-total');
+2651:    quoteLineItems.custom.push({
+2658:    renderQuoteLineItems();
+2661:// Calculate quote totals

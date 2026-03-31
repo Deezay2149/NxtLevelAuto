@@ -1,0 +1,91 @@
+    
+    const html = `
+        <div class="work-order-view-container">
+            <!-- Header Info -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div><strong>📋 Work Order #</strong><br>${workOrder.id.substring(0, 8).toUpperCase()}</div>
+                <div><strong>📅 Created</strong><br>${new Date(workOrder.createdAt).toLocaleString()}</div>
+                <div><strong>📊 Status</strong><br><span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">${workOrder.status}</span></div>
+                ${workOrder.completedDate ? `<div><strong>✅ Completed</strong><br>${new Date(workOrder.completedDate).toLocaleDateString()}</div>` : ''}
+            </div>
+            
+            <!-- Customer & Vehicle Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h4 style="margin: 0 0 10px 0;">👤 Customer</h4>
+                    <p style="margin: 4px 0;"><strong>${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">📧 ${customer ? customer.email : 'N/A'}</p>
+                    <p style="margin: 4px 0; font-size: 14px;">📞 ${customer ? customer.phone : 'N/A'}</p>
+                </div>
+                <div style="padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h4 style="margin: 0 0 10px 0;">🚗 Vehicle</h4>
+                    <p style="margin: 4px 0;"><strong>${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'N/A'}</strong></p>
+                    <p style="margin: 4px 0; font-size: 14px;">🔤 Plate: ${vehicle ? vehicle.plate : 'N/A'}</p>
+                    <p style="margin: 4px 0; font-size: 14px;">🔧 VIN: ${vehicle ? (vehicle.vin || 'N/A') : 'N/A'}</p>
+                </div>
+            </div>
+            
+            ${technician ? `
+            <div style="padding: 1rem; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🔧 Technician</h4>
+                <p style="margin: 4px 0;"><strong>${technician.name}</strong></p>
+            </div>
+            ` : ''}
+            
+            <!-- Services -->
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🛠️ Services</h4>
+                ${servicesHtml || '<p style="color: #6c757d;">No services</p>'}
+            </div>
+            
+            <!-- Parts -->
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">🔩 Parts Used</h4>
+                ${partsHtml}
+            </div>
+            
+            <!-- Summary -->
+            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Labor Hours:</span>
+                    <strong>${workOrder.laborHours || 0} hrs</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid #dee2e6; padding-top: 8px; margin-top: 8px;">
+                    <span>Total Cost:</span>
+                    <span style="color: #28a745;">${formatCurrency(workOrder.totalCost)}</span>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            ${workOrder.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 10px 0;">📝 Notes</h4>
+                <div style="padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; white-space: pre-wrap;">${workOrder.notes}</div>
+            </div>
+            ` : ''}
+            
+            <!-- Evidence -->
+            ${evidenceHtml}
+            
+            <!-- Actions -->
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="editWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteWorkOrder('${workOrder.id}'); closeModal('work-order-view-modal');">🗑️ Delete</button>
+                <button class="btn btn-secondary" onclick="closeModal('work-order-view-modal');">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('work-order-view-content').innerHTML = html;
+    document.getElementById('work-order-view-title').textContent = `📋 Work Order #${workOrder.id.substring(0, 8).toUpperCase()}`;
+    openModal('work-order-view-modal');
+}
+
+function deleteWorkOrder(id) {
+    if (!confirm('Are you sure you want to delete this work order?')) return;
+    
+    workOrders = workOrders.filter(w => w.id !== id);
+    saveData();
+    renderWorkOrdersList();
+    updateDashboard();
+    showNotification('Work order deleted!', 'success');

@@ -1,0 +1,100 @@
+// Parts Management
+let parts = JSON.parse(localStorage.getItem('parts')) || [];
+let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
+let currentPartImages = [];  // array of base64 strings
+
+// Sorting state for parts
+let partSortColumn = 'name';
+let partSortDirection = 'asc';
+
+// Show notification message
+function showNotification(message, type = 'info') {
+    alert(message);
+}
+
+// Initialize Billing Features
+function initializeBilling() {
+    initializePartsManagement();
+    initializeInvoices();
+    renderPartsList();
+    renderStockLevelsList();
+    renderInvoicesList();
+}
+
+// Parts Management Functions
+function openPartModal() {
+    document.getElementById('part-form').reset();
+    document.getElementById('part-id').value = '';
+    currentPartImages = [];
+    renderPartImageGallery();
+    document.getElementById('part-cost-ex-vat').value = '';
+    document.getElementById('part-cost-inc-vat').value = '';
+    document.getElementById('part-price').value = '';
+    document.getElementById('part-price-mode').value = 'manual';
+    document.getElementById('markup-percentage-group').style.display = 'none';
+    
+    // Reset profit display
+    document.getElementById('display-cost-ex-vat').textContent = 'R0.00';
+    document.getElementById('display-selling-price').textContent = 'R0.00';
+    document.getElementById('display-profit').textContent = 'R0.00';
+    document.getElementById('display-profit-margin').textContent = '0%';
+    
+    // Populate supplier dropdown
+    populateSupplierDropdowns();
+    
+    openModal('part-modal');
+}
+
+function savePart(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('part-id').value || generateId();
+    const existingPart = parts.find(p => p.id === id);
+    const supplierId = document.getElementById('part-supplier').value;
+    const supplier = suppliers.find(s => s.id === supplierId);
+    
+    const part = {
+        id: id,
+        name: document.getElementById('part-name').value,
+        sku: document.getElementById('part-sku').value,
+        serialNumber: document.getElementById('part-serial-number').value || '',
+        description: document.getElementById('part-description').value,
+        costExVat: parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
+        costPrice: parseFloat(document.getElementById('part-cost-inc-vat').value) || parseFloat(document.getElementById('part-cost-ex-vat').value) || 0,
+        sellingPrice: parseFloat(document.getElementById('part-price').value) || 0,
+        stockQuantity: parseInt(document.getElementById('part-stock').value) || 0,
+        minStockLevel: parseInt(document.getElementById('part-min-stock').value) || 0,
+        reorderQty: parseInt(document.getElementById('part-reorder-qty').value) || 0,
+        supplierId: supplierId,
+        supplier: supplier ? supplier.name : '',
+        images: currentPartImages.length ? currentPartImages : (existingPart ? (existingPart.images || (existingPart.image ? [existingPart.image] : [])) : []),
+        createdAt: existingPart ? existingPart.createdAt : new Date().toISOString()
+    };
+    
+    // Validate selling price >= cost inc VAT
+    const costIncVatVal = parseFloat(document.getElementById('part-cost-inc-vat').value) || 0;
+    const sellingPriceVal = parseFloat(document.getElementById('part-price').value) || 0;
+    if (sellingPriceVal < costIncVatVal && costIncVatVal > 0) {
+        showNotification('\u26a0\ufe0f Selling price cannot be less than Cost Inc VAT (' + formatCurrency(costIncVatVal) + '). Please adjust the selling price.', 'error');
+        document.getElementById('part-price').focus();
+        return;
+    }
+
+    const existingIndex = parts.findIndex(p => p.id === id);
+    if (existingIndex >= 0) {
+        parts[existingIndex] = part;
+    } else {
+        parts.push(part);
+    }
+    
+    saveBillingData();
+    closeModal('part-modal');
+    renderPartsList();
+    renderStockLevelsList();
+    showNotification('Part saved successfully!', 'success');
+    currentPartImages = [];
+}
+
+// Sort Parts
+function sortParts(column) {

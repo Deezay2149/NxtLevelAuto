@@ -1,0 +1,16 @@
+                    <textarea id="appointment-notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Schedule Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Work Order Modal -->
+    <div id="work-order-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create/Edit Work Order</h2>
+                <button class="close-btn" onclick="closeModal('work-order-modal')">&times;</button>
+            </div>
+            <form id="work-order-form">
+                <input type="hidden" id="work-order-id">

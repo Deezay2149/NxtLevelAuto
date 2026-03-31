@@ -1,0 +1,78 @@
+function renderSuppliersList(filter = '') {
+    const container = document.getElementById('suppliers-list');
+    
+    // Filter suppliers if search term provided
+    let filteredSuppliers = suppliers;
+    if (filter) {
+        const searchTerms = filter.toLowerCase();
+        filteredSuppliers = suppliers.filter(supplier => {
+            return (
+                (supplier.name && supplier.name.toLowerCase().includes(searchTerms)) ||
+                (supplier.contact && supplier.contact.toLowerCase().includes(searchTerms)) ||
+                (supplier.phone && supplier.phone.toLowerCase().includes(searchTerms)) ||
+                (supplier.email && supplier.email.toLowerCase().includes(searchTerms)) ||
+                (supplier.accountNumber && supplier.accountNumber.toLowerCase().includes(searchTerms)) ||
+                (supplier.status && supplier.status.toLowerCase().includes(searchTerms))
+            );
+        });
+    }
+    
+    if (filteredSuppliers.length === 0) {
+        container.innerHTML = '<p class="empty-state">No suppliers found' + (filter ? ' matching your search.' : '. Add your first supplier!') + '</p>';
+        return;
+    }
+    
+    container.innerHTML = filteredSuppliers.map(supplier => {
+        const logoHtml = supplier.logo
+            ? `<img src="${supplier.logo}" class="supplier-logo-thumb" alt="${supplier.name} logo">`
+            : `<div class="supplier-logo-placeholder">🏭</div>`;
+        
+        const websiteHtml = supplier.website
+            ? `<p>🌐 <a href="${supplier.website}" target="_blank" style="color:var(--primary-color);text-decoration:none;font-weight:500;" onclick="event.stopPropagation()">${supplier.website.replace(/^https?:\/\//, '')}</a></p>`
+            : '';
+
+        return `
+        <div class="supplier-item">
+            ${logoHtml}
+            <div class="supplier-info">
+                <h4>${supplier.name} <span class="supplier-status ${supplier.status}">${supplier.status}</span></h4>
+                <p>📞 ${supplier.phone} ${supplier.email ? `| ✉️ ${supplier.email}` : ''}</p>
+                <p>👤 ${supplier.contact || 'No contact person'}</p>
+                ${supplier.accountNumber ? `<p>🔖 Account: ${supplier.accountNumber}</p>` : ''}
+                ${websiteHtml}
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="openSupplierModal('${supplier.id}')" type="button">✏️ Edit</button>
+                <button class="btn btn-danger" onclick="deleteSupplier('${supplier.id}')" type="button">🗑️ Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Filter Suppliers based on search input
+function filterSuppliers() {
+    const searchInput = document.getElementById('suppliers-search');
+    const filter = searchInput ? searchInput.value : '';
+    renderSuppliersList(filter);
+}
+
+// Update Suppliers Summary
+function updateSuppliersSummary() {
+    const totalEl = document.getElementById('total-suppliers-count');
+    const activeEl = document.getElementById('active-suppliers-count');
+    
+    if (totalEl) totalEl.textContent = suppliers.length;
+    if (activeEl) activeEl.textContent = suppliers.filter(s => s.status === 'active').length;
+}
+
+// Populate Supplier Dropdowns
+function populateSupplierDropdowns() {
+    const dropdowns = [
+        document.getElementById('part-supplier'),
+        document.getElementById('book-in-supplier')
+    ];
+    
+    dropdowns.forEach(dropdown => {
+        if (!dropdown) return;
+        
+        const currentValue = dropdown.value;

@@ -1,0 +1,26 @@
+        const recordDateParts = record.date.split('T')[0].split('-');
+        const recordDate = new Date(parseInt(recordDateParts[0]), parseInt(recordDateParts[1]) - 1, parseInt(recordDateParts[2]));
+        const recordDateTime = recordDate.getTime();
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        // Only include if paid and within date range
+        return (record.paymentStatus === 'paid' || record.paymentStatus === 'Paid') && 
+               recordDateTime >= startTime && recordDateTime <= endTime;
+    });
+
+    let totalOutflows = 0;
+    let outflowsList = [];
+
+    // Add regular expenses
+    let outflowsList = [];
+    
+    filteredExpenses.forEach(exp => {
+        const amount = parseFloat(exp.amount) || 0;
+        totalOutflows += amount;
+        outflowsList.push({
+            description: exp.description || 'Expense',
+            category: exp.category || 'General',
+            date: exp.date,
+            amount: amount
+        });
+    });

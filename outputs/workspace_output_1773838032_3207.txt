@@ -1,0 +1,16 @@
+                    <select id="work-order-status" onchange="toggleCompletedDate()">
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group" id="completed-date-group" style="display: none;">
+                    <label>Completed Date</label>
+                    <input type="date" id="work-order-completed-date">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Work Order</button>
+            </form>
+        </div>
+    </div>
+

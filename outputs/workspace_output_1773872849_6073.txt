@@ -1,0 +1,10 @@
+22:    renderInvoicesList();
+732:        let servicesHTML = '<div class="invoice-items-section"><h4>🔧 Services</h4>';
+737:                    <div class="invoice-item">
+738:                        <div class="invoice-item-name">${service.name}</div>
+739:                        <div class="invoice-item-price">${formatCurrency(service.price)}</div>
+748:        let partsHTML = '<div class="invoice-items-section"><h4>🔩 Parts</h4>';
+754:                        <div class="invoice-item">
+755:                            <div class="invoice-item-name">${part.name} (x${partItem.quantity})</div>
+756:                            <div class="invoice-item-price">${formatCurrency(part.sellingPrice * partItem.quantity)}</div>
+905:    renderInvoicesList();

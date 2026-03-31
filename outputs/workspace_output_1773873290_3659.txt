@@ -1,0 +1,58 @@
+    <div id="technician-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Technician</h2>
+                <button class="close-btn" onclick="closeModal('technician-modal')">&times;</button>
+            </div>
+            <form id="technician-form">
+                <input type="hidden" id="technician-id">
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" id="technician-first-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" id="technician-last-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="technician-email">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="technician-phone">
+                </div>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" id="technician-specialization" placeholder="e.g., Engine Repair, Electrical Systems">
+                </div>
+                <div class="form-group">
+                    <label>Hourly Rate (R)</label>
+                    <input type="number" id="technician-hourly-rate" min="0" step="0.01" placeholder="e.g., 150.00">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="technician-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="technician-notes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Technician</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expense-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Edit Expense</h2>
+                <button class="close-btn" onclick="closeModal('expense-modal')">&times;</button>
+            </div>
+            <form id="expense-form">
+                <input type="hidden" id="expense-id">
+                <div class="form-group">

@@ -1,0 +1,12 @@
+780:function sortAppointments(column) {
+995:function openAppointmentModal() {
+1002:function populateAppointmentDropdowns() {
+1038:function saveAppointment(e) {
+1076:function renderAppointmentsList() {
+1129:    function getAppointmentUrgency(apptDate) {
+1186:function completeAppointment(id) {
+1197:function editAppointment(id) {
+1236:function cancelAppointment(id) {
+1381:function deleteAppointment(id) {
+1924:function updateUpcomingAppointments() {
+2329:function renderFilteredAppointments(filteredAppointments) {

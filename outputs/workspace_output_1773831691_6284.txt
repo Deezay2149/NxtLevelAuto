@@ -1,0 +1,4 @@
+4227:                <button class="btn btn-primary" onclick="openTechModal('${item.type}', '${item.id}'); closeModal('tech-view-modal');">✏️ Edit</button>
+4228:                <button class="btn btn-secondary" onclick="closeModal('tech-view-modal')">Close</button>
+4235:    openModal('tech-view-modal');
+4524:function closeModal(modalId) {

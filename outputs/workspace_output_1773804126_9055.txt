@@ -1,0 +1,10 @@
+tcp        0      0 0.0.0.0:6080            0.0.0.0:*               LISTEN      878/python3         
+tcp        0      0 0.0.0.0:8090            0.0.0.0:*               LISTEN      664/python3         
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      654/python          
+tcp        0      0 0.0.0.0:8085            0.0.0.0:*               LISTEN      663/python3         
+tcp        0      0 0.0.0.0:8050            0.0.0.0:*               LISTEN      661/python          
+tcp        0      0 0.0.0.0:8002            0.0.0.0:*               LISTEN      649/python          
+tcp        0      0 0.0.0.0:5901            0.0.0.0:*               LISTEN      645/x11vnc          
+tcp        0      0 0.0.0.0:3222            0.0.0.0:*               LISTEN      620/nginx: master p 
+tcp        0      0 127.0.0.1:2222          0.0.0.0:*               LISTEN      655/ttyd            
+tcp        0      0 127.0.0.1:4000          0.0.0.0:*               LISTEN      702/node            

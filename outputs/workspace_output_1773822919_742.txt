@@ -1,0 +1,9 @@
+3860:const TECH_TYPE_CONFIG = {
+3923:function openTechModal(type, id = null) {
+3924:    const cfg = TECH_TYPE_CONFIG[type];
+3999:    showNotification(isEdit ? `${TECH_TYPE_CONFIG[type].label} updated!` : `${TECH_TYPE_CONFIG[type].label} saved!`, 'success');
+4005:    if (!confirm(`Delete this ${TECH_TYPE_CONFIG[item.type].label}? This cannot be undone.`)) return;
+4010:    showNotification(`${TECH_TYPE_CONFIG[item.type].label} deleted.`, 'success');
+4027:    const cfg = TECH_TYPE_CONFIG[type];
+4102:    const cfg = TECH_TYPE_CONFIG[type];
+4108:    const cfg = TECH_TYPE_CONFIG[type];

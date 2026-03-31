@@ -1,0 +1,55 @@
+function renderAppointmentsList() {
+    const container = document.getElementById('appointments-list');
+    
+    if (appointments.length === 0) {
+        container.innerHTML = '<p class="empty-state">No appointments found. Schedule your first appointment!</p>';
+        return;
+    }
+    
+    // Sort appointments
+    const sortedAppointments = [...appointments].sort((a, b) => {
+        let aVal, bVal;
+        const aCustomer = customers.find(c => c.id === a.customerId);
+        const bCustomer = customers.find(c => c.id === b.customerId);
+        const aVehicle = vehicles.find(v => v.id === a.vehicleId);
+        const bVehicle = vehicles.find(v => v.id === b.vehicleId);
+        const aService = services.find(s => s.id === a.serviceId);
+        const bService = services.find(s => s.id === b.serviceId);
+        
+        switch (appointmentSortColumn) {
+            case 'date':
+                aVal = new Date(a.date + ' ' + a.time).getTime();
+                bVal = new Date(b.date + ' ' + b.time).getTime();
+                break;
+            case 'customer':
+                aVal = aCustomer ? `${aCustomer.firstName} ${aCustomer.lastName}`.toLowerCase() : '';
+                bVal = bCustomer ? `${bCustomer.firstName} ${bCustomer.lastName}`.toLowerCase() : '';
+                break;
+            case 'vehicle':
+                aVal = aVehicle ? `${aVehicle.make} ${aVehicle.model}`.toLowerCase() : '';
+                bVal = bVehicle ? `${bVehicle.make} ${bVehicle.model}`.toLowerCase() : '';
+                break;
+            case 'service':
+                aVal = aService ? aService.name.toLowerCase() : '';
+                bVal = bService ? bService.name.toLowerCase() : '';
+                break;
+            case 'status':
+                aVal = (a.status || '').toLowerCase();
+                bVal = (b.status || '').toLowerCase();
+                break;
+            default:
+                aVal = new Date(a.date + ' ' + a.time).getTime();
+                bVal = new Date(b.date + ' ' + b.time).getTime();
+        }
+        if (appointmentSortDirection === 'asc') {
+            return typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+        } else {
+            return typeof aVal === 'string' ? bVal.localeCompare(aVal) : bVal - aVal;
+        }
+    });
+    
+    const sortIndicator = (col) => appointmentSortColumn === col ? (appointmentSortDirection === 'asc' ? '<span class="sort-arrow">▲</span>' : '<span class="sort-arrow">▼</span>') : '';
+
+    // Urgency helper: returns 'apt-due-tomorrow', 'apt-due-2days', or ''
+    function getAppointmentUrgency(apptDate) {
+        const today = new Date(); today.setHours(0,0,0,0);

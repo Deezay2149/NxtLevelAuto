@@ -1,0 +1,2 @@
+926:                <div class="form-group" id="evidence-group" style="display: none;">
+929:                    <input type="file" id="work-order-evidence" accept="image/*,video/*" multiple onchange="handleWorkOrderEvidenceUpload(event)">

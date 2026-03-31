@@ -1,0 +1,5 @@
+/workspace/mechanic-shop/app.js:354:    renderCustomersList();
+/workspace/mechanic-shop/app.js:359:function renderCustomersList() {
+/workspace/mechanic-shop/app.js:505:    renderCustomersList();
+/workspace/mechanic-shop/app.js:829:    renderCustomersList();
+/workspace/mechanic-shop/app.js:2856:    renderCustomersList();

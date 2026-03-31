@@ -1,0 +1,98 @@
+function renderQuotesList(filter = '') {
+    const container = document.getElementById('quotes-list');
+    
+    if (!container) return;
+    
+    // Filter quotes if search term provided
+    let filteredQuotes = quotes;
+    if (filter) {
+        const q = filter.toLowerCase();
+        filteredQuotes = quotes.filter(quote => {
+            const customer = customers.find(c => c.id === quote.customerId);
+            const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+            const customerName = customer ? (customer.firstName + ' ' + customer.lastName).toLowerCase() : '';
+            const vehicleName = vehicle ? (vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model).toLowerCase() : '';
+            
+            return quote.quoteNumber.toLowerCase().includes(q) ||
+                   customerName.includes(q) ||
+                   vehicleName.includes(q) ||
+                   (quote.status && quote.status.toLowerCase().includes(q)) ||
+                   (quote.notes && quote.notes.toLowerCase().includes(q));
+        });
+    }
+    
+    if (filteredQuotes.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">' + (filter ? 'No quotes match your search.' : 'No quotes yet. Create your first quote!') + '</p>';
+        return;
+    }
+    
+    let html = '<table style="width: 100%; border-collapse: collapse;">';
+    html += '<thead><tr style="background: #f5f5f5;">';
+    html += '<th style="padding: 12px; text-align: left;">Quote #</th>';
+    html += '<th style="padding: 12px; text-align: left;">Customer</th>';
+    html += '<th style="padding: 12px; text-align: left;">Vehicle</th>';
+    html += '<th style="padding: 12px; text-align: right;">Total</th>';
+    html += '<th style="padding: 12px; text-align: center;">Status</th>';
+    html += '<th style="padding: 12px; text-align: center;">Valid Until</th>';
+    html += '<th style="padding: 12px; text-align: center;">Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    filteredQuotes.forEach(quote => {
+        const customer = customers.find(c => c.id === quote.customerId);
+        const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+        const customerName = customer ? (customer.firstName + ' ' + customer.lastName).trim() : 'Unknown';
+        const vehicleName = vehicle ? (vehicle.year + ' ' + vehicle.make + ' ' + vehicle.model) : 'Unknown';
+        
+        let statusBadge = '';
+        if (quote.status === 'pending') {
+            statusBadge = '<span style="background: #ffc107; color: #000; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Pending</span>';
+        } else if (quote.status === 'accepted') {
+            statusBadge = '<span style="background: #28a745; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Accepted</span>';
+        } else if (quote.status === 'rejected') {
+            statusBadge = '<span style="background: #dc3545; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Rejected</span>';
+        } else if (quote.status === 'converted') {
+            statusBadge = '<span style="background: #6c757d; color: #fff; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Converted</span>';
+        }
+        
+        let validUntil = quote.expiresAt ? new Date(quote.expiresAt).toLocaleDateString() : '-';
+        
+        html += '<tr style="border-bottom: 1px solid #e0e0e0;">';
+        html += '<td style="padding: 12px;">' + quote.quoteNumber + '</td>';
+        html += '<td style="padding: 12px;">' + customerName + '</td>';
+        html += '<td style="padding: 12px;">' + vehicleName + '</td>';
+        html += '<td style="padding: 12px; text-align: right; font-weight: bold;">' + formatCurrency(quote.total) + '</td>';
+        html += '<td style="padding: 12px; text-align: center;">' + statusBadge + '</td>';
+        html += '<td style="padding: 12px; text-align: center;">' + validUntil + '</td>';
+        html += '<td style="padding: 12px; text-align: center;">';
+        html += '<button onclick="viewQuote(\'' + quote.id + '\')" style="padding: 4px 8px; margin: 0 2px; cursor: pointer;">View</button>';
+        
+        if (quote.status === 'pending') {
+            html += '<button onclick="convertQuoteToInvoice(\'' + quote.id + '\')" style="padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #28a745; color: white;">Convert</button>';
+        }
+        
+        html += '<button onclick="deleteQuote(\'' + quote.id + '\')" style="padding: 4px 8px; margin: 0 2px; cursor: pointer; background: #dc3545; color: white;">Delete</button>';
+        html += '</td></tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// Filter quotes based on search input
+function filterQuotes() {
+    const searchInput = document.getElementById('quotes-search');
+    const filter = searchInput ? searchInput.value : '';
+    renderQuotesList(filter);
+}
+
+// View quote details
+function viewQuote(quoteId) {
+    const quote = quotes.find(q => q.id === quoteId);
+    if (!quote) return;
+    
+    const customer = customers.find(c => c.id === quote.customerId);
+    const vehicle = vehicles.find(v => v.id === quote.vehicleId);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Unknown';
+    const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown';
+    
+    let html = `
