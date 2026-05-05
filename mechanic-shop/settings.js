@@ -8,20 +8,11 @@ let globalSettings = JSON.parse(localStorage.getItem('globalSettings')) || {
     shopName: 'NxtLevel Auto',
     shopAddress: '123 Main Street, Johannesburg, South Africa',
     shopPhone: '+27 11 123 4567',
-    shopEmail: 'info@nxtlevelauto.co.za'
+    shopEmail: 'info@autofixpro.co.za',
+    weatherCity: '',
+    weatherLat: null,
+    weatherLon: null
 };
-
-// Apply shop name to all visible elements (header, page title)
-function applyShopName() {
-    const name = globalSettings.shopName || 'NxtLevel Auto';
-
-    // Update header logo text
-    const headerEl = document.getElementById('header-shop-name');
-    if (headerEl) headerEl.textContent = name;
-
-    // Update browser tab title
-    document.title = name + ' - Mechanic Shop Management';
-}
 
 // Initialize Settings
 function initializeSettings() {
@@ -37,30 +28,18 @@ function loadSettings() {
     document.getElementById('settings-shop-address').value = globalSettings.shopAddress;
     document.getElementById('settings-shop-phone').value = globalSettings.shopPhone;
     document.getElementById('settings-shop-email').value = globalSettings.shopEmail;
-
-    // Apply shop name to UI on load
-    applyShopName();
+    // Weather settings
+    document.getElementById('settings-weather-city').value = globalSettings.weatherCity || '';
+    document.getElementById('settings-weather-lat').value = globalSettings.weatherLat || '';
+    document.getElementById('settings-weather-lon').value = globalSettings.weatherLon || '';
 }
 
 function saveSettings(e) {
     e.preventDefault();
     
-    // Validate shop phone (optional in settings)
-    const shopPhoneInput = document.getElementById('settings-shop-phone');
-    const shopPhoneVal = shopPhoneInput.value.trim();
-    let shopPhone = shopPhoneVal;
-    if (shopPhoneVal) {
-        const formatted = formatSAPhone(shopPhoneVal);
-        if (!formatted) {
-            shopPhoneInput.style.borderColor = '#e03131';
-            shopPhoneInput.style.boxShadow = '0 0 0 2px rgba(224,49,49,0.2)';
-            showNotification('Shop phone must be in format: +27 72 768 0826', 'error');
-            shopPhoneInput.focus();
-            return;
-        }
-        shopPhone = formatted;
-        shopPhoneInput.value = formatted;
-    }
+    const weatherLat = document.getElementById('settings-weather-lat').value;
+    const weatherLon = document.getElementById('settings-weather-lon').value;
+    const weatherCity = document.getElementById('settings-weather-city').value.trim();
     
     globalSettings = {
         taxRate: parseFloat(document.getElementById('settings-tax-rate').value),
@@ -70,16 +49,21 @@ function saveSettings(e) {
         serviceReminderKm: parseInt(document.getElementById('settings-service-reminder-km').value),
         shopName: document.getElementById('settings-shop-name').value,
         shopAddress: document.getElementById('settings-shop-address').value,
-        shopPhone: shopPhone,
-        shopEmail: document.getElementById('settings-shop-email').value
+        shopPhone: document.getElementById('settings-shop-phone').value,
+        shopEmail: document.getElementById('settings-shop-email').value,
+        weatherCity: weatherCity,
+        weatherLat: weatherLat ? parseFloat(weatherLat) : null,
+        weatherLon: weatherLon ? parseFloat(weatherLon) : null
     };
     
     localStorage.setItem('globalSettings', JSON.stringify(globalSettings));
-
-    // Apply updated shop name immediately to header + title
-    applyShopName();
-
     showNotification('Settings saved successfully!', 'success');
+    closeModal('settings-modal');
+    
+    // Refresh weather widget with new settings
+    if (typeof initWeatherWidget === 'function') {
+        initWeatherWidget();
+    }
 }
 
 function getTaxRate() {
@@ -95,7 +79,7 @@ function getLaborRate() {
 }
 
 function formatCurrency(amount) {
-    return `${getCurrency()}${parseFloat(amount || 0).toFixed(2)}`;
+    return `${getCurrency()}${amount.toFixed(2)}`;
 }
 
 function getServiceReminderKm() {
