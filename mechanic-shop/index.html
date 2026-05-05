@@ -48,16 +48,17 @@
             <li><button data-section="customers">Customers</button></li>
             <li><button data-section="vehicles">Vehicles</button></li>
             <li><button data-section="services">Services</button></li>
-            <li><button data-section="suppliers">Suppliers</button></li>
             <li><button data-section="parts">Parts</button></li>
+            <li><button data-section="suppliers">Suppliers</button></li>
             <li><button data-section="appointments">Appointments</button></li>
             <li><button data-section="work-orders">Work Orders</button></li>
+            <li><button data-section="quotes">Quotes</button></li>
             <li><button data-section="invoices">Invoices</button></li>
             <li><button data-section="technical">Technical</button></li>
             <li><button data-section="reminders">Reminders</button></li>
-            <li><button data-section="reports">Reports</button></li>
             <li><button data-section="technicians">Technicians</button></li>
             <li><button data-section="expenses">Expenses</button></li>
+            <li><button data-section="reports">Reports</button></li>
             <li><button data-section="settings">Settings</button></li>
         </ul>
     </nav>
@@ -67,19 +68,19 @@
         <!-- Dashboard Section -->
         <section id="dashboard" class="active">
             <div class="dashboard">
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="navigateToSection('customers')" title="Go to Customers">
                     <h3>Total Customers</h3>
                     <div class="number" id="total-customers">0</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="navigateToSection('vehicles')" title="Go to Vehicles">
                     <h3>Total Vehicles</h3>
                     <div class="number" id="total-vehicles">0</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="navigateToSection('appointments')" title="Go to Appointments">
                     <h3>Appointments Today</h3>
                     <div class="number" id="appointments-today">0</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="navigateToSection('work-orders')" title="Go to Work Orders">
                     <h3>Active Work Orders</h3>
                     <div class="number" id="active-work-orders">0</div>
                 </div>
@@ -239,7 +240,7 @@
             <div class="card">
                 <h2>🏭 Suppliers Management</h2>
                 <div class="search-box">
-                    <input type="text" id="suppliers-search" placeholder="Search suppliers...">
+                    <input type="text" id="suppliers-search" placeholder="Search suppliers by name, contact, phone, email..." oninput="filterSuppliers()">
                     <button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button>
                 </div>
                 <div class="suppliers-summary" id="suppliers-summary">
@@ -267,6 +268,31 @@
                 <div id="invoices-list"></div>
             </div>
         </section>
+
+        <!-- Quotes Section -->
+        <section id="quotes">
+            <div class="card">
+                <h2>📋 Quote Management</h2>
+                <div class="search-box" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="quotes-search" placeholder="Search quotes by number, customer, vehicle..." oninput="filterQuotes()" style="flex: 1; min-width: 200px;">
+                    <button class="btn btn-primary" onclick="openCreateQuoteModal()">+ Create Quote</button>
+                </div>
+                <div id="quotes-list"></div>
+            </div>
+        </section>
+
+    <!-- Quote View Modal -->
+    <div id="quote-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📋 Quote Details</h2>
+                <button class="close-btn" onclick="closeModal('quote-view-modal')">&times;</button>
+            </div>
+            <div id="quote-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
 
         <!-- Technical Knowledge Base Section -->
         <section id="technical">
@@ -669,6 +695,19 @@
         </div>
     </div>
 
+    <!-- Customer View Modal -->
+    <div id="customer-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="customer-view-title">👤 Customer Details</h2>
+                <button class="close-btn" onclick="closeModal('customer-view-modal')">&times;</button>
+            </div>
+            <div id="customer-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Vehicle Modal -->
     <div id="vehicle-modal" class="modal">
         <div class="modal-content">
@@ -767,8 +806,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="vehicle-notes" rows="3" placeholder="Add any notes about this vehicle..."></textarea>
+                </div>
                 <button type="submit" class="btn btn-primary">Save Vehicle</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Vehicle View Modal -->
+    <div id="vehicle-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="vehicle-view-title">🚗 Vehicle Details</h2>
+                <button class="close-btn" onclick="closeModal('vehicle-view-modal')">&times;</button>
+            </div>
+            <div id="vehicle-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -792,6 +848,26 @@
                     <textarea id="service-description" rows="3"></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Category: Brand</label>
+                    <select id="service-brand" onchange="updateServiceModelDropdown()">
+                        <option value="">All Brands</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Category: Vehicle Type</label>
+                        <select id="service-vehicle-type">
+                            <option value="">All Vehicle Types</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category: Year</label>
+                        <select id="service-year">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Engine Brand</label>
                     <input type="text" id="service-engine-brand" placeholder="e.g. Toyota, Ford, BMW">
                 </div>
@@ -805,6 +881,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save Service</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Service View Modal -->
+    <div id="service-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="service-view-title">🔧 Service Details</h2>
+                <button class="close-btn" onclick="closeModal('service-view-modal')">&times;</button>
+            </div>
+            <div id="service-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -849,6 +938,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Schedule Appointment</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Appointment View Modal -->
+    <div id="appointment-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="appointment-view-title">📅 Appointment Details</h2>
+                <button class="close-btn" onclick="closeModal('appointment-view-modal')">&times;</button>
+            </div>
+            <div id="appointment-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -910,8 +1012,27 @@
                     <label>Completed Date</label>
                     <input type="date" id="work-order-completed-date">
                 </div>
+                <div class="form-group" id="evidence-group" style="display: none;">
+                    <label>📸 Evidence (Photos/Videos)</label>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Upload photos or videos as proof of completed work</p>
+                    <input type="file" id="work-order-evidence" accept="image/*,video/*" multiple onchange="handleWorkOrderEvidenceUpload(event)">
+                    <div id="evidence-preview" class="evidence-preview" style="margin-top: 10px;"></div>
+                </div>
                 <button type="submit" class="btn btn-primary">Save Work Order</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Work Order View Modal -->
+    <div id="work-order-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="work-order-view-title">📋 Work Order Details</h2>
+                <button class="close-btn" onclick="closeModal('work-order-view-modal')">&times;</button>
+            </div>
+            <div id="work-order-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -1020,8 +1141,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="part-notes" rows="3" placeholder="Add any additional notes about this part..."></textarea>
+                </div>
                 <button type="submit" class="btn btn-primary">Save Part</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Part View Modal -->
+    <div id="part-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Part Details</h2>
+                <button class="close-btn" onclick="closeModal('part-view-modal')">&times;</button>
+            </div>
+            <div id="part-view-content">
+                <!-- Content will be dynamically populated -->
+            </div>
         </div>
     </div>
 
@@ -1066,11 +1204,29 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Photo</label>
+                    <input type="file" id="technician-photo" accept="image/*" onchange="previewTechnicianPhoto(event)">
+                    <div id="technician-photo-preview" style="margin-top:10px;"></div>
+                </div>
+                <div class="form-group">
                     <label>Notes</label>
                     <textarea id="technician-notes" rows="2"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Save Technician</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Technician View Modal -->
+    <div id="technician-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Technician Details</h2>
+                <button class="close-btn" onclick="closeModal('technician-view-modal')">&times;</button>
+            </div>
+            <div id="technician-view-content">
+                <!-- Content will be dynamically populated -->
+            </div>
         </div>
     </div>
 
@@ -1135,6 +1291,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save Expense</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Expense View Modal -->
+    <div id="expense-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Expense Details</h2>
+                <button class="close-btn" onclick="closeModal('expense-view-modal')">&times;</button>
+            </div>
+            <div id="expense-view-content">
+                <!-- Content will be dynamically populated -->
+            </div>
         </div>
     </div>
 
@@ -1224,6 +1393,32 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save Supplier</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Supplier View Modal -->
+    <div id="supplier-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Supplier Details</h2>
+                <button class="close-btn" onclick="closeModal('supplier-view-modal')">&times;</button>
+            </div>
+            <div id="supplier-view-content">
+                <!-- Content will be dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplier Logo View Modal -->
+    <div id="supplier-logo-view-modal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <h2>Supplier Logo</h2>
+                <button class="close-btn" onclick="closeModal('supplier-logo-view-modal')">&times;</button>
+            </div>
+            <div id="supplier-logo-view-content">
+                <!-- Content will be dynamically populated -->
+            </div>
         </div>
     </div>
 
@@ -1356,56 +1551,93 @@
                 <button class="close-btn" onclick="closeModal('tech-modal')">&times;</button>
             </div>
             <form id="tech-form">
-                <input type="hidden" id="tech-item-id">
-                <input type="hidden" id="tech-item-type">
-                <div class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label>Title *</label>
-                        <input type="text" id="tech-title" required placeholder="Enter a clear, descriptive title...">
+                <div class="modal-body-scroll">
+                    <input type="hidden" id="tech-item-id">
+                    <input type="hidden" id="tech-item-type">
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Title *</label>
+                            <input type="text" id="tech-title" required placeholder="Enter a clear, descriptive title...">
+                        </div>
                     </div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Category / Vehicle Type</label>
-                        <input type="text" id="tech-category" placeholder="e.g. Engine, Brakes, Electrical, General...">
-                    </div>
-                    <div class="form-group">
-                        <label>Applies To (Make / Model)</label>
-                        <input type="text" id="tech-applies-to" placeholder="e.g. Toyota Hilux, All vehicles...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Content *</label>
-                    <textarea id="tech-content" rows="8" required placeholder="Enter detailed content, steps, descriptions or notes..."></textarea>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Author / Source</label>
-                        <input type="text" id="tech-author" placeholder="e.g. Technician name, OEM bulletin ref...">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Category / Vehicle Type</label>
+                            <input type="text" id="tech-category" placeholder="e.g. Engine, Brakes, Electrical, General...">
+                        </div>
+                        <div class="form-group">
+                            <label>Applies To (Make / Model)</label>
+                            <input type="text" id="tech-applies-to" placeholder="e.g. Toyota Hilux, All vehicles...">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Priority / Severity</label>
-                        <select id="tech-priority">
-                            <option value="normal">Normal</option>
-                            <option value="important">Important</option>
-                            <option value="critical">Critical</option>
-                            <option value="info">Info Only</option>
-                        </select>
+                        <label>Content *</label>
+                        <textarea id="tech-content" rows="8" required placeholder="Enter detailed content, steps, descriptions or notes..."></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Author / Source</label>
+                            <input type="text" id="tech-author" placeholder="e.g. Technician name, OEM bulletin ref...">
+                        </div>
+                        <div class="form-group">
+                            <label>Priority / Severity</label>
+                            <select id="tech-priority">
+                                <option value="normal">Normal</option>
+                                <option value="important">Important</option>
+                                <option value="critical">Critical</option>
+                                <option value="info">Info Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tags <span style="font-size:0.8rem;color:#888;">(comma-separated)</span></label>
+                        <input type="text" id="tech-tags" placeholder="e.g. oil leak, timing belt, recall...">
+                    </div>
+                    <div class="form-group">
+                        <label>Images <span style="font-size:0.8rem;color:#888;">(optional - up to 5 images)</span></label>
+                        <div class="tech-images-upload">
+                            <input type="file" id="tech-images-input" accept="image/*" multiple onchange="handleTechImageUpload(this)">
+                            <div id="tech-images-preview" class="tech-images-preview"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Documents <span style="font-size:0.8rem;color:#888;">(optional - up to 10 documents, max 5MB each. Supports: PDF, DOC, DOCX, XLS, XLSX, TXT)</span></label>
+                        <div class="tech-documents-upload">
+                            <input type="file" id="tech-documents-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" multiple onchange="handleTechDocumentUpload(this)">
+                            <div id="tech-documents-preview" class="tech-documents-preview"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Tags <span style="font-size:0.8rem;color:#888;">(comma-separated)</span></label>
-                    <input type="text" id="tech-tags" placeholder="e.g. oil leak, timing belt, recall...">
+                <div class="modal-footer-sticky">
+                    <button type="submit" class="btn btn-primary" id="tech-save-btn">Save</button>
                 </div>
-                <div class="form-group">
-                    <label>Images <span style="font-size:0.8rem;color:#888;">(optional - up to 5 images)</span></label>
-                    <div class="tech-images-upload">
-                        <input type="file" id="tech-images-input" accept="image/*" multiple onchange="handleTechImageUpload(event)">
-                        <div id="tech-images-preview" class="tech-images-preview"></div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="tech-save-btn">Save</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Tech Item View Modal -->
+    <div id="tech-view-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="tech-view-title">📄 Article Details</h2>
+                <button class="close-btn" onclick="closeModal('tech-view-modal')">&times;</button>
+            </div>
+            <div id="tech-view-content" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tech Image Modal -->
+    <div id="tech-image-modal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <h2>Image Preview</h2>
+                <button class="close-btn" onclick="closeModal('tech-image-modal')">&times;</button>
+            </div>
+            <div id="tech-image-display" style="text-align:center;">
+                <!-- Image will be displayed here -->
+            </div>
         </div>
     </div>
 
@@ -1643,9 +1875,23 @@
             </div>
             <div id="invoice-details"></div>
             <div class="form-group" style="margin-top: 1.5rem;">
+                <button class="btn btn-secondary" onclick="editInvoice(currentViewingInvoice?.id)">✏️ Edit Invoice</button>
                 <button class="btn btn-primary" onclick="downloadInvoicePDF()">📥 Download PDF</button>
                 <button class="btn btn-success" onclick="sendInvoiceWhatsApp()">📱 Send via WhatsApp</button>
                 <button class="btn btn-warning" onclick="sendInvoiceSMS()">💬 Send via SMS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Details Modal (for row click) -->
+    <div id="invoice-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Invoice Details</h2>
+                <button class="close-btn" onclick="closeModal('invoice-details-modal')">&times;</button>
+            </div>
+            <div id="invoice-details-content">
+                <!-- Content will be dynamically populated -->
             </div>
         </div>
     </div>
@@ -1743,8 +1989,135 @@
     <script src="reminders.js"></script>
 <!-- Build Version -->
     <div id="build-version" style="position: fixed; bottom: 10px; right: 10px; font-size: 11px; color: #888; z-index: 1000;">
-        v1.1.2 - 2026-03-17
+        v1.1.4 - 2026-04-01
     </div>
+
+
+<!-- Create Quote Modal -->
+<div id="create-quote-modal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2>Create Quote</h2>
+            <button class="close-btn" onclick="closeQuoteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="create-quote-form" onsubmit="saveQuote(); return false;">
+                <div class="form-group">
+                    <label>Work Order *</label>
+                    <select id="quote-work-order" onchange="loadWorkOrderItemsToQuote()" required>
+                        <option value="">Select Work Order</option>
+                    </select>
+                </div>
+                
+                <div id="quote-line-items" style="min-height: 100px; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                    <p style="color: #888; text-align: center;">Select a work order to populate items</p>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Labor Hours</label>
+                        <input type="number" id="quote-labor" step="0.5" min="0" value="0" oninput="calculateQuoteTotals()">
+                    </div>
+                    <div class="form-group">
+                        <label>Labor Rate (R)</label>
+                        <input type="number" id="quote-labor-rate" step="0.01" min="0" value="75" oninput="calculateQuoteTotals()">
+                    </div>
+                </div>
+                
+                <h4>Add Custom Item</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="quote-custom-name" placeholder="Item name">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="quote-custom-description" placeholder="Optional description">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="quote-custom-quantity" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price (R)</label>
+                        <input type="number" id="quote-custom-unit-price" step="0.01" min="0">
+                    </div>
+                </div>
+                <button type="button" onclick="addQuoteCustomItem()" style="margin-bottom: 20px;">Add Custom Item</button>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Discount (R)</label>
+                        <input type="number" id="quote-discount" step="0.01" min="0" value="0" oninput="calculateQuoteTotals()">
+                    </div>
+                    <div class="form-group">
+                        <label>Tax Rate (%)</label>
+                        <input type="number" id="quote-tax-rate" step="0.01" min="0" value="15" oninput="calculateQuoteTotals()">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Valid Until</label>
+                    <input type="date" id="quote-valid-until">
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="quote-notes" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Services:</span>
+                        <span id="quote-services-total">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Parts:</span>
+                        <span id="quote-parts-total">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Custom Items:</span>
+                        <span id="quote-custom-total">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Labor:</span>
+                        <span id="quote-labor-total">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Subtotal:</span>
+                        <span id="quote-subtotal">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Tax:</span>
+                        <span id="quote-tax-amount">R0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2em; font-weight: bold; border-top: 1px solid #ccc; padding-top: 10px;">
+                        <span>Total:</span>
+                        <span id="quote-total">R0.00</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" onclick="closeQuoteModal()" style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Quote</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quote Details Modal -->
+<div id="quote-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>Quote Details</h2>
+            <button class="close-btn" onclick="closeModal('quote-details-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="quote-details-content"></div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

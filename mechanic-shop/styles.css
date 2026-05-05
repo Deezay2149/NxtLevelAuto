@@ -649,6 +649,23 @@ tbody tr:hover {
     width: 95%;
     max-height: 90vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-large .modal-body-scroll {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.modal-large .modal-footer-sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    padding: 1rem 0 0 0;
+    border-top: 1px solid var(--border-color);
+    z-index: 1;
 }
 
 .part-selection-container {
@@ -1387,6 +1404,36 @@ tbody tr:hover {
 .supplier-status.inactive {
     background: #f8d7da;
     color: #721c24;
+}
+
+.supplier-logo-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 1rem;
+    border: 2px solid #e0e0e0;
+}
+
+.supplier-logo-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-right: 1rem;
+}
+
+.supplier-item {
+    display: flex;
+    align-items: center;
+}
+
+.supplier-item .supplier-info {
+    flex: 1;
 }
 
 /* Book In Parts Section */
